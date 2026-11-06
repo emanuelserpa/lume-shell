@@ -191,14 +191,6 @@ QtObject {
         return [
             {
                 kind: "app_exec",
-                command: ["nm-connection-editor"],
-                title: "Configurações de rede e Wi-Fi",
-                subtitle: "Abrir o gerenciador de conexões de rede",
-                icon: "󰤨",
-                color: root.cCyan
-            },
-            {
-                kind: "app_exec",
                 command: ["blueberry"],
                 title: "Dispositivos Bluetooth",
                 subtitle: "Abrir painel de pareamento e conexões Bluetooth",

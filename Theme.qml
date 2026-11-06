@@ -228,7 +228,7 @@ QtObject {
         ? Qt.rgba(grey.r, grey.g, grey.b, 0.50)
         : Qt.rgba(grey.r, grey.g, grey.b, 0.55)
 
-    // Mixed text + icons: keep proportional spacing like the original Waybar.
+    // Mixed text + icons: keep proportional spacing with proportional spacing.
     readonly property string fontFamily: "Noto Sans"
     readonly property string nerdFontFamily: "Noto Sans Nerd Font"
     // Pure icon labels can use the symbol font directly.

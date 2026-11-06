@@ -7,7 +7,6 @@ Output envelope adheres strictly to {"ok": bool, "action": str, "error": str | N
 """
 
 import json
-import configparser
 import hashlib
 import os
 from pathlib import Path
@@ -26,8 +25,6 @@ SHELL_DIR = Path(__file__).resolve().parent.parent
 THEME_MANAGER = SHELL_DIR / "scripts" / "theme-manager.py"
 WALLPAPER_STATE = STATE_DIR / "wallpaper.json"
 PREVIEW_DIR = CACHE_DIR / "quickshell" / "wallpaper-previews"
-CONFIG_HOME = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-WAYPAPER_CONFIG = CONFIG_HOME / "waypaper" / "config.ini"
 
 VALID_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".avif", ".jxl", ".bmp"}
 
@@ -76,11 +73,6 @@ def detect_current_wallpaper_path() -> str | None:
                 return saved
         except (OSError, ValueError, TypeError):
             pass
-        legacy = configparser.ConfigParser()
-        legacy.read(WAYPAPER_CONFIG)
-        old = Path(legacy.get("Settings", "wallpaper", fallback="")).expanduser()
-        if old.is_file():
-            return str(old)
         return str(CURRENT_WALLPAPER)
 
     return None
@@ -225,12 +217,6 @@ def cmd_restore():
     except (OSError, ValueError, TypeError):
         pass
     if not path:
-        legacy = configparser.ConfigParser()
-        legacy.read(WAYPAPER_CONFIG)
-        path = legacy.get("Settings", "wallpaper", fallback="")
-    if not path and CURRENT_WALLPAPER.is_file():
-        path = str(CURRENT_WALLPAPER)
-    if not path:
         return result(False, "restore", "Nenhum wallpaper salvo")
     for attempt in range(5):
         ok, err = apply_wallpaper(Path(path).expanduser())
@@ -249,12 +235,6 @@ def collect_candidates(current=None, exclude_current=False, limit=24):
             search_dirs.append(folder)
     except (OSError, ValueError, TypeError):
         pass
-    if not search_dirs:
-        legacy = configparser.ConfigParser()
-        legacy.read(WAYPAPER_CONFIG)
-        legacy_folder = Path(legacy.get("Settings", "folder", fallback="")).expanduser()
-        if legacy_folder.is_dir():
-            search_dirs.append(legacy_folder)
     if current and Path(current).parent.is_dir():
         parent = Path(current).parent
         if parent not in search_dirs and current != str(CURRENT_WALLPAPER):

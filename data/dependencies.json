@@ -206,13 +206,6 @@
       "arch_source": "official repositories"
     },
     {
-      "command": "nm-connection-editor",
-      "level": "feature",
-      "purpose": "edição avançada de conexões de rede",
-      "arch_package": "network-manager-applet",
-      "arch_source": "official repositories"
-    },
-    {
       "command": "blueberry",
       "level": "feature",
       "purpose": "configurações avançadas de Bluetooth",

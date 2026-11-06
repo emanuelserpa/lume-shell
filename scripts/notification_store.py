@@ -17,27 +17,11 @@ IMAGE_DIR = BASE_DIR / "images"
 MAX_HISTORY = 2000
 LOAD_LIMIT = 500
 MAX_TEXT_LENGTH = 32768
-EXCLUDED_HISTORY_APPS = (
-    "battery",
-    "bateria",
-    "upower",
-    "nm-applet",
-    "networkmanager applet",
-    "miniaplicativo gerenciador de redes",
-    "miniaplicativo networkmanager",
-)
-EXCLUDED_HISTORY_DESKTOP_ENTRIES = (
-    "nm-applet",
-    "nm-applet.desktop",
-    "org.freedesktop.network-manager-applet",
-    "org.freedesktop.network-manager-applet.desktop",
-)
+EXCLUDED_HISTORY_APPS = ("battery", "bateria", "upower")
 
 
-def is_excluded_from_history(app_name, desktop_entry=""):
-    app = str(app_name or "").strip().lower()
-    desktop = str(desktop_entry or "").strip().lower()
-    return app in EXCLUDED_HISTORY_APPS or desktop in EXCLUDED_HISTORY_DESKTOP_ENTRIES
+def is_excluded_from_history(app_name):
+    return str(app_name or "").strip().lower() in EXCLUDED_HISTORY_APPS
 
 
 def get_db():
@@ -84,11 +68,6 @@ def init_db(conn=None):
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_notifications_fingerprint "
                 "ON notifications(fingerprint, received_at DESC)"
-            )
-            conn.execute(
-                f"DELETE FROM notifications WHERE LOWER(TRIM(app_name)) IN ({','.join('?' for _ in EXCLUDED_HISTORY_APPS)}) "
-                f"OR LOWER(TRIM(desktop_entry)) IN ({','.join('?' for _ in EXCLUDED_HISTORY_DESKTOP_ENTRIES)})",
-                (*EXCLUDED_HISTORY_APPS, *EXCLUDED_HISTORY_DESKTOP_ENTRIES),
             )
             rows = conn.execute("""
                 SELECT id, fingerprint, app_name, summary, body, image
@@ -178,7 +157,7 @@ def record_notification(payload, conn=None):
     fingerprint = _fingerprint(payload)
     app_name = _text(payload.get("appName"), 512)
     desktop_entry = _text(payload.get("desktopEntry"), 512)
-    if is_excluded_from_history(app_name, desktop_entry):
+    if is_excluded_from_history(app_name):
         return None, False
     app_icon = _text(payload.get("appIcon"), 2048)
     image = _text(payload.get("image"), 4096)
@@ -248,10 +227,8 @@ def get_history(limit=LOAD_LIMIT, conn=None):
             SELECT id, received_at, fingerprint, app_name, desktop_entry, app_icon,
                    image, summary, body, urgency, hints_json
             FROM notifications
-            WHERE LOWER(TRIM(app_name)) NOT IN ({','.join('?' for _ in EXCLUDED_HISTORY_APPS)})
-              AND LOWER(TRIM(desktop_entry)) NOT IN ({','.join('?' for _ in EXCLUDED_HISTORY_DESKTOP_ENTRIES)})
             ORDER BY received_at DESC, id DESC LIMIT ?
-        """, (*EXCLUDED_HISTORY_APPS, *EXCLUDED_HISTORY_DESKTOP_ENTRIES, limit)).fetchall()
+        """, (limit,)).fetchall()
         return [_row_to_item(row) for row in rows]
     finally:
         if owns_connection:

@@ -16,8 +16,7 @@ It can contain the Wi-Fi password, so exclude it from shared archives.
 
 Selecting a protected Wi-Fi network
 opens Quickshell's password dialog, which sends the password to
-`nmcli --ask` on stdin. No session starts `nm-applet`. The Tray still filters any stale nm-applet item to
-avoid the animated icon path that previously crashed KIconLoader.
+`nmcli --ask` on stdin.
 
 ## Features
 

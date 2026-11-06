@@ -73,7 +73,7 @@ WEATHER_CODES = {
     "260": "󰖑",
 }
 
-CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "waybar"
+CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "lume-shell"
 CACHE_FILE = CACHE_DIR / "weather.json"
 
 STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "quickshell"
@@ -241,7 +241,7 @@ def save_cache(city_name: str, city_id: str, data: dict) -> None:
         "weather_data": data,
     }
 
-    # Escrita atômica: nunca deixa a Waybar ler um JSON incompleto.
+    # Atomic replacement keeps concurrent readers from seeing partial JSON.
     with tempfile.NamedTemporaryFile(
         mode="w",
         encoding="utf-8",

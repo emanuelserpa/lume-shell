@@ -64,13 +64,6 @@ metadata, seek bar with elapsed/total time, and previous/play-pause/next actions
 inside a rounded card with a clipped, blurred album-art backdrop. The old media
 popup continues to offer its hover-preview behavior.
 
-## Historical Control Center
-
-The former standalone v0.21.0 Control Center was an upstream-Quickshell-only
-top-right `PanelWindow`, later embedded as `ControlCenterCard` in the center
-dashboard. `SUPER+A` continues to open Spotlight actions; it is not a
-Quick Settings shortcut.
-
 The current implementation keeps these established integrations:
 
 - native Quickshell PipeWire for audio;

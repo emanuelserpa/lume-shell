@@ -51,10 +51,7 @@ Rectangle {
         spacing: root.theme.spacingTokens.xs
 
         Repeater {
-            // Secret-agent / IME items stay running but are neither shown
-            // nor icon-loaded here: an empty Image source keeps KIconLoader
-            // away from nm-applet's animated theme icons, which caused a
-            // past SIGSEGV (see ~/.cache/quickshell/crashes).
+            // Secret-agent / IME items stay running but are not shown.
             model: SystemTray.items
 
             delegate: Item {
@@ -62,8 +59,6 @@ Rectangle {
                 required property var modelData
 
                 readonly property bool shown: modelData.id !== "fcitx5"
-                         && modelData.id !== "nm-applet"
-                         && modelData.id !== "network-manager-applet"
                          && modelData.id !== "spotify-client"
                          && modelData.id !== "chrome_status_icon_1"
                 visible: shown

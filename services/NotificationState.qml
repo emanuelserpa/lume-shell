@@ -427,10 +427,6 @@ QtObject {
         return NotificationContent.isBattery(n)
     }
 
-    function isNetworkApplet(n) {
-        return NotificationContent.isNetworkApplet(n)
-    }
-
     function isExcludedFromHistory(n) {
         return NotificationContent.isExcludedFromHistory(n)
     }

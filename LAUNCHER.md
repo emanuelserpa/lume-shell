@@ -116,16 +116,7 @@ Recommended:
 Without `fd`, file search falls back to common user directories.
 Clipboard mode uses a persistent native Wayland daemon with local SQLite storage (see `docs/clipboard.md`).
 
-## Historical Hyprland shortcut example
-
-    bind = SUPER, SPACE, global, quickshell:spotlight
-
-For hyprland.lua, keep using your existing global binding for:
-
-    quickshell:spotlight
-
-
-## Hyprland integration / replacing Wofi
+## Hyprland integration
 
 Additional global shortcuts:
 
@@ -191,9 +182,9 @@ The `#` clipboard manager has been thoroughly redesigned:
    - Removes item safely matching its ID and SHA-256 signature and removes it from the local list instantly.
 
 
-## v1.2.0 — Native Wayland Clipboard Manager (SQLite Backend)
+## Clipboard Manager
 
-The `#` clipboard manager backend was completely migrated from CopyQ to an internal native Wayland backend:
+The `#` clipboard manager uses the native Wayland backend:
 
 1. **Architecture & Persistence**:
    - **Daemon**: `scripts/clipboard-daemon.py` acts as a supervisor using `wl-paste --watch` with a singleton flock (`daemon.lock`).
@@ -203,7 +194,7 @@ The `#` clipboard manager backend was completely migrated from CopyQ to an inter
 
 2. **Permanent IDs & Atomic Deletion**:
    - Every item receives a permanent SQLite autoincrement `id`.
-   - Item removal (`Shift+Delete` / `󰆴 Del`) deletes by exact ID and content hash, eliminating previous bugs where deleted items reappeared due to CopyQ index shifting.
+   - Item removal (`Shift+Delete` / `󰆴 Del`) deletes by exact ID and content hash, so deletion remains stable as the history changes.
    - Instant local filtering in `Spotlight.qml` provides zero-latency removal feedback.
 
 3. **Loop Prevention & Deduplication**:

@@ -21,14 +21,6 @@ TestCase {
         verify(result.data.data === undefined)
     }
 
-    function test_preservesLegacyWaybarPayload() {
-        const result = CommandResult.decode('{"text":"wifi","tooltip":"Connected","class":["active"]}')
-        verify(result.ok)
-        compare(result.data.text, "wifi")
-        compare(result.data.tooltip, "Connected")
-        compare(result.data.class[0], "active")
-    }
-
     function test_normalizesFailureAndMalformedJson() {
         const failure = CommandResult.decode('{"ok":false,"version":1,"error":"offline"}')
         verify(!failure.ok)

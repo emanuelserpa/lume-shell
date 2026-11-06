@@ -68,9 +68,7 @@ Responsibilities:
 
 Search uses Open-Meteo geocoding.
 
-### `scripts/waybar-wttr.py`
-
-Historical filename retained for compatibility.
+### `scripts/weather-fetch.py`
 
 Responsibilities:
 - resolve selected city;

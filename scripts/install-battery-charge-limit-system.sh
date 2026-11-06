@@ -31,13 +31,6 @@ install -D -o root -g root -m 0644 \
     "$repo_root/system/systemd/quickshell-power-source-policy.service" \
     /etc/systemd/system/quickshell-power-source-policy.service
 
-runtime_dir="/run/user/$target_uid"
-if [[ -S "$runtime_dir/bus" ]]; then
-    session_env=(env "XDG_RUNTIME_DIR=$runtime_dir" "DBUS_SESSION_BUS_ADDRESS=unix:path=$runtime_dir/bus")
-    runuser -u "$target_user" -- "${session_env[@]}" \
-        systemctl --user disable --now tlp-battery-monitor.service 2>/dev/null || true
-fi
-
 systemctl daemon-reload
 systemctl enable --now quickshell-power-source-policy.service
 echo "Installed the charge helper and power-source policy service for $target_user."

@@ -1,6 +1,9 @@
-# Current State — v1.2.0 baseline
+# Current State
 
-This page is a short map of the running shell. Check the referenced source before changing behavior: some components added after v1.2.0 are still being developed. For constraints, read `AGENTS.md` and `docs/stability-contract.md`; for design and implementation, read `docs/architecture.md`, [`shell-uml.md`](shell-uml.md), and the relevant domain page. History belongs in `docs/version-history.md` and `CHANGELOG.md`.
+This page maps the current shell. Check the referenced source before changing
+behavior. For constraints, read `AGENTS.md` and `docs/stability-contract.md`;
+for design and implementation, read `docs/architecture.md`,
+[`shell-uml.md`](shell-uml.md), and the relevant domain guide.
 
 ## Shell composition
 
@@ -39,7 +42,7 @@ Design decisions: [design guidelines](design-guidelines.md),
 | Phone (KDE Connect, currently hidden) | `bar/Phone.qml`, `bar/PhonePopup.qml`, `docs/phone.md` |
 | Printing | `bar/Printer.qml`, `bar/PrinterPopup.qml`, `docs/printer.md` |
 | Media and audio | `bar/Audio.qml` (speaker volume pill), Spotify-only `bar/MediaIsland.qml` with artwork, metadata, animated playback indicator, progress, and inline transport controls, `services/MediaState.qml`, `bar/QuickMediaPlayer.qml`, `bar/MediaPopup.qml`, `bar/AudioPopup.qml` (EasyEffects bypass and presets: `docs/easyeffects.md`); the Quick Settings player, media popup, and `SUPER+;` share MPRIS player selection; stability rules in `docs/stability-contract.md` |
-| Battery and power | `bar/Battery.qml`, `bar/BatteryPopup.qml`, `services/PowerProfileState.qml`, `scripts/energy-profile.py`, `scripts/battery-health.py` (UPower fallback), `scripts/cpu-boost.py`, system power-source policy and charge-limit helper, `docs/power-controls.md`; this host uses PPD with automatic AC/battery profile and suspend-mode selection |
+| Battery and power | `bar/Battery.qml`, `bar/BatteryPopup.qml`, `services/PowerProfileState.qml`, `scripts/energy-profile.py`, `scripts/battery-health.py` (UPower fallback), `scripts/cpu-boost.py`, system power-source policy and charge-limit helper, `docs/power-controls.md`; automatic AC/battery profiles and suspend-mode selection |
 | Notifications | `services/NotificationState.qml`, `scripts/notification_store.py` (SQLite/WAL archive), `services/BatteryAlertState.qml`, `notifications/NotificationToasts.qml`, `docs/notifications.md` |
 | OSD and screen recording | `osd/Osd.qml`, `bar/ScreenRecording.qml`, `docs/osd.md`, `docs/screen-recording.md` |
 | Dashboard and controls | `bar/CenterDashboardPopup.qml`, `bar/CalendarCard.qml`, `components/HolidayPill.qml`, `services/HolidayLogic.js`, `docs/calendar-holidays.md`, `bar/SystemMonitor.qml`, `docs/system-monitor.md`, `bar/NotificationPopup.qml`, `services/UpdateState.qml` (Arch, AUR, Flatpak, Homebrew, Gear Lever AppImages), `docs/control-center.md` |
@@ -54,20 +57,6 @@ com dados do hardware, sistema e pacotes obtidos pelo Fastfetch. O painel fica
 aberto ao clicar fora ou na barra; somente `Esc` o fecha.
 |Compositor support | `services/WorkspaceModel.js` normalizes protocol windowsets; `services/MangoState.qml` and `services/MangoWorkspace.js` provide Mango fallback state; `services/CompositorBackend.js`, `scripts/compositor-dispatch.sh`, `docs/compositor-integration.md` |
 | Display projection | `bar/DisplayProjectionPopup.qml`, `services/DisplayProjectionState.qml`, `scripts/display-projection.py`, `docs/compositor-integration.md` (Hyprland only) |
-
-## Legacy and unmounted components
-
-The following files remain in the repository for reference or optional fallback but are **not mounted or visible** in the active shell (`bar/Bar.qml` / `shell.qml`):
-
-| Legacy component | Active replacement in the running shell |
-| --- | --- |
-| `bar/Media.qml` | `bar/MediaIsland.qml` (bar) and `bar/QuickMediaPlayer.qml` (`bar/NotificationPopup.qml`) |
-| `bar/Brightness.qml`, `bar/BrightnessPopup.qml` | Brightness `SliderRow` in `bar/NotificationPopup.qml` and `osd/Osd.qml` |
-| `bar/SinkSelector.qml` | Full audio mixer and sink/source selector in `bar/AudioPopup.qml` |
-| `bar/Phone.qml`, `bar/PhonePopup.qml` | KDE Connect module (currently unmounted in `bar/Bar.qml`) |
-| `controlcenter/SettingsWindow.qml` | Unified quick controls in `bar/NotificationPopup.qml` and Theme Studio in `launcher/Spotlight.qml` |
-| `bar/QuickStatusIndicators.qml` | Autonomous `bar/Network.qml` and `bar/Bluetooth.qml` pills in `rightIsland` of `bar/Bar.qml` |
-| `bar/ScreenRecording.qml` | Unmounted standalone recording pill; state lives in `services/ScreenRecordingState.qml` while triggers live in `bar/NotificationControl.qml` and `bar/StatusIsland.qml` |
 
 ## Maintenance notes
 
@@ -97,7 +86,7 @@ recording and VPN controls. Specialized calendar cells, notification cards,
 workspace delegates, and Spotlight results keep their own structures.
 
 - Keep the explicit `Bar.qml` ordering and the existing popup behavior. `Network` remains after `Tray`.
-- The custom network UI prompts for protected Wi-Fi passwords and passes them to `nmcli --ask` over stdin; no session starts `nm-applet`. See `docs/network.md`.
+- The custom network UI prompts for protected Wi-Fi passwords and passes them to `nmcli --ask` over stdin; See `docs/network.md`.
 - `services/UpdateState.qml` polls Arch, AUR, Flatpak, Homebrew, and Gear Lever AppImage updates once per hour. A dedicated bar pill appears only when updates are available or installation is running; its popup shows provider progress and results, including Flatpak's current item and download percentage. Install actions run in the background and system package elevation uses Polkit. Gear Lever's JSON list feeds the AppImages row; its update action skips running apps. `Tray` hides when no visible tray icons remain; `Printer`, `Media`, and `Submap` also conditionally hide.
 - Night Light saves its enabled preference in state and synchronizes `hyprsunset`/`wlsunset` when the shell session starts, so its persisted indicator and display effect recover together.
 - Hyprland applies blur to Quickshell layers and popups; all shell base surfaces share the theme background alpha (maximum 0.68). Mango and labwc retain near-opaque popup/base fallbacks where compositor blur is unavailable.

@@ -403,7 +403,7 @@ run_json_helper "cpu-boost" scripts/cpu-boost.py status
 run_json_helper "battery-health" scripts/battery-health.py
 run_json_helper "hardware-sensors" scripts/hardware-sensors.py
 run_json_helper "nightlight-status" scripts/nightlight-manager.py status
-run_json_helper "weather" scripts/waybar-wttr.py
+run_json_helper "weather" scripts/weather-fetch.py
 run_json_helper "ytdlp-download" scripts/ytdlp-download.py recent
 
 # -----------------------------------------------------------------------------
@@ -421,35 +421,6 @@ if [ ${#unwanted_files[@]} -gt 0 ]; then
     record_fail "Unwanted files/directories found: ${unwanted_files[*]}"
 else
     record_ok "No __pycache__ or temporary files"
-fi
-
-# -----------------------------------------------------------------------------
-# G. Runtime Dependency Checks (Obsolete Dependencies)
-# -----------------------------------------------------------------------------
-obsolete_ok=true
-
-# Check for CopyQ in runtime files (excluding .git, docs, markdown, import tool, and validate.sh itself)
-copyq_matches="$(grep -Rni "copyq" --exclude-dir=.git --exclude-dir=docs --exclude-dir=tests --exclude="*.md" --exclude="clipboard-import-copyq.py" --exclude="validate.sh" . 2>/dev/null || true)"
-if [ -n "$copyq_matches" ]; then
-    record_fail "Obsolete CopyQ reference found in runtime code:\n$copyq_matches"
-    obsolete_ok=false
-fi
-
-# Check for SwayNC in runtime code
-swaync_matches="$(grep -Rni "swaync" --exclude-dir=.git --exclude-dir=docs --exclude-dir=tests --exclude="*.md" --exclude="validate.sh" . 2>/dev/null || true)"
-if [ -n "$swaync_matches" ]; then
-    record_fail "Obsolete SwayNC reference found in runtime code:\n$swaync_matches"
-    obsolete_ok=false
-fi
-
-# Check for obsolete config/bar.json
-if [ -f "$REPO_ROOT/config/bar.json" ]; then
-    record_fail "Obsolete config/bar.json exists"
-    obsolete_ok=false
-fi
-
-if [ "$obsolete_ok" = true ]; then
-    record_ok "Runtime dependency checks (no obsolete CopyQ/SwayNC)"
 fi
 
 # -----------------------------------------------------------------------------

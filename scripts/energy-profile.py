@@ -53,8 +53,7 @@ def ppd_state():
     if not cmd:
         return None
 
-    # Avoid using powerprofilesctl just because the binary exists: TLP users
-    # commonly keep power-profiles-daemon disabled to prevent policy conflicts.
+    # Avoid using powerprofilesctl when its system service is inactive.
     if not service_active("power-profiles-daemon.service"):
         return None
 
@@ -108,11 +107,10 @@ def platform_state():
     if not available:
         available = [active]
 
-    tlp_active = service_active("tlp.service")
     return {
         "available": True,
         "backend": "platform-profile",
-        "backend_label": "TLP / platform profile" if tlp_active else "Platform profile",
+        "backend_label": "Platform profile",
         "active": active,
         "active_raw": active_raw,
         "choices_raw": choices,

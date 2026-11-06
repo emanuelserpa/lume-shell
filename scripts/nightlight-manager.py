@@ -23,7 +23,6 @@ sys.dont_write_bytecode = True
 STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "quickshell"
 STATE_FILE = STATE_DIR / "nightlight.json"
 WEATHER_STATE_FILE = STATE_DIR / "weather.json"
-WEATHER_CACHE_FILE = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "waybar" / "weather.json"
 
 HYPR_CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "hypr"
 HYPR_SUNSET_CONF = HYPR_CONFIG_DIR / "hyprsunset.conf"
@@ -181,7 +180,7 @@ def is_night_time(sunrise_str: str, sunset_str: str, now_time: datetime.time | N
 def get_weather_location() -> dict:
     """
     Obtém a localização (cidade, latitude, longitude) a partir da configuração de clima.
-    Prioridade: 1) weather.json state, 2) waybar cache, 3) ip-api fallback, 4) coordenadas padrão.
+    Prioridade: 1) configuração atual do clima, 2) localização de rede, 3) coordenadas padrão.
     """
     # 1. ~/.local/state/quickshell/weather.json
     try:

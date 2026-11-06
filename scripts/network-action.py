@@ -353,12 +353,6 @@ def main():
         action_name = "vpn-up" if sys.argv[3] == "on" else "vpn-down"
         return run_nmcli(action_name, vpn_nmcli_command(sys.argv[2], sys.argv[3] == "on"))
 
-    if action == "editor":
-        return spawn(action, [
-            ["uwsm", "app", "--", "nm-connection-editor"],
-            ["nm-connection-editor"],
-        ])
-
     return result(False, action, "Ação de rede desconhecida.")
 
 

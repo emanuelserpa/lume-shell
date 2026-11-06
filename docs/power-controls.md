@@ -103,16 +103,6 @@ A write that requires elevated privileges uses `pkexec`; cancellation and
 write errors are displayed in the popup. Once the scoped system integration is
 installed, changing or restoring this one setting does not ask for a password.
 
-### TLP integration
-
-If TLP manages CPU boost through `CPU_BOOST_ON_AC`, `CPU_BOOST_ON_BAT`, or
-`CPU_BOOST_ON_SAV`, its profile switch will override the Quickshell preference
-when AC power changes. Leave those settings commented out in `/etc/tlp.conf`
-and any `/etc/tlp.d/*.conf` drop-ins so the Quickshell switch remains the owner
-of this setting. After changing TLP configuration, apply it with `sudo tlp
-start`; the saved Quickshell preference is then restored independently at
-login.
-
 The switch controls whether the kernel may use frequency boost. An enabled
 state does not mean the CPU is boosting at that instant; workload, thermal
 headroom, and platform power limits still apply. The kernel can omit this
@@ -125,21 +115,15 @@ host's real sysfs.
 
 ### Power profiles and charge thresholds
 
-The reproducible Arch profiles use `power-profiles-daemon` as the sole owner
-of platform power profiles. Do not run TLP alongside it: both can write the
-same firmware profile, and TLP's event handlers can reapply settings after
-PPD changes them. PPD covers the firmware platform profiles, not all of TLP's
-extra runtime-PM, Wi-Fi, or USB autosuspend policies. After migration, those
-devices follow kernel/driver defaults except for explicit host udev rules.
+Power profiles use `power-profiles-daemon` when available. The shell reports
+firmware `platform_profile` values on supported systems without that service.
 
 PPD does not manage battery charge thresholds. On supported ThinkPads, install
 `sudo scripts/install-battery-charge-limit-system.sh` once to add a fixed
 root-owned helper and a user-scoped Polkit rule. The helper accepts 80
 (75/80 eco limit) or 100 (temporary full-charge mode); 100 requires external
 power. It writes only the battery's kernel-exposed start/end threshold files. The
-existing popup can then keep using the feature without TLP. Hardware without
-those sysfs controls has no charge-limit action. The older TLP command fallback
-remains for unconverted installations.
+Hardware without those sysfs controls has no charge-limit action.
 
 The system unit `quickshell-power-source-policy.service` watches udev power
 supply events. On AC it selects `balanced` and `s2idle`; on battery it selects
@@ -147,15 +131,3 @@ supply events. On AC it selects `balanced` and `s2idle`; on battery it selects
 it restores 75/80 automatically. It performs the same source selection at
 startup, so it also recovers when the machine boots on battery. A manually
 selected PPD profile stays in effect until the power source changes.
-
-On this host, migrate with `sudo scripts/migrate-tlp-to-ppd.sh`. It backs up
-`/etc/tlp.conf` and `/etc/tlp.d` under
-`~/.local/share/quickshell/migrations/`, installs the system policy unit and
-scoped charge helper, disables the old user TLP monitor, removes TLP (and its
-optional `tlp-rdw` companion), and installs/enables the replacement system
-unit. To reinstall its helper and unit, run
-`sudo scripts/install-battery-charge-limit-system.sh`. TLP's other device-level policies such as USB autosuspend,
-runtime PM deny lists, Wi-Fi power save, sound power save, and AMD panel
-brightness are not yet reproduced by this service; their effective values
-come from kernel and driver defaults. The archived TLP configuration remains
-available for reference or rollback.

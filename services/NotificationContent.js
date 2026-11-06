@@ -93,23 +93,8 @@ function isBattery(n) {
     return hay.indexOf("bateria") !== -1 || hay.indexOf("battery") !== -1
 }
 
-function isNetworkApplet(n) {
-    if (!n) return false
-    const desktop = String(n.desktopEntry || n.hints?.["desktop-entry"] || "").trim().toLowerCase()
-    if (desktop === "nm-applet"
-            || desktop === "nm-applet.desktop"
-            || desktop === "org.freedesktop.network-manager-applet"
-            || desktop === "org.freedesktop.network-manager-applet.desktop")
-        return true
-    const app = String(n.appName ?? "").trim().toLowerCase()
-    return app === "nm-applet"
-        || app === "networkmanager applet"
-        || app === "miniaplicativo gerenciador de redes"
-        || app === "miniaplicativo networkmanager"
-}
-
 function isExcludedFromHistory(n) {
-    return isBattery(n) || isNetworkApplet(n)
+    return isBattery(n)
 }
 
 function isChargingNotification(n) {

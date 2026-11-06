@@ -17,10 +17,8 @@ This is a priority guide, not a mandate.
 
 ### Reprodutibilidade no Arch Linux
 
-O [plano de reprodução](reproducibility-plan.md) cobre inventário,
-empacotamento, separação de preferências, instalação e validação numa
-instalação limpa de Arch Linux. Escopo: shell atual, sem dock. Outras
-distribuições estão fora do trabalho atual.
+O pacote Arch e o processo de validação estão descritos em
+`packaging/arch/README.md` e `docs/deploy-and-validation.md`.
 
 ### Spotlight inspirado no Raycast
 
@@ -68,8 +66,7 @@ instructions and adapter coverage are documented in `docs/theme-management.md`.
 - [x] Keep the current Catppuccin Mocha palette in `Theme.qml` as the default
   and fallback; add an explicit Mocha / Chameleon wallpaper colors switch.
 - [x] Generate a palette from the selected wallpaper and store it under XDG
-  state, outside the source repository. Extend Waypaper's existing
-  `post_command` so its current wallpaper cache update still runs.
+  state, outside the source repository.
 - [x] Load and validate the generated palette in Quickshell, map it to the
   existing theme tokens, and fall back cleanly when it is missing or invalid.
 - [x] Move component colors to active theme tokens; keep palette literals in

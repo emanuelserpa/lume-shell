@@ -1,6 +1,6 @@
 # AGENTS.md — Quickshell Shell Project
 
-This repository contains a custom Quickshell-based Linux desktop shell evolved from a Waybar configuration.
+This repository contains a custom Quickshell-based Linux desktop shell designed as a standalone desktop shell.
 
 ## Start here
 
@@ -15,11 +15,9 @@ This repository contains a custom Quickshell-based Linux desktop shell evolved f
 - For visible UI changes, read `docs/design-guidelines.md`; before validation
   or deployment, read `docs/deploy-and-validation.md`.
 - For Spotlight interaction, ranking, actions, shortcuts, or geometry, read
-  `docs/spotlight-raycast-plan.md`. Read `docs/version-history.md` or
-  `docs/roadmap.md` only when history or planned work matters.
+  `docs/spotlight-raycast-plan.md`. Read `docs/roadmap.md` only when planned work matters.
 - For themes, wallpaper colors, or Theme Studio, also read
-  `docs/wallpaper-color-plan.md`; distinguish its planned features from the
-  currently implemented automatic Chameleon extraction.
+  `docs/wallpaper-color-plan.md`.
 
 ## Active plan priority
 
@@ -69,21 +67,19 @@ This project is already in daily use. Avoid regressions. If a subsystem is docum
 
 ## Non-negotiable constraints
 
-- Do **not** reintroduce `config/bar.json`.
+- Keep the explicit bar layout in `bar/Bar.qml`; avoid dynamic reordering.
 - Do **not** replace the explicit `Bar.qml` layout with dynamic `Loader`/`Repeater` ordering. That experiment made the bar visually worse and was reverted.
 - Keep `Network` after `Tray` in the right-side bar order.
-- Preserve the active native NotificationServer, toast, history, and DND behavior.
+- Preserve native notifications, toast, history, and DND behavior.
 - Preserve the compact Catppuccin Mocha-inspired identity through the active
-  theme tokens. Mocha is the historical/default dark palette; built-in and
+  theme tokens. Mocha is the default dark palette; built-in and
   Chameleon light/dark/OLED palettes remain supported. Do not hardcode Mocha
   colors into surfaces. See `docs/design-guidelines.md`.
 - Keep Noto Sans / Nerd Font usage; avoid switching to a mono-heavy visual language.
 - Preserve compact spacing and low visual density.
 - Avoid "card inside card inside card" UI.
 - The bar should be glanceable; detail belongs in popups.
-- `nm-applet` is intentionally not used anywhere (explicit user decision):
-  Wi-Fi secrets flow through the shell password dialog to `nmcli --ask`
-  over stdin. Do not reintroduce it as secret agent.
+- Wi-Fi secrets flow through the shell password dialog to `nmcli --ask` over stdin.
 - Do not move Wi-Fi passwords into command-line argv.
 - Do not break existing OSD behavior.
 - Do not rewrite Bluetooth to raw BlueZ D-Bus solely for architectural elegance.
@@ -302,7 +298,6 @@ At minimum:
 - inspect QML syntax carefully;
 - run Python syntax compilation for modified Python scripts;
 - preserve executable bits on scripts;
-- ensure no obsolete `bar.json` assumptions remain;
 - avoid importing QML component types without importing their module;
 - package without `__pycache__`;
 - describe the change, validation, and any material limitations.

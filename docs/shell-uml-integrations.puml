@@ -32,7 +32,7 @@ package "Sistema operacional e ferramentas" {
   component "NetworkManager / nmcli" as Network
   component "BlueZ / bluetoothctl" as Bluetooth
   component "CUPS" as CUPS
-  component "UPower · sysfs · TLP" as Power
+  component "UPower · sysfs" as Power
   component "wf-recorder · slurp" as Recording
   component "EasyEffects · pactl" as AudioDsp
   component "hyprsunset · wlsunset" as NightLight

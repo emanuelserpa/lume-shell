@@ -4,7 +4,7 @@ pkgver="${_release_pkgver:-0.1.0}"
 pkgrel=3
 pkgdesc='Wayland desktop shell built with Quickshell'
 arch=('x86_64')
-url='https://github.com/emanuelserpa/lume-shell-clean'
+url='https://github.com/emanuelserpa/lume-shell'
 # Upstream has not declared a license yet; do not publish this recipe until it does.
 license=('custom')
 depends=('quickshell' 'qt6-5compat' 'qt6-declarative' 'python' 'python-requests'
@@ -41,7 +41,7 @@ if [[ -n "$_local_source" ]]; then
   source=()
   sha256sums=()
 else
-  source=("lume-shell::git+https://github.com/emanuelserpa/lume-shell-clean.git#commit=${_commit}")
+  source=("lume-shell::git+https://github.com/emanuelserpa/lume-shell.git#commit=${_commit}")
   sha256sums=('SKIP')
 fi
 

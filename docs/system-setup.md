@@ -106,17 +106,10 @@ flatpak override --user \
   (verified per-job via `python3 -c "import cups"` attributes).
 - Reliable flow for problem documents: app → print to PDF → `lp`.
 
-## Clipboard
-
-CopyQ is retired (native `wl-clipboard` + SQLite backend since v1.2.0).
-Do not autostart `copyq --start-server`; its crashed helpers spam error
-toasts through the shell. `scripts/clipboard-import-copyq.py` remains only
-as the one-shot migration importer.
-
 ## Secrets and agents
 
-The labwc session no longer starts `nm-applet`. Quickshell prompts for
-protected Wi-Fi passwords and passes them to `nmcli --ask` over stdin.
+Quickshell prompts for protected Wi-Fi passwords and passes them to
+`nmcli --ask` over stdin.
 Passwords never travel via command-line argv (see `docs/network.md`).
 
 ## Phone (KDE Connect)

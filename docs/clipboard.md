@@ -2,8 +2,7 @@
 
 ## Visão Geral
 
-O sistema de histórico do clipboard do Quickshell utiliza um backend nativo próprio,
-desenhado especificamente para Wayland sem dependência de daemons externos de terceiros (como CopyQ).
+O histórico do clipboard usa um backend nativo de Wayland integrado ao Quickshell.
 
 A arquitetura combina:
 - **`wl-paste --watch`**: observador de eventos de seleção do Wayland em tempo real;
@@ -196,35 +195,6 @@ Se o `wl-clipboard` não estiver disponível no `PATH`, o backend retorna:
 }
 ```
 e a interface exibe a mensagem de indisponibilidade de forma amigável.
-
----
-
-## Migração do CopyQ (Opcional)
-
-Para importar o histórico anterior do CopyQ para a base de dados nativa do Quickshell:
-
-```bash
-python3 ~/.config/quickshell/scripts/clipboard-import-copyq.py [limite]
-```
-
-- Lê até 200 itens (ou o limite especificado) da aba ativa do CopyQ;
-- Importa textos e imagens com deduplicação por hash;
-- **Não altera nem remove** dados da instalação do CopyQ.
-
-## Desativando o CopyQ após a migração
-
-O backend nativo substitui o CopyQ; manter os dois ativos duplica captura
-(`wl-paste --watch` + monitoramento do CopyQ) e custo de CPU. Após importar o
-histórico, desative o CopyQ:
-
-```bash
-python3 ~/.config/quickshell/scripts/clipboard-import-copyq.py
-copyq exit
-```
-
-E remova o autostart/bindings legados em `~/.config/hypr/hyprland.lua`
-(`copyq --start-server` no bloco de autostart e o bind `SUPER+V` para
-`copyq toggle`), mantendo apenas `SUPER+C` (atalho nativo do Spotlight).
 
 ---
 

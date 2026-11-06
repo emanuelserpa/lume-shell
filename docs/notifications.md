@@ -2,7 +2,7 @@
 
 ## Overview
 
-The notification subsystem is a native Quickshell implementation providing toast popups, a tracked-notification history panel, Do Not Disturb (DND) controls, and status bar integration. It replaces the earlier SwayNC integration.
+The notification subsystem provides toast popups, a tracked-notification history panel, Do Not Disturb (DND) controls, and status bar integration through Quickshell's native NotificationServer.
 
 ---
 
@@ -113,16 +113,15 @@ Battery alerts no longer use the separate `battery-notify.service` or
 `notify-send`. The UPower monitor is owned by Quickshell and runs once for the
 shell, independent of monitor count. Connecting power dismisses stale low
 battery alerts while preserving the short-lived “Carregador conectado” notice.
-Power source changes and charge limit restoration are handled by the system
-unit `quickshell-power-source-policy.service`; this notification flow does not
-depend on TLP.
+Power source changes and charge-limit restoration are handled by the system
+unit `quickshell-power-source-policy.service`.
 
 ---
 
 ## 2. Visual Theme & Consistency Contract
 
 The notification subsystem keeps the shell's adaptive glass palette while
-borrowing macOS interaction and SwayNC's image/icon composition: compact rounded
+using compact rounded rows with image and icon support: compact rounded
 cards, relative time without an app-name label, concise title/body, and 40px
 Soft UI action buttons revealed on hover. When a notification supplies a primary image, its app icon
 overlays the image's lower-right corner, with its badge slot (24px in toasts, 20px in history) extending 6px

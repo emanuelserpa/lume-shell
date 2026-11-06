@@ -66,7 +66,7 @@ Item {
 
     CommandJson {
         id: weather
-        command: ["python3", Quickshell.shellDir + "/scripts/waybar-wttr.py"]
+        command: ["python3", Quickshell.shellDir + "/scripts/weather-fetch.py"]
         interval: 300000
     }
 

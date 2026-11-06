@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Battery charge-limit helper (ThinkPad ACPI sysfs, with TLP fallback).
+"""Battery charge-limit helper (ThinkPad ACPI sysfs).
 
 Reads the firmware charge threshold and toggles between the eco limit
-(75/80, applied via TLP) and a one-shot full charge (100, "travel mode").
+(75/80) and a one-shot full charge (100, "travel mode").
 
 Usage:
     battery-charge-limit.py status        -> JSON envelope with current limit
@@ -11,8 +11,7 @@ Usage:
 JSON contract (same envelope as the other helpers):
     {"ok": bool, "version": 1, "error": str | None, ...}
 
-The `set` path uses a fixed, allowlisted Polkit helper when installed. Older
-installations fall back to `sudo -n tlp` until that helper is deployed.
+The `set` path uses a fixed, allowlisted Polkit helper.
 """
 import glob
 import json
@@ -101,24 +100,7 @@ def apply_limit(limit, runner=run, which=shutil.which, helper_path=PRIVILEGED_HE
         rc, _, err = runner([pkexec, str(helper_path), str(limit)], timeout=60.0)
         return (rc == 0, "" if rc == 0 else err or "A alteração foi cancelada ou não autorizada.")
 
-    # Compatibility path for hosts that have not installed the scoped writer.
-    tlp = which("tlp")
-    sudo = which("sudo")
-    if not tlp or not sudo:
-        return False, "Instale a integração de limite de carga ou o TLP."
-
-    bat = detect_battery() or "BAT0"
-    if limit == FULL:
-        args = [sudo, "-n", tlp, "fullcharge", bat]
-    else:
-        args = [sudo, "-n", tlp, "setcharge", str(ECO_START), str(ECO_STOP), bat]
-    rc, _, err = runner(args, timeout=30.0)
-    if rc != 0:
-        hint = (err or "").strip()
-        if "password" in hint.lower() or not hint:
-            hint = "Sem permissão sem senha: crie a regra sudoers para tlp setcharge/fullcharge."
-        return False, hint
-    return True, ""
+    return False, "A integração segura de limite de carga não está instalada."
 
 
 def main():

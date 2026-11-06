@@ -35,20 +35,16 @@ class BatteryChargeLimitTests(unittest.TestCase):
         self.assertIn("carregador", error)
         self.assertEqual(calls, [])
 
-    def test_legacy_tlp_fallback_remains_available(self):
+    def test_requires_the_scoped_helper(self):
         calls = []
-
-        def runner(args, **kwargs):
-            calls.append(args)
-            return 0, "", ""
-
-        ok, _ = battery.apply_limit(
-            100, runner=runner,
-            which=lambda name: {"tlp": "/usr/bin/tlp", "sudo": "/usr/bin/sudo"}.get(name),
+        ok, error = battery.apply_limit(
+            100, runner=lambda *args, **kwargs: calls.append(args),
+            which=lambda name: None,
             helper_path=Path("/nonexistent/helper"), ac_power=lambda: True,
         )
-        self.assertTrue(ok)
-        self.assertEqual(calls, [["/usr/bin/sudo", "-n", "/usr/bin/tlp", "fullcharge", "BAT0"]])
+        self.assertFalse(ok)
+        self.assertIn("integração segura", error)
+        self.assertEqual(calls, [])
 
 
 if __name__ == "__main__":

@@ -152,7 +152,7 @@ as mesmas cores semânticas dos outros popups.
 
 ## 5. Barra e distribuição das tarefas
 
-`bar/Bar.qml` mantém composição explícita, sem `bar.json` ou ordenação por Loader.
+`bar/Bar.qml` mantém a composição explícita dos módulos.
 Há três ilhas principais e até três condicionais:
 
 | Região | Composição atual |

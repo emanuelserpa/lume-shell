@@ -125,21 +125,6 @@ class NotificationStoreTests(unittest.TestCase):
         self.assertIsNone(item)
         self.assertEqual(notification_store.get_history(), [])
 
-    def test_ignores_network_applet_notifications_from_history(self):
-        net_pt = self.notification(80000, "Conexão estabelecida")
-        net_pt["appName"] = "Miniaplicativo gerenciador de redes"
-        net_pt["desktopEntry"] = "org.freedesktop.network-manager-applet"
-        item_pt, inserted_pt = notification_store.record_notification(net_pt)
-        self.assertFalse(inserted_pt)
-        self.assertIsNone(item_pt)
-
-        net_en = self.notification(81000, "Connection Established")
-        net_en["appName"] = "NetworkManager Applet"
-        net_en["desktopEntry"] = "nm-applet"
-        item_en, inserted_en = notification_store.record_notification(net_en)
-        self.assertFalse(inserted_en)
-        self.assertIsNone(item_en)
-        self.assertEqual(notification_store.get_history(), [])
 
 
 if __name__ == "__main__":

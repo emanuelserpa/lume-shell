@@ -124,37 +124,6 @@ TestCase {
         verify(!NotificationContent.isBattery({appName: "Spotify", summary: "Música nova"}))
     }
 
-    function test_isNetworkAppletDetectsAndExcludesFromHistory() {
-        const netPt = {
-            id: 10,
-            appName: "Miniaplicativo gerenciador de redes",
-            desktopEntry: "org.freedesktop.network-manager-applet",
-            summary: "Conexão estabelecida",
-            body: "Conectado ao Wi-Fi"
-        }
-        const netEn = {
-            id: 11,
-            appName: "NetworkManager Applet",
-            desktopEntry: "nm-applet",
-            summary: "Connection Established"
-        }
-        const normal = {
-            id: 12,
-            appName: "Zen",
-            desktopEntry: "zen",
-            summary: "Download concluído"
-        }
-        verify(NotificationContent.isNetworkApplet(netPt))
-        verify(NotificationContent.isNetworkApplet(netEn))
-        verify(!NotificationContent.isNetworkApplet(normal))
-        verify(NotificationContent.isExcludedFromHistory(netPt))
-        verify(!NotificationContent.isExcludedFromHistory(normal))
-
-        const rows = NotificationContent.historyRows([netPt, netEn, normal], [])
-        compare(rows.length, 1)
-        compare(rows[0].notification, normal)
-    }
-
     function test_batteryIconReturnsCorrectGlyphs() {
         compare(NotificationContent.batteryIcon({summary: "Carregador conectado"}), "󰂄")
         compare(NotificationContent.batteryIcon({urgency: 2, summary: "Bateria criticamente baixa"}), "󰂃")
