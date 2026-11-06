@@ -102,7 +102,9 @@ Item {
 
                 visible: !root.hyprlandActive
                     || (belongsToScreen
-                        && !String(ws?.name ?? "").startsWith("special:"))
+                        && !String(ws?.name ?? "").startsWith("special:")
+                        && ws !== null && ws.toplevels
+                        && ws.toplevels.values.length > 0)
 
                 width: Math.max(root.theme.barWorkspaceMinWidth,
                                 label.implicitWidth + root.theme.barWorkspaceHorizontalPadding)

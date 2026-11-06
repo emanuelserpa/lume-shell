@@ -3,8 +3,8 @@
 ## Unreleased
 
 - Workspace labels now come from the compositor; Hyprland users can set them
-  with workspace rules, including persistent empty workspaces, while the former
-  icon map remains only as an example.
+  with workspace rules. The bar shows occupied workspaces only, while the
+  former icon map remains only as an example.
 - Restored the NetworkManager connection editor action and hide its standalone
   applet icon when the shell tray already provides network controls.
 

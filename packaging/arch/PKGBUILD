@@ -1,7 +1,7 @@
 # Maintainer: Emanuel Serpa
 pkgname=lume-shell
 pkgver="${_release_pkgver:-0.1.0}"
-pkgrel=9
+pkgrel=10
 pkgdesc='Wayland desktop shell built with Quickshell'
 arch=('x86_64')
 url='https://github.com/emanuelserpa/lume-shell'
