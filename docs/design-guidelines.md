@@ -295,9 +295,9 @@ atualizar pacotes ou cancelar jobs apenas para demonstrar um estado visual.
 
 Os controles da barra usam vetores locais `assets/tabler/bar-*.svg`, desenhados
 para uma grade comum de 24 unidades com traço arredondado de 2 unidades e
-renderizados em `barIconSize`. A cor vem dos tokens do tema. Ícones e números
-padrão dos workspaces são elementos separados, centralizados verticalmente;
-configurações personalizadas em `workspaces.json` continuam aceitando glifos.
+renderizados em `barIconSize`. A cor vem dos tokens do tema. Os pills de
+workspaces exibem os nomes/IDs fornecidos pelo compositor; no Hyprland, glifos
+podem ser definidos com `default_name` nas regras de workspace.
 Clima, data e hora separam os vetores do texto Noto Sans. Atualizações preservam
 a rotação durante execução. Ícones de aplicativos da bandeja e a marca Spotify
 continuam pertencendo aos aplicativos. A mudança é restrita à barra; os popups

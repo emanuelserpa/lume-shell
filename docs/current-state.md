@@ -95,12 +95,10 @@ workspace delegates, and Spotlight results keep their own structures.
 Recent surface polish: Spotlight and toast outer corners use `radiusPopup`. The update pill rotates while its busy state is active; low battery no longer highlights the whole battery pill. Notification images are archived to private files instead of retaining short-lived Quickshell image handles. Notification history can reopen the originating app through its desktop-entry when a live action is unavailable (requires `gtk-launch`).
 
 Bar icon polish: mounted shell indicators use local theme-tinted SVGs at
-`Theme.barIconSize`. Default workspace icons and numbers are centered as
-separate elements; custom workspace glyphs remain supported. Details and
-visual evidence are in the design guide and visual regression checklist.
-On Hyprland, workspace delegates use a stable numeric model so active and
-occupied-state updates do not recreate the animated pills. The active marker
-comes from the workspace currently selected on that bar's monitor.
+`Theme.barIconSize`. Workspace pills display labels supplied by their
+compositor. On Hyprland, the bar uses its live workspace model, names, IDs, and
+monitor assignments, showing active and occupied regular workspaces per
+monitor. The shell does not define workspace icons or names.
 
 The date/weather dashboard uses one popup surface for both columns. Its local
 calendar and forecast controls use the shared theme-tinted SVG family and

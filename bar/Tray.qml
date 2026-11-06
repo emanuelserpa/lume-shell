@@ -51,14 +51,28 @@ Rectangle {
         spacing: root.theme.spacingTokens.xs
 
         Repeater {
-            // Secret-agent / IME items stay running but are not shown.
+            // Secret-agent / IME and NetworkManager applet items stay running
+            // but remain hidden; the shell provides its own network controls.
             model: SystemTray.items
 
             delegate: Item {
                                 id: trayDelegate
                 required property var modelData
 
+                readonly property bool networkManagerApplet: {
+                    const identity = [modelData.id, modelData.title,
+                                      modelData.tooltipTitle, modelData.tooltipDescription]
+                        .map(value => String(value ?? "").toLowerCase())
+                        .join(" ")
+                    return identity.includes("nm-applet")
+                        || identity.includes("network-manager-applet")
+                        || identity.includes("networkmanager applet")
+                        || identity.includes("network manager applet")
+                }
                 readonly property bool shown: modelData.id !== "fcitx5"
+                         && modelData.id !== "nm-applet"
+                         && modelData.id !== "network-manager-applet"
+                         && !networkManagerApplet
                          && modelData.id !== "spotify-client"
                          && modelData.id !== "chrome_status_icon_1"
                 visible: shown

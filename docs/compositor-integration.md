@@ -15,8 +15,8 @@ appropriate:
   activation. Each bar scopes the model through `screenProjection(screen)` so
   output-specific workspaces remain attached to that output. Hyprland uses its
   native workspace model first, and Mango uses `mmsg` first; each can fall back
-  to the generic protocol when its native state is unavailable. Workspace IDs
-  are normalized and range-checked before selecting their workspace icons.
+  to the generic protocol when its native state is unavailable. Workspace
+  labels come from the compositor's workspace names and IDs.
 - `ToplevelManager` uses `zwlr-foreign-toplevel-management-v1` for listing,
   activation, and close requests in Spotlight's `~` mode outside Hyprland.
   Hyprland uses its native client metadata first, including workspace names.

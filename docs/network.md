@@ -55,6 +55,10 @@ opens Quickshell's password dialog, which sends the password to
   `components/PopupHeader.qml`; theme-tinted local vector icons identify Wi-Fi
   signal, Ethernet, security, search, transfer, QR, and speed-test actions.
   The network module owns its speedtest, QR, settings, and Wi-Fi controls.
+- Its settings gear opens `nm-connection-editor`; install the optional Arch
+  package `network-manager-applet` to provide that advanced editor.
+- The standalone NetworkManager applet stays available for the editor but its
+  tray icon is hidden because Lume already provides the network controls.
 - The popup keeps one outer `PopupCard`. Clickable network/VPN rows preserve
   their active and hover surfaces; the captive-portal notice, telemetry, speed
   test, and QR sharing keep only the grouping surfaces needed for those tasks.

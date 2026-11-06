@@ -73,6 +73,13 @@
       "arch_source": "official repositories"
     },
     {
+      "command": "nm-connection-editor",
+      "level": "feature",
+      "purpose": "abrir o editor avançado de conexões de rede",
+      "arch_package": "network-manager-applet",
+      "arch_source": "official repositories"
+    },
+    {
       "command": "bluetoothctl",
       "level": "feature",
       "purpose": "controle Bluetooth",

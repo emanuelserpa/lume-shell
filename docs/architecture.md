@@ -190,8 +190,8 @@ and the stability rules in `AGENTS.md`:
   file/emoji/window queries, and clipboard snapshots/actions. Ranking, query
   routing, selection, and keyboard behavior remain owned by their current
   components; compositor IPC streams keep their protocol-specific parsers.
-- Direct JSON parsing in QML is limited to the static workspace icon map, Mango's
-  line-based compositor IPC, and the incremental speed-test event stream. Other
+- Direct JSON parsing in QML is limited to Mango's line-based compositor IPC
+  and the incremental speed-test event stream. Other
   helper responses use `CommandResult.js` or `CommandJson`.
 - Brightness status and write helpers return the versioned JSON contract; QML
   owns only optimistic display state and presents helper failures in the open

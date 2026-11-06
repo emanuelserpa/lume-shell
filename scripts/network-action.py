@@ -337,6 +337,12 @@ def main():
             ["xdg-open", "http://captive.apple.com"],
         ])
 
+    if action == "editor":
+        return spawn(action, [
+            ["uwsm", "app", "--", "nm-connection-editor"],
+            ["nm-connection-editor"],
+        ])
+
     if action == "vpn-up":
         if len(sys.argv) < 3:
             return result(False, action, "Perfil VPN inválido.")

@@ -1,7 +1,7 @@
 # Maintainer: Emanuel Serpa
 pkgname=lume-shell
 pkgver="${_release_pkgver:-0.1.0}"
-pkgrel=3
+pkgrel=8
 pkgdesc='Wayland desktop shell built with Quickshell'
 arch=('x86_64')
 url='https://github.com/emanuelserpa/lume-shell'
@@ -17,6 +17,7 @@ optdepends=(
   'upower: battery state'
   'power-profiles-daemon: power profile controls'
   'networkmanager: network controls'
+  'network-manager-applet: advanced network connection editor'
   'bluez: Bluetooth controls'
   'pipewire: audio controls'
   'wireplumber: audio device management'
@@ -51,7 +52,7 @@ prepare() {
     mkdir -p "$srcdir/lume-shell"
     tar -C "$_local_source" \
       --exclude='./.git' --exclude='./.pytest_cache' --exclude='./.cache' \
-      --exclude='__pycache__' --exclude='./workspaces.json' \
+      --exclude='__pycache__' \
       --exclude='./packaging/arch/src' --exclude='./packaging/arch/pkg' \
       --exclude='*.pkg.tar.*' --exclude='*.src.tar.*' --exclude='*.bundle' \
       --exclude='./power/cpu-boost.json' --exclude='./state' \
