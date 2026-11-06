@@ -97,8 +97,9 @@ Recent surface polish: Spotlight and toast outer corners use `radiusPopup`. The 
 Bar icon polish: mounted shell indicators use local theme-tinted SVGs at
 `Theme.barIconSize`. Workspace pills display labels supplied by their
 compositor. On Hyprland, the bar uses its live workspace model, names, IDs, and
-monitor assignments, showing active and occupied regular workspaces per
-monitor. The shell does not define workspace icons or names.
+monitor assignments, showing regular workspaces reported by the compositor,
+including empty persistent workspaces. The shell does not define workspace
+icons or names.
 
 The date/weather dashboard uses one popup surface for both columns. Its local
 calendar and forecast controls use the shared theme-tinted SVG family and
