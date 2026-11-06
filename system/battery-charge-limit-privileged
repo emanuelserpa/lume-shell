@@ -1,0 +1,141 @@
+#!/usr/bin/python3
+"""Narrow privileged writer for supported ThinkPad charge thresholds."""
+import logging
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+SYSFS = Path("/sys")
+POWER_SUPPLIES = SYSFS / "class/power_supply"
+
+
+def read_int(path):
+    try:
+        return int(path.read_text().strip())
+    except (OSError, ValueError):
+        return None
+
+
+def on_ac():
+    for supply in POWER_SUPPLIES.iterdir():
+        supply_type = supply / "type"
+        try:
+            kind = supply_type.read_text().strip()
+        except OSError:
+            kind = "Mains" if supply.name.startswith(("AC", "ADP")) else ""
+        if kind == "Mains" and read_int(supply / "online") == 1:
+            return True
+    return False
+
+
+def write_thresholds(limit):
+    batteries = sorted(POWER_SUPPLIES.glob("BAT*/charge_control_end_threshold"))
+    if not batteries:
+        raise OSError("No supported battery charge threshold was found")
+    end_path = batteries[0]
+    start_path = end_path.with_name("charge_control_start_threshold")
+    if not start_path.exists():
+        raise OSError("The battery does not expose a start threshold")
+    if limit == 100:
+        end_path.write_text("100\n")
+        start_path.write_text("0\n")
+    else:
+        start_path.write_text("75\n")
+        end_path.write_text("80\n")
+
+
+def restore_eco_if_needed():
+    if on_ac():
+        return
+    batteries = sorted(POWER_SUPPLIES.glob("BAT*/charge_control_end_threshold"))
+    if batteries and read_int(batteries[0]) == 100:
+        write_thresholds(80)
+        logging.info("Restored battery charge threshold to 75/80 after unplug")
+
+
+def set_power_source_policy(ac_power):
+    profile = "balanced" if ac_power else "power-saver"
+    sleep_mode = "s2idle" if ac_power else "deep"
+    try:
+        subprocess.run(["/usr/bin/powerprofilesctl", "set", profile],
+                       check=True, timeout=10, capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError) as error:
+        logging.warning("Could not select %s profile: %s", profile, error)
+
+    sleep_path = SYSFS / "power/mem_sleep"
+    try:
+        supported = sleep_path.read_text().split()
+        if any(value.strip("[]") == sleep_mode for value in supported):
+            sleep_path.write_text(sleep_mode)
+        else:
+            logging.warning("Suspend mode %s is not available on this kernel", sleep_mode)
+    except OSError as error:
+        logging.warning("Could not select suspend mode %s: %s", sleep_mode, error)
+
+
+def watch_power_source():
+    monitor = subprocess.Popen(
+        ["/usr/bin/udevadm", "monitor", "--udev", "--subsystem-match=power_supply"],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
+    previous = None
+    try:
+        current = on_ac()
+        set_power_source_policy(current)
+        if not current:
+            restore_eco_if_needed()
+        previous = current
+        logging.info("Power source policy watcher started (%s)", "AC" if current else "battery")
+        assert monitor.stdout is not None
+        for _line in monitor.stdout:
+            current = on_ac()
+            if current != previous:
+                set_power_source_policy(current)
+                if not current:
+                    restore_eco_if_needed()
+                logging.info("Power source changed to %s", "AC" if current else "battery")
+                previous = current
+        raise RuntimeError("udevadm monitor exited")
+    finally:
+        monitor.terminate()
+        monitor.wait(timeout=3)
+
+def main(argv):
+    if len(argv) != 2 or argv[1] not in ("80", "100", "restore", "watch"):
+        print("usage: quickshell-battery-charge-limit 80|100|restore|watch", file=sys.stderr)
+        return 2
+
+    if argv[1] == "watch":
+        if os.geteuid() != 0 or "PKEXEC_UID" in os.environ:
+            print("watch mode is restricted to the system service", file=sys.stderr)
+            return 1
+        logging.basicConfig(level=logging.INFO, format="%(message)s")
+        try:
+            watch_power_source()
+        except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+            logging.error("Power source watcher failed: %s", error)
+            return 1
+        return 0
+
+    if argv[1] == "restore":
+        try:
+            restore_eco_if_needed()
+        except OSError as error:
+            print(f"Could not restore the charge threshold: {error}", file=sys.stderr)
+            return 1
+        return 0
+
+    # Require external power to enable travel-mode charging.
+    if argv[1] == "100" and not on_ac():
+        print("Connect external power before changing the charge limit.", file=sys.stderr)
+        return 1
+    try:
+        write_thresholds(int(argv[1]))
+    except OSError as error:
+        print(f"Could not update the charge threshold: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))

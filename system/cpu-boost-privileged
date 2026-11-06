@@ -1,0 +1,26 @@
+#!/bin/sh
+# Root-owned allowlisted writer for CPU frequency boost only.
+set -eu
+
+if [ "$#" -ne 1 ]; then
+    echo "usage: quickshell-cpu-boost on|off" >&2
+    exit 2
+fi
+
+case "$1" in
+    on) generic_value=1; intel_value=0 ;;
+    off) generic_value=0; intel_value=1 ;;
+    *) echo "invalid boost state" >&2; exit 2 ;;
+esac
+
+generic=/sys/devices/system/cpu/cpufreq/boost
+intel=/sys/devices/system/cpu/intel_pstate/no_turbo
+
+if [ -f "$generic" ]; then
+    printf '%s' "$generic_value" > "$generic"
+elif [ -f "$intel" ]; then
+    printf '%s' "$intel_value" > "$intel"
+else
+    echo "CPU boost runtime control is unavailable" >&2
+    exit 1
+fi

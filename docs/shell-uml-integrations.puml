@@ -1,0 +1,68 @@
+@startuml
+title Quickshell — limites de integração com a plataforma
+left to right direction
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam ArrowColor #52606d
+
+package "Interfaces Quickshell / Wayland" {
+  component "Window / Screen / IdleInhibitor" as WindowApi
+  component "SystemTray / DBusMenu" as TrayApi
+  component "PipeWire" as PipeWire
+  component "MPRIS" as Mpris
+  component "NotificationServer" as NotificationServer
+  component "Clipboard tools\nwl-paste · wl-copy" as ClipboardTools
+}
+
+package "Adapters do shell" {
+  component "ShellRoot / surfaces" as Surfaces
+  component "Tray widget" as Tray
+  component "Audio / OSD" as Audio
+  component "MediaState / MediaIsland" as Media
+  component "NotificationState\nnotification_store.py" as Notifications
+  component "ClipboardService\nclipboard-daemon.py" as Clipboard
+  component "Workspace adapters" as Workspaces
+  component "Domain helpers\n(scripts/*.py · *.sh)" as Helpers
+}
+
+package "Sistema operacional e ferramentas" {
+  component "Hyprland · Mango · labwc" as Compositors
+  component "NetworkManager / nmcli" as Network
+  component "BlueZ / bluetoothctl" as Bluetooth
+  component "CUPS" as CUPS
+  component "UPower · sysfs · TLP" as Power
+  component "wf-recorder · slurp" as Recording
+  component "EasyEffects · pactl" as AudioDsp
+  component "hyprsunset · wlsunset" as NightLight
+  component "pacman · yay · flatpak\nbrew · gearlever · yt-dlp" as PackagesAndDownloads
+}
+
+Surfaces ..> WindowApi : telas, janelas e inibição
+Tray ..> TrayApi : itens e menus
+Audio ..> PipeWire : dispositivos e streams
+Media ..> Mpris : players e controles
+Notifications ..> NotificationServer : eventos e histórico SQLite
+Clipboard ..> ClipboardTools : leitura e escrita
+Workspaces ..> Compositors : estado / despacho
+
+Helpers ..> Network : status, Wi-Fi, VPN e QR
+Helpers ..> Bluetooth : status, scan e pareamento
+Helpers ..> CUPS : filas e impressão
+Helpers ..> Power : bateria, brilho e sensores
+Helpers ..> Recording : captura de tela e áudio
+Helpers ..> AudioDsp : presets e mix de gravação
+Helpers ..> NightLight : temperatura de cor
+Helpers ..> PackagesAndDownloads : atualizações e downloads
+
+note bottom of Workspaces
+  A seleção do backend é feita pelo adaptador do compositor;
+  QML não deve chamar diretamente hyprctl ou swaymsg.
+end note
+
+legend bottom
+  As setas mostram o limite de integração, não o mecanismo interno
+  de transporte usado por cada API ou serviço.
+endlegend
+@enduml

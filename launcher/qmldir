@@ -1,0 +1,23 @@
+module qs.launcher
+AppCategorySidebar 1.0 AppCategorySidebar.qml
+AppsProvider 1.0 AppsProvider.qml
+ClipboardPreview 1.0 ClipboardPreview.qml
+CommandsProvider 1.0 CommandsProvider.qml
+DownloadPanel 1.0 DownloadPanel.qml
+LauncherItemDelegate 1.0 LauncherItemDelegate.qml
+Spotlight 1.0 Spotlight.qml
+SpotlightActionBar 1.0 SpotlightActionBar.qml
+SpotlightActionCatalog 1.0 SpotlightActionCatalog.qml
+SpotlightActionExecutor 1.0 SpotlightActionExecutor.qml
+SpotlightActionPanel 1.0 SpotlightActionPanel.qml
+SpotlightActions 1.0 SpotlightActions.qml
+SpotlightClipboard 1.0 SpotlightClipboard.qml
+SpotlightModes 1.0 SpotlightModes.qml
+SpotlightRanking 1.0 SpotlightRanking.qml
+SpotlightQueryRouter 1.0 SpotlightQueryRouter.qml
+SpotlightResult 1.0 SpotlightResult.qml
+SpotlightSearch 1.0 SpotlightSearch.qml
+SpotlightSearchController 1.0 SpotlightSearchController.qml
+SystemInfoPopup 1.0 SystemInfoPopup.qml
+ThemePreviewPane 1.0 ThemePreviewPane.qml
+WindowsProvider 1.0 WindowsProvider.qml

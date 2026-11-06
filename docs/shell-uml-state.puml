@@ -1,0 +1,106 @@
+@startuml
+title Quickshell — estado compartilhado e adaptadores
+left to right direction
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam ArrowColor #52606d
+
+package "Consumidores montados" {
+  component "NotificationToasts" as Toasts
+  component "NotificationPopup" as NotificationPopup
+  component "StatusIsland / Bar" as StatusIsland
+  component "Weather / Clock\nCenterDashboardPopup" as WeatherUI
+  component "MediaIsland / QuickMediaPlayer" as MediaUI
+  component "AudioPopup" as AudioPopup
+  component "BatteryPopup" as BatteryPopup
+  component "UpdateControl / SystemUpdatePopup" as UpdateUI
+  component "DisplayProjectionPopup" as ProjectionUI
+  component "Theme.qml / popups" as ThemeConsumers
+  component "Spotlight / DownloadPanel\nThemePreviewPane" as Spotlight
+  component "Workspaces / OSD" as WorkspaceUI
+}
+
+package "Singletons de estado (qs.services)" {
+  component "NotificationState" as NotificationState
+  component "BatteryAlertState" as BatteryAlerts
+  component "IdleState" as IdleState
+  component "ScreenRecordingState" as ScreenRecordingState
+  component "WeatherState" as WeatherState
+  component "NightLightState" as NightLightState
+  component "MediaState" as MediaState
+  component "EasyEffectsState" as EasyEffectsState
+  component "PowerProfileState" as PowerProfileState
+  component "UpdateState" as UpdateState
+  component "DisplayProjectionState" as DisplayProjectionState
+  component "ThemeState" as ThemeState
+  component "WallpaperState" as WallpaperState
+  component "DownloadState" as DownloadState
+  component "MotionState" as MotionState
+}
+
+package "Adaptadores do projeto" {
+  component "CommandJson.qml\nCommandAction.qml" as CommandJson
+  component "CommandResult.js" as CommandResult
+  component "NotificationContent.js" as NotificationContent
+  component "WorkspaceModel.js\nCompositorBackend.js" as WorkspaceModel
+  component "MangoState.qml" as MangoState
+  component "Helpers Python / shell\nnotification_store.py" as Helpers
+}
+
+package "APIs nativas Quickshell / Wayland" {
+  component "MPRIS" as Mpris
+  component "NotificationServer" as NotificationServerApi
+  component "WindowManager · Hyprland\next-workspace-v1" as WorkspaceProtocol
+}
+
+Toasts ..> NotificationState
+NotificationPopup ..> NotificationState
+NotificationPopup ..> IdleState
+NotificationPopup ..> ScreenRecordingState
+NotificationPopup ..> NightLightState
+StatusIsland ..> NotificationState
+StatusIsland ..> IdleState
+StatusIsland ..> ScreenRecordingState
+WeatherUI ..> WeatherState
+BatteryAlerts ..> NotificationState : publica / remove alertas
+MediaUI ..> MediaState
+AudioPopup ..> EasyEffectsState
+BatteryPopup ..> PowerProfileState
+UpdateUI ..> UpdateState
+ProjectionUI ..> DisplayProjectionState
+ThemeConsumers ..> ThemeState
+ThemeConsumers ..> MotionState
+Spotlight ..> ThemeState
+Spotlight ..> WallpaperState
+Spotlight ..> DownloadState
+WorkspaceUI ..> WorkspaceModel
+
+NotificationState ..> NotificationServerApi
+NotificationState ..> NotificationContent
+NotificationState ..> Helpers : notification_store.py
+MediaState ..> Mpris
+WorkspaceUI ..> WorkspaceProtocol
+WorkspaceUI ..> MangoState
+WorkspaceModel ..> MangoState
+NightLightState ..> CommandJson
+ScreenRecordingState ..> CommandJson
+WeatherState ..> CommandJson
+PowerProfileState ..> CommandJson
+UpdateState ..> CommandJson
+EasyEffectsState ..> CommandJson
+DisplayProjectionState ..> CommandJson
+DownloadState ..> Helpers : ytdlp-download.py
+CommandJson ..> CommandResult
+CommandJson ..> Helpers
+MangoState ..> Helpers : Mango IPC / dispatch
+WallpaperState ..> Helpers : wallpaper-action.py
+ThemeState ..> Helpers : theme-manager.py
+
+legend bottom
+  Setas tracejadas indicam consumo/publicação de estado ou despacho.
+  Cada domínio mantém seu próprio singleton em services/ quando o estado
+  precisa ser compartilhado entre superfícies ou persistido na sessão.
+endlegend
+@enduml

@@ -1,0 +1,84 @@
+# Maintainer: Emanuel Serpa
+pkgname=lume-shell
+pkgver="${_release_pkgver:-0.1.0}"
+pkgrel=3
+pkgdesc='Wayland desktop shell built with Quickshell'
+arch=('x86_64')
+url='https://github.com/emanuelserpa/lume-shell-clean'
+# Upstream has not declared a license yet; do not publish this recipe until it does.
+license=('custom')
+depends=('quickshell' 'qt6-5compat' 'qt6-declarative' 'python' 'python-requests'
+  'python-pillow' 'systemd' 'fontconfig' 'kitty')
+optdepends=(
+  'noto-fonts: default interface font family'
+  'ttf-nerd-fonts-symbols-mono: additional interface icons'
+  'wl-clipboard: clipboard history'
+  'brightnessctl: brightness controls'
+  'upower: battery state'
+  'power-profiles-daemon: power profile controls'
+  'networkmanager: network controls'
+  'bluez: Bluetooth controls'
+  'pipewire: audio controls'
+  'wireplumber: audio device management'
+  'xdg-utils: opening URLs and applications'
+  'fd: Spotlight file search'
+  'grim: screenshots'
+  'slurp: region screenshots'
+  'hyprland: Hyprland compositor integration'
+  'labwc: labwc compositor integration'
+  'pacman-contrib: repository update indicator'
+)
+makedepends=('git' 'tar')
+install=lume-shell.install
+options=('!strip')
+
+_commit="${_release_commit:-}"
+_local_source="${_local_source:-}"
+if [[ -z "$_local_source" && -z "$_commit" ]]; then
+  _local_source="$(cd "$startdir/../.." && pwd)"
+fi
+if [[ -n "$_local_source" ]]; then
+  source=()
+  sha256sums=()
+else
+  source=("lume-shell::git+https://github.com/emanuelserpa/lume-shell-clean.git#commit=${_commit}")
+  sha256sums=('SKIP')
+fi
+
+prepare() {
+  if [[ -n "$_local_source" ]]; then
+    [[ -d "$_local_source" ]] || { error "Local source not found: $_local_source"; return 1; }
+    mkdir -p "$srcdir/lume-shell"
+    tar -C "$_local_source" \
+      --exclude='./.git' --exclude='./.pytest_cache' --exclude='./.cache' \
+      --exclude='__pycache__' --exclude='./workspaces.json' \
+      --exclude='./packaging/arch/src' --exclude='./packaging/arch/pkg' \
+      --exclude='*.pkg.tar.*' --exclude='*.src.tar.*' --exclude='*.bundle' \
+      --exclude='./power/cpu-boost.json' --exclude='./state' \
+      -cf - . | tar -C "$srcdir/lume-shell" -xf -
+  fi
+}
+
+package() {
+  local root="$srcdir/lume-shell"
+  local share="$pkgdir/usr/share/lume-shell"
+  install -d "$share" "$pkgdir/usr/bin" \
+    "$pkgdir/usr/lib/systemd/user" "$pkgdir/usr/share/doc/lume-shell"
+
+  for entry in shell.qml Theme.qml qmldir assets bar components controlcenter \
+    data launcher notifications osd references scripts services; do
+    cp -R --no-preserve=ownership "$root/$entry" "$share/"
+  done
+  install -Dm755 "$startdir/lume-shell" "$pkgdir/usr/bin/lume-shell"
+  install -Dm644 "$startdir/lume-shell.service" \
+    "$pkgdir/usr/lib/systemd/user/lume-shell.service"
+  install -Dm644 "$root/README.md" "$pkgdir/usr/share/doc/lume-shell/README.md"
+  for doc in arch-packaging-plan dependency-inventory; do
+    if [[ -f "$root/docs/$doc.md" ]]; then
+      install -Dm644 "$root/docs/$doc.md" \
+        "$pkgdir/usr/share/doc/lume-shell/$doc.md"
+    fi
+  done
+  install -Dm644 "$root/workspaces.json.example" \
+    "$pkgdir/usr/share/doc/lume-shell/workspaces.json.example"
+}

@@ -1,0 +1,11 @@
+[Unit]
+Description=Restore saved CPU boost preference
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/quickshell/scripts/cpu-boost.py restore
+TimeoutStartSec=65
+ProtectHome=read-only
+
+[Install]
+WantedBy=default.target

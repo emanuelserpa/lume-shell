@@ -1,0 +1,4 @@
+module qs.controlcenter
+QuickTile 1.0 QuickTile.qml
+SliderRow 1.0 SliderRow.qml
+SettingsWindow 1.0 SettingsWindow.qml

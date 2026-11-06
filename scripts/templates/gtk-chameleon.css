@@ -1,0 +1,240 @@
+@define-color theme_bg_color __QS_BG__;
+@define-color theme_fg_color __QS_FG__;
+@define-color theme_base_color __QS_SURF__;
+@define-color theme_text_color __QS_FG__;
+@define-color theme_selected_bg_color __QS_ACC__;
+@define-color theme_selected_fg_color __QS_BG__;
+@define-color theme_tooltip_bg_color __QS_HOVER__;
+@define-color theme_tooltip_fg_color __QS_FG__;
+@define-color borders __QS_HOVER__;
+@define-color unfocused_borders __QS_SURF__;
+@define-color warning_color __QS_YELLOW__;
+@define-color error_color __QS_RED__;
+@define-color success_color __QS_GREEN__;
+@define-color placeholder_text_color __QS_GREY__;
+
+* {
+    outline-style: none;
+}
+
+window, dialog, assistant, printdialog {
+    background-color: __QS_BG__;
+    color: __QS_FG__;
+}
+
+headerbar, .titlebar {
+    background-color: __QS_MANTLE__;
+    color: __QS_FG__;
+    border-bottom: 1px solid __QS_HOVER__;
+}
+
+headerbar button, .titlebar button {
+    background-color: transparent;
+    color: __QS_DIM__;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 4px 8px;
+}
+
+headerbar button:hover, .titlebar button:hover {
+    background-color: __QS_HOVER__;
+    color: __QS_FG__;
+}
+
+.titlebutton {
+    color: __QS_DIM__;
+    border-radius: 50%;
+    min-width: 22px;
+    min-height: 22px;
+}
+
+.titlebutton.close:hover {
+    background-color: __QS_RED__;
+    color: __QS_BG__;
+}
+
+button {
+    background-color: __QS_SURF__;
+    color: __QS_FG__;
+    border: 1px solid __QS_HOVER__;
+    border-radius: 6px;
+    padding: 4px 10px;
+}
+
+button:hover {
+    background-color: __QS_HOVER__;
+}
+
+button:active, button:checked {
+    background-color: __QS_ACC__;
+    color: __QS_BG__;
+    border-color: __QS_ACC__;
+}
+
+button.suggested-action {
+    background-color: __QS_ACC__;
+    color: __QS_BG__;
+    border-color: __QS_ACC__;
+}
+
+button.destructive-action {
+    background-color: __QS_RED__;
+    color: __QS_BG__;
+    border-color: __QS_RED__;
+}
+
+entry, spinbutton, searchbar {
+    background-color: __QS_SURF__;
+    color: __QS_FG__;
+    border: 1px solid __QS_HOVER__;
+    border-radius: 6px;
+    padding: 4px 8px;
+}
+
+entry:focus {
+    border-color: __QS_ACC__;
+}
+
+entry selection, textview text selection, label selection {
+    background-color: __QS_ACC__;
+    color: __QS_BG__;
+}
+
+treeview, textview, iconview {
+    background-color: __QS_SURF__;
+    color: __QS_FG__;
+}
+
+treeview:selected, iconview:selected {
+    background-color: __QS_ACC__;
+    color: __QS_BG__;
+}
+
+menu, menubar, context-menu, popover {
+    background-color: __QS_SURF__;
+    color: __QS_FG__;
+    border: 1px solid __QS_HOVER__;
+}
+
+menuitem:hover, modelbutton:hover {
+    background-color: __QS_HOVER__;
+}
+
+notebook {
+    background-color: __QS_BG__;
+}
+
+notebook tab {
+    background-color: __QS_SURF__;
+    color: __QS_DIM__;
+    padding: 4px 10px;
+}
+
+notebook tab:checked {
+    background-color: __QS_HOVER__;
+    color: __QS_FG__;
+}
+
+scrollbar slider {
+    background-color: __QS_HOVER__;
+    border-radius: 8px;
+    min-width: 8px;
+    min-height: 8px;
+}
+
+scrollbar slider:hover {
+    background-color: __QS_GREY__;
+}
+
+check, radio {
+    background-color: __QS_SURF__;
+    border: 1px solid __QS_GREY__;
+}
+
+check:checked, radio:checked {
+    background-color: __QS_ACC__;
+    border-color: __QS_ACC__;
+    color: __QS_BG__;
+}
+
+switch {
+    background-color: __QS_HOVER__;
+    border: 1px solid __QS_GREY__;
+    border-radius: 12px;
+}
+
+switch:checked {
+    background-color: __QS_ACC__;
+    border-color: __QS_ACC__;
+}
+
+switch slider {
+    background-color: __QS_FG__;
+    border-radius: 50%;
+    min-width: 16px;
+    min-height: 16px;
+}
+
+list {
+    background-color: __QS_BG__;
+}
+
+list row, .view row {
+    background-color: transparent;
+    color: __QS_FG__;
+    padding: 6px 8px;
+    border-radius: 6px;
+}
+
+list row:hover, .view row:hover {
+    background-color: __QS_HOVER__;
+}
+
+list row:selected, .view row:selected {
+    background-color: __QS_ACC__;
+    color: __QS_BG__;
+}
+
+expander title {
+    color: __QS_DIM__;
+}
+
+tooltip {
+    background-color: __QS_HOVER__;
+    color: __QS_FG__;
+    border: 1px solid __QS_GREY__;
+    border-radius: 6px;
+}
+
+progressbar trough, scale trough, levelbar trough {
+    background-color: __QS_SURF__;
+    border-radius: 6px;
+}
+
+progressbar progress, scale highlight {
+    background-color: __QS_ACC__;
+    border-radius: 6px;
+}
+
+separator {
+    background-color: __QS_HOVER__;
+}
+
+infobar.info {
+    background-color: __QS_SURF__;
+    color: __QS_FG__;
+}
+
+infobar.warning {
+    background-color: __QS_YELLOW__;
+    color: __QS_BG__;
+}
+
+infobar.error {
+    background-color: __QS_RED__;
+    color: __QS_BG__;
+}
+
+spinner:checked {
+    color: __QS_ACC__;
+}

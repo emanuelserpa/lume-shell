@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+.env
+.env.*
+*.log
+*.sqlite
+*.sqlite3
+*.db
+*.pem
+*.key
+.cache/
+.local/
+state/
+/power/cpu-boost.json
+wifi-qr.png
+
+# User workspace icons (see workspaces.json.example)
+workspaces.json
+
+# Build output and private backups
+*.pkg.tar.*
+*.src.tar.*
+*.bundle
+/packaging/arch/src/
+/packaging/arch/pkg/

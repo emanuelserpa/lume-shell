@@ -1,0 +1,7 @@
+Controller 14:5A:FC:18:15:D2 (public)
+	Name: t14
+	Alias: t14
+	Class: 0x006c010c (7078156)
+	Powered: no
+	Discoverable: no
+	Pairable: no

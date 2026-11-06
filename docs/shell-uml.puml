@@ -1,0 +1,31 @@
+@startuml
+title Quickshell — arquitetura montada
+top to bottom direction
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam ArrowColor #52606d
+
+component "Runtime Quickshell\nshell.qml · ShellRoot" as Runtime
+component "Superfícies montadas\nBar · OSD · Toasts por monitor\nSpotlight · Clipboard globais" as Surfaces
+component "Domínios de UI\nwidgets · popups · launcher\nnotificações · gravação" as UI
+component "APIs do projeto\nestado compartilhado · adaptadores\ncomponentes visuais · helpers" as Project
+component "Plataforma\nAPIs Quickshell · Wayland\nserviços do sistema · compositores" as Platform
+
+Runtime ..> Surfaces : instancia
+Surfaces ..> UI : monta e conecta
+UI ..> Project : consome
+Project ..> Platform : integra
+
+note right of Surfaces
+  A topologia de instâncias e a composição
+  explícita da Bar estão nas vistas detalhadas.
+end note
+
+legend bottom
+  Vista de contexto: resume as camadas e limites principais do shell.
+  Setas tracejadas indicam dependência; detalhes de cada domínio
+  aparecem nos diagramas complementares.
+endlegend
+@enduml

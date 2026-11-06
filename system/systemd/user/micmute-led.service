@@ -1,0 +1,17 @@
+[Unit]
+Description=Synchronize ThinkPad microphone mute LED with PipeWire
+After=pipewire.service pipewire-pulse.service
+Wants=pipewire-pulse.service
+
+[Service]
+Type=simple
+ExecStart=%h/.config/quickshell/scripts/micmute-led.sh
+Restart=always
+RestartSec=2
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/sys/class/leds/platform::micmute/brightness
+
+[Install]
+WantedBy=default.target

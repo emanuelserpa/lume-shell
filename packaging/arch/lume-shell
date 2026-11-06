@@ -1,0 +1,78 @@
+#!/bin/sh
+set -eu
+
+usage() {
+  cat <<'EOF'
+Uso:
+  lume-shell [run] [argumentos do Quickshell]  Inicia a shell
+  lume-shell spotlight <comando>              Controla o Spotlight em execução
+
+Comandos do Spotlight:
+  open | toggle | clipboard | actions | theme | config
+  emoji | kill | windows | search <texto>
+
+Exemplos:
+  lume-shell spotlight clipboard
+  lume-shell spotlight search "Firefox"
+
+LUME_SHELL_CONFIG pode apontar para outro diretório de configuração.
+EOF
+}
+
+config_path=${LUME_SHELL_CONFIG:-${QS_CONFIG_PATH:-/usr/share/lume-shell}}
+
+if [ "$#" -eq 0 ]; then
+  exec /usr/bin/quickshell --path "$config_path"
+fi
+
+case "$1" in
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  run)
+    shift
+    exec /usr/bin/quickshell --path "$config_path" "$@"
+    ;;
+  spotlight)
+    shift
+    ;;
+  *)
+    printf 'lume-shell: comando desconhecido: %s\n' "$1" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
+
+if [ "$#" -eq 0 ]; then
+  printf 'lume-shell: informe um comando do Spotlight.\n' >&2
+  usage >&2
+  exit 2
+fi
+
+command=$1
+shift
+case "$command" in
+  open|toggle|clipboard|actions|theme|config|emoji|kill|windows)
+    if [ "$#" -ne 0 ]; then
+      printf 'lume-shell: "%s" não aceita argumentos.\n' "$command" >&2
+      exit 2
+    fi
+    set -- "$command"
+    ;;
+  search)
+    if [ "$#" -eq 0 ]; then
+      printf 'lume-shell: informe o texto para pesquisar.\n' >&2
+      exit 2
+    fi
+    query=$*
+    set -- search "$query"
+    ;;
+  *)
+    printf 'lume-shell: comando de Spotlight desconhecido: %s\n' "$command" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
+
+exec /usr/bin/quickshell ipc --path "$config_path" call spotlight "$@"

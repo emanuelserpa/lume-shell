@@ -1,0 +1,88 @@
+@startuml
+title Quickshell — composição explícita e plugável da barra
+left to right direction
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam ArrowColor #52606d
+
+component "Bar.qml\n6× BarIslandSurface" as Bar
+
+package "Ilha esquerda (leftIsland)" {
+  component "StartButton\n(bar-search)" as StartButton
+  component "Workspaces" as Workspaces
+}
+
+package "Ilha condicional (submapIslandSlot)" {
+  component "Submap" as Submap
+}
+
+package "Ilha central (centerCluster)" {
+  component "Weather" as Weather
+  component "Clock\nCenterDashboardPopup" as Clock
+}
+
+package "Ilhas condicionais entre centro e direita" {
+  component "MediaIsland\n(Spotify)" as MediaIsland
+  component "StatusIsland\n(DND · Café · Gravação + timer)" as StatusIsland
+}
+
+package "Ilha direita (rightIsland)" {
+  component "Tray" as Tray
+  component "Network\nNetworkPopup" as Network
+  component "Bluetooth\nBluetoothPopup" as Bluetooth
+  component "Printer\nPrinterPopup" as Printer
+  component "SystemMonitor\nSystemMonitorPopup" as SystemMonitor
+  component "UpdateControl\nSystemUpdatePopup" as UpdateControl
+  component "Battery\nBatteryPopup" as Battery
+  component "Audio\nAudioPopup" as Audio
+  component "NotificationControl\nNotificationPopup · ScreenRecordingPopup" as Notifications
+}
+
+component "DisplayProjectionPopup" as DisplayProjection
+component "Spotlight" as Spotlight
+component "TrayMenu" as TrayMenu
+component "WeatherCard · CalendarCard\nHolidayPill" as DashboardCards
+component "QuickMediaPlayer\nQuickTile (2×2) · SliderRow" as QuickControls
+component "SessionActionsPopup" as SessionActions
+
+Bar *-- StartButton
+Bar *-- Workspaces
+Bar *-- Submap
+Bar *-- Weather
+Bar *-- Clock
+Bar *-- MediaIsland
+Bar *-- StatusIsland
+Bar *-- Tray
+Bar *-- Network
+Bar *-- Bluetooth
+Bar *-- Printer
+Bar *-- SystemMonitor
+Bar *-- UpdateControl
+Bar *-- Battery
+Bar *-- Audio
+Bar *-- Notifications
+Bar *-- DisplayProjection
+
+StartButton ..> Spotlight : toggleLauncher()
+Tray *-- TrayMenu
+Clock *-- DashboardCards
+Notifications *-- QuickControls
+Notifications *-- SessionActions
+
+note right of Network
+  Todos os módulos da barra são autônomos e plugáveis
+  ({ theme: barTheme; plain: true }), sem sinais cruzados em Bar.qml.
+end note
+
+note bottom of StatusIsland
+  StatusIsland tem prioridade de espaço sobre MediaIsland
+  e lê NotificationState, IdleState e ScreenRecordingState diretamente.
+end note
+
+legend bottom
+  Losango preenchido: instância criada pelo componente proprietário.
+  Seta tracejada: delegação de ação.
+endlegend
+@enduml

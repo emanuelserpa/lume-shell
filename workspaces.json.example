@@ -1,0 +1,15 @@
+{
+  "_comment": "Ícones dos workspaces 1-10. Copie para workspaces.json e edite; a barra recarrega sozinha ao salvar. Posições vazias usam o padrão.",
+  "icons": [
+    "󰖟 ₁",
+    " ₂",
+    "󰭹 ₃",
+    "󰎆 ₄",
+    "󰉋 ₅",
+    "󰈙 ₆",
+    " ₇",
+    "󰊗 ₈",
+    "󰅩 ₉",
+    " ₁₀"
+  ]
+}

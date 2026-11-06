@@ -1,0 +1,38 @@
+@startuml
+title Quickshell — instâncias montadas
+top to bottom direction
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam ArrowColor #52606d
+
+component "shell.qml\nShellRoot" as Root
+
+package "Uma instância por tela conectada" {
+  component "bar/Bar.qml" as Bar
+  component "osd/Osd.qml" as Osd
+  component "notifications/NotificationToasts.qml" as Toasts
+}
+
+package "Instâncias e inicialização globais" {
+  component "launcher/Spotlight.qml" as Spotlight
+  component "services/ClipboardService.qml" as Clipboard
+  component "services/BatteryAlertState.qml" as BatteryAlerts
+  component "services/NightLightState.qml" as NightLight
+}
+
+Root "1" *-- "0..*" Bar
+Root "1" *-- "0..*" Osd
+Root "1" *-- "0..*" Toasts
+Root "1" *-- "1" Spotlight
+Root "1" *-- "1" Clipboard
+Root ..> BatteryAlerts : start()
+Root ..> NightLight : syncSession()
+
+legend bottom
+  Losango preenchido: ShellRoot instancia e mantém a superfície.
+  Multiplicidade 0..*: uma instância para cada tela conectada.
+  BatteryAlertState e NightLightState são sincronizados pelo runtime na inicialização.
+endlegend
+@enduml

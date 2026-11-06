@@ -1,0 +1,20 @@
+module qs.services
+singleton IdleState 1.0 IdleState.qml
+singleton MediaState 1.0 MediaState.qml
+singleton NotificationState 1.0 NotificationState.qml
+singleton BatteryAlertState 1.0 BatteryAlertState.qml
+singleton ThemeState 1.0 ThemeState.qml
+singleton GlassState 1.0 GlassState.qml
+singleton WallpaperState 1.0 WallpaperState.qml
+singleton NightLightState 1.0 NightLightState.qml
+singleton PowerProfileState 1.0 PowerProfileState.qml
+singleton UpdateState 1.0 UpdateState.qml
+singleton MotionState 1.0 MotionState.qml
+singleton MangoState 1.0 MangoState.qml
+singleton DisplayProjectionState 1.0 DisplayProjectionState.qml
+singleton DownloadState 1.0 DownloadState.qml
+ClipboardService 1.0 ClipboardService.qml
+singleton EasyEffectsState 1.0 EasyEffectsState.qml
+singleton ScreenRecordingState 1.0 ScreenRecordingState.qml
+singleton WeatherState 1.0 WeatherState.qml
+singleton ShellPaths 1.0 ShellPaths.qml

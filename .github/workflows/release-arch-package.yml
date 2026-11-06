@@ -1,0 +1,56 @@
+name: Build Arch package for release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  arch-package:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v4
+
+      - name: Prepare Arch build tools and unprivileged builder
+        run: |
+          pacman -Syu --needed --noconfirm git github-cli sudo
+          useradd --create-home --uid 1001 builder
+          printf 'builder ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/builder
+          chmod 0440 /etc/sudoers.d/builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+
+      - name: Build package from this release tag
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          [[ "$version" =~ ^[0-9]+(\.[0-9]+)*$ ]] || {
+            echo "Release tags must look like v1.2.3; got $GITHUB_REF_NAME" >&2
+            exit 1
+          }
+          commit="$(runuser -u builder -- git -C "$GITHUB_WORKSPACE" \
+            rev-parse "${GITHUB_REF}^{commit}")"
+          cd "$GITHUB_WORKSPACE/packaging/arch"
+          runuser -u builder -- env \
+            _release_pkgver="$version" \
+            _release_commit="$commit" \
+            _local_source="$GITHUB_WORKSPACE" \
+            makepkg --syncdeps --cleanbuild --noconfirm
+
+      - name: Create GitHub release and attach Arch package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          package_file="$(find "$GITHUB_WORKSPACE/packaging/arch" -maxdepth 1 \
+            -type f -name 'lume-shell-*.pkg.tar.zst' -print -quit)"
+          test -n "$package_file"
+          sha256sum "$package_file" > "${package_file}.sha256"
+          gh release create "$GITHUB_REF_NAME" "$package_file" \
+            "${package_file}.sha256" \
+            --verify-tag --generate-notes --title "Lume ${GITHUB_REF_NAME#v}"

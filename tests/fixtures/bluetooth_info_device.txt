@@ -1,0 +1,11 @@
+Device 23:08:15:B3:C8:A3 (public)
+	Name: Moondrop Space Travel
+	Alias: Moondrop Space Travel
+	Class: 0x00240404 (2360324)
+	Icon: audio-headset
+	Paired: yes
+	Trusted: yes
+	Blocked: no
+	Connected: yes
+	LegacyPairing: no
+	Battery Percentage: 0x50 (80)

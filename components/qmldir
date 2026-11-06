@@ -1,0 +1,27 @@
+module qs.components
+ActionFeedback 1.0 ActionFeedback.qml
+MaterialSwitch 1.0 MaterialSwitch.qml
+SettingToggleRow 1.0 SettingToggleRow.qml
+Pill 1.0 Pill.qml
+BarIslandSurface 1.0 BarIslandSurface.qml
+HolidayPill 1.0 HolidayPill.qml
+PopupCard 1.0 PopupCard.qml
+PopupHeader 1.0 PopupHeader.qml
+PopupListRow 1.0 PopupListRow.qml
+MediaSeekBar 1.0 MediaSeekBar.qml
+SearchField 1.0 SearchField.qml
+ScrollableList 1.0 ScrollableList.qml
+PopupOutsideClick 1.0 PopupOutsideClick.qml
+PopupSettingsButton 1.0 PopupSettingsButton.qml
+PopupIconButton 1.0 PopupIconButton.qml
+CloseButton 1.0 CloseButton.qml
+ScrollBar 1.0 ScrollBar.qml
+ToolTipBubble 1.0 ToolTipBubble.qml
+CommandJson 1.0 CommandJson.qml
+CommandAction 1.0 CommandAction.qml
+EmptyState 1.0 EmptyState.qml
+NotificationActionButton 1.0 NotificationActionButton.qml
+PowerProfileSelector 1.0 PowerProfileSelector.qml
+WheelKinetic 1.0 WheelKinetic.qml
+NotificationCardContent 1.0 NotificationCardContent.qml
+TablerIcon 1.0 TablerIcon.qml

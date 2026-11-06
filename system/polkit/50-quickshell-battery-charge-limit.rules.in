@@ -1,0 +1,8 @@
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.policykit.exec" &&
+        action.lookup("program") == "/usr/local/libexec/quickshell-battery-charge-limit" &&
+        subject.user == "@QUICKSHELL_USER@" &&
+        subject.local && subject.active) {
+        return polkit.Result.AUTH_SELF_KEEP;
+    }
+});

@@ -1,0 +1,557 @@
+{
+  "schema_version": 1,
+  "project": "Lume",
+  "arch_package": "lume-shell",
+  "support_target": {
+    "distribution": "Arch Linux",
+    "architecture": "x86_64",
+    "session": "Wayland",
+    "init": "systemd"
+  },
+  "requirements": [
+    {
+      "command": "quickshell",
+      "level": "required",
+      "purpose": "executar a interface",
+      "arch_package": "quickshell",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "python3",
+      "level": "required",
+      "purpose": "helpers do shell",
+      "arch_package": "python",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "systemctl",
+      "level": "required",
+      "purpose": "serviço de usuário",
+      "arch_package": "systemd",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "kitty",
+      "level": "required",
+      "purpose": "terminal usado pelos atalhos do shell",
+      "arch_package": "kitty",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "fc-match",
+      "level": "required",
+      "purpose": "verificar fontes",
+      "arch_package": "fontconfig",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "fc-list",
+      "level": "required",
+      "purpose": "verificar fontes instaladas",
+      "arch_package": "fontconfig",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "wl-copy",
+      "level": "feature",
+      "purpose": "escrever na área de transferência",
+      "arch_package": "wl-clipboard",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "wl-paste",
+      "level": "feature",
+      "purpose": "ler/monitorar a área de transferência",
+      "arch_package": "wl-clipboard",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "nmcli",
+      "level": "feature",
+      "purpose": "NetworkManager e VPN",
+      "arch_package": "networkmanager",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "bluetoothctl",
+      "level": "feature",
+      "purpose": "controle Bluetooth",
+      "arch_package": "bluez-utils",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "wpctl",
+      "level": "feature",
+      "purpose": "áudio PipeWire",
+      "arch_package": "wireplumber",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "pactl",
+      "level": "feature",
+      "purpose": "compatibilidade PulseAudio/PipeWire",
+      "arch_package": "libpulse",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "brightnessctl",
+      "level": "feature",
+      "purpose": "controle de brilho",
+      "arch_package": "brightnessctl",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "grim",
+      "level": "feature",
+      "purpose": "capturas de tela",
+      "arch_package": "grim",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "slurp",
+      "level": "feature",
+      "purpose": "seleção de região e gravação",
+      "arch_package": "slurp",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "wf-recorder",
+      "level": "feature",
+      "purpose": "gravação de tela",
+      "arch_package": "wf-recorder",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "wtype",
+      "level": "feature",
+      "purpose": "atalhos e compatibilidade labwc",
+      "arch_package": "wtype",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "curl",
+      "level": "feature",
+      "purpose": "dados de clima",
+      "arch_package": "curl",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "fastfetch",
+      "level": "feature",
+      "purpose": "popup de informações do sistema no Spotlight",
+      "arch_package": "fastfetch",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "lpstat",
+      "level": "feature",
+      "purpose": "estado de impressoras CUPS",
+      "arch_package": "cups",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "pkexec",
+      "level": "feature",
+      "purpose": "ações administrativas de energia",
+      "arch_package": "polkit",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "flatpak",
+      "level": "feature",
+      "purpose": "verificação de atualizações Flatpak",
+      "arch_package": "flatpak",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "brew",
+      "level": "feature",
+      "purpose": "verificação de atualizações Homebrew",
+      "arch_package": null,
+      "arch_source": "external"
+    },
+    {
+      "command": "powerprofilesctl",
+      "level": "feature",
+      "purpose": "perfis de energia",
+      "arch_package": "power-profiles-daemon",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "notify-send",
+      "level": "feature",
+      "purpose": "feedback de notificações e ações",
+      "arch_package": "libnotify",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "swappy",
+      "level": "feature",
+      "purpose": "anotação de capturas de tela",
+      "arch_package": "swappy",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "zbarimg",
+      "level": "feature",
+      "purpose": "leitura de QR code",
+      "arch_package": "zbar",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "xdg-user-dir",
+      "level": "feature",
+      "purpose": "localização das pastas XDG",
+      "arch_package": "xdg-user-dirs",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "nm-connection-editor",
+      "level": "feature",
+      "purpose": "edição avançada de conexões de rede",
+      "arch_package": "network-manager-applet",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "blueberry",
+      "level": "feature",
+      "purpose": "configurações avançadas de Bluetooth",
+      "arch_package": "blueberry",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "pwvucontrol",
+      "level": "feature",
+      "purpose": "configurações avançadas de áudio",
+      "arch_package": "pwvucontrol",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "kdeconnect-cli",
+      "level": "feature",
+      "purpose": "integração com KDE Connect",
+      "arch_package": "kdeconnect",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "gdbus",
+      "level": "feature",
+      "purpose": "bateria dos dispositivos KDE Connect",
+      "arch_package": "glib2",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "cancel",
+      "level": "feature",
+      "purpose": "cancelamento de trabalhos de impressão",
+      "arch_package": "cups",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "ippfind",
+      "level": "feature",
+      "purpose": "descoberta de impressoras de rede",
+      "arch_package": "cups",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "checkupdates",
+      "level": "feature",
+      "purpose": "consulta de atualizações dos repositórios Arch",
+      "arch_package": "pacman-contrib",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "yay",
+      "level": "feature",
+      "purpose": "atualizações AUR e ações de pacote",
+      "arch_package": "yay",
+      "arch_source": "AUR"
+    },
+    {
+      "command": "pacman",
+      "level": "feature",
+      "purpose": "inventário e atualizações de pacotes Arch",
+      "arch_package": "pacman",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "vercmp",
+      "level": "feature",
+      "purpose": "comparação de versões de pacotes Arch/AUR",
+      "arch_package": "pacman",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "magick",
+      "level": "feature",
+      "purpose": "pré-visualizações de formatos especiais de imagem",
+      "arch_package": "imagemagick",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "fd",
+      "level": "feature",
+      "purpose": "busca de arquivos no Spotlight",
+      "arch_package": "fd",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "yt-dlp",
+      "level": "feature",
+      "purpose": "downloads iniciados pelo Spotlight",
+      "arch_package": "yt-dlp",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "gtk-launch",
+      "level": "feature",
+      "purpose": "reabrir o aplicativo de uma notificação arquivada",
+      "arch_package": "gtk3",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "xdg-open",
+      "level": "feature",
+      "purpose": "abrir arquivos, URLs e páginas de configurações",
+      "arch_package": "xdg-utils",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "gsettings",
+      "level": "feature",
+      "purpose": "integração opcional de temas GTK",
+      "arch_package": "glib2",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "lpq",
+      "level": "feature",
+      "purpose": "detalhes adicionais dos trabalhos de impressão",
+      "arch_package": "cups",
+      "arch_source": "official repositories"
+    },
+    {
+      "command": "system-config-printer",
+      "level": "feature",
+      "purpose": "abrir a fila gráfica CUPS",
+      "arch_package": "system-config-printer",
+      "arch_source": "official repositories"
+    }
+  ],
+  "alternatives": [
+    {
+      "commands": [
+        "awww",
+        "swww"
+      ],
+      "purpose": "aplicação de wallpaper",
+      "arch_packages": [
+        "awww"
+      ],
+      "arch_source": "official repositories",
+      "package_note": "awww é o backend recomendado no Arch. swww continua aceito como comando legado quando já estiver instalado; não há pacote swww separado nos repositórios Arch consultados."
+    },
+    {
+      "commands": [
+        "zenity",
+        "kdialog"
+      ],
+      "purpose": "seletor gráfico de wallpaper",
+      "arch_packages": [
+        "zenity",
+        "kdialog"
+      ],
+      "arch_source": "official repositories"
+    },
+    {
+      "commands": [
+        "hyprsunset",
+        "wlsunset"
+      ],
+      "purpose": "controle de luz noturna",
+      "arch_packages": [
+        "hyprsunset",
+        "wlsunset"
+      ],
+      "arch_source": "official repositories"
+    }
+  ],
+  "notes": [
+    "O escopo atual de reprodução é Arch Linux x86_64 com Wayland e systemd. A validação no host CachyOS não equivale a uma instalação limpa de Arch Linux.",
+    "O manifesto cobre comandos comuns, bibliotecas Python, módulos QML, perfis de compositor e integrações de serviço conhecidas, com nomes de pacotes Arch. A lista ainda precisa de revisão contra todos os caminhos condicionais, licenças e versões.",
+    "A presença de um executável não comprova que serviço, hardware ou sessão estejam funcionais.",
+    "Os nomes de pacotes são uma referência de instalação Arch, não uma lista mínima verificada; confirme a disponibilidade e a origem (repositório/AUR) antes de gerar um pacote de instalação.",
+    "As entradas QML indicam os pacotes esperados no alvo Arch; a validação de imports e compatibilidade em instalação limpa ainda não foi feita.",
+    "Os serviços são capacidades opcionais do sistema: listar o pacote não significa que a unidade precise ser habilitada em todos os hosts."
+  ],
+  "python_modules": [
+    {
+      "module": "requests",
+      "level": "feature",
+      "purpose": "requisições HTTP dos recursos de clima",
+      "arch_package": "python-requests"
+    },
+    {
+      "module": "PIL",
+      "level": "feature",
+      "purpose": "extração de paleta Chameleon e tratamento aprimorado de imagens",
+      "arch_package": "python-pillow"
+    }
+  ],
+  "qml_modules": [
+    {
+      "import": "QtQuick",
+      "arch_package": "qt6-declarative"
+    },
+    {
+      "import": "QtQuick.Controls",
+      "arch_package": "qt6-declarative"
+    },
+    {
+      "import": "QtQuick.Dialogs",
+      "arch_package": "qt6-declarative"
+    },
+    {
+      "import": "QtQuick.Effects",
+      "arch_package": "qt6-declarative"
+    },
+    {
+      "import": "QtQuick.Layouts",
+      "arch_package": "qt6-declarative"
+    },
+    {
+      "import": "QtQuick.Shapes",
+      "arch_package": "qt6-declarative"
+    },
+    {
+      "import": "QtQuick.Window",
+      "arch_package": "qt6-declarative"
+    },
+    {
+      "import": "Qt5Compat.GraphicalEffects",
+      "arch_package": "qt6-5compat"
+    },
+    {
+      "import": "Quickshell",
+      "arch_package": "quickshell"
+    },
+    {
+      "import": "Quickshell.Hyprland",
+      "arch_package": "quickshell"
+    },
+    {
+      "import": "Quickshell.Io",
+      "arch_package": "quickshell"
+    },
+    {
+      "import": "Quickshell.Services.Mpris",
+      "arch_package": "quickshell"
+    },
+    {
+      "import": "Quickshell.Services.Notifications",
+      "arch_package": "quickshell"
+    },
+    {
+      "import": "Quickshell.Services.Pipewire",
+      "arch_package": "quickshell"
+    },
+    {
+      "import": "Quickshell.Services.SystemTray",
+      "arch_package": "quickshell"
+    },
+    {
+      "import": "Quickshell.Services.UPower",
+      "arch_package": "quickshell"
+    },
+    {
+      "import": "Quickshell.Wayland",
+      "arch_package": "quickshell"
+    },
+    {
+      "import": "Quickshell.Widgets",
+      "arch_package": "quickshell"
+    },
+    {
+      "import": "Quickshell.WindowManager",
+      "arch_package": "quickshell"
+    },
+    {
+      "import": "qs.*",
+      "arch_package": "project files (qmldir)"
+    }
+  ],
+  "profiles": {
+    "hyprland": [
+      {
+        "command": "hyprctl",
+        "level": "required",
+        "purpose": "controle da sessão Hyprland",
+        "arch_package": "hyprland",
+        "arch_source": "official repositories"
+      },
+      {
+        "command": "grimblast",
+        "level": "feature",
+        "purpose": "atalhos de captura de tela Hyprland",
+        "arch_package": "grimblast-git",
+        "arch_source": "AUR"
+      }
+    ],
+    "labwc": [
+      {
+        "command": "labwc",
+        "level": "required",
+        "purpose": "sessão labwc",
+        "arch_package": "labwc",
+        "arch_source": "official repositories"
+      }
+    ],
+    "mango": [
+      {
+        "command": "mmsg",
+        "level": "required",
+        "purpose": "IPC e workspaces Mango",
+        "arch_package": "mangowm",
+        "arch_source": "AUR"
+      }
+    ]
+  },
+  "services": [
+    {
+      "unit": "NetworkManager.service",
+      "feature": "rede e VPN",
+      "arch_package": "networkmanager"
+    },
+    {
+      "unit": "bluetooth.service",
+      "feature": "controle Bluetooth",
+      "arch_package": "bluez"
+    },
+    {
+      "unit": "pipewire.service",
+      "feature": "áudio e microfone",
+      "arch_package": "pipewire"
+    },
+    {
+      "unit": "wireplumber.service",
+      "feature": "gerenciamento de dispositivos PipeWire",
+      "arch_package": "wireplumber"
+    },
+    {
+      "unit": "upower.service",
+      "feature": "estado de baterias",
+      "arch_package": "upower"
+    },
+    {
+      "unit": "cups.service",
+      "feature": "impressoras",
+      "arch_package": "cups"
+    },
+    {
+      "unit": "power-profiles-daemon.service",
+      "feature": "perfis de energia",
+      "arch_package": "power-profiles-daemon"
+    }
+  ]
+}
