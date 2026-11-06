@@ -17,6 +17,11 @@ appropriate:
   native workspace model first, and Mango uses `mmsg` first; each can fall back
   to the generic protocol when its native state is unavailable. Workspace
   labels come from the compositor's workspace names and IDs.
+- The Hyprland workspace strip considers both tracked toplevels and the
+  compositor's `j/workspaces` window count. Hyprland's `openwindow` event may
+  identify a renamed workspace by its numeric name while Quickshell tracks its
+  display name, so the bar refreshes the workspace snapshot after window
+  open/close/move events to keep occupied pills accurate.
 - `ToplevelManager` uses `zwlr-foreign-toplevel-management-v1` for listing,
   activation, and close requests in Spotlight's `~` mode outside Hyprland.
   Hyprland uses its native client metadata first, including workspace names.

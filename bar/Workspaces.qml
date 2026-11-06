@@ -74,6 +74,23 @@ Item {
         }
     }
 
+    Timer {
+        id: workspaceRefresh
+        interval: 50
+        repeat: false
+        onTriggered: Hyprland.refreshWorkspaces()
+    }
+
+    Connections {
+        target: root.hyprlandActive ? Hyprland : null
+
+        function onRawEvent(event) {
+            if (event.name === "openwindow" || event.name === "closewindow"
+                    || event.name === "movewindowv2")
+                workspaceRefresh.restart()
+        }
+    }
+
     Row {
         id: row
         anchors.verticalCenter: parent.verticalCenter
@@ -103,8 +120,7 @@ Item {
                 visible: !root.hyprlandActive
                     || (belongsToScreen
                         && !String(ws?.name ?? "").startsWith("special:")
-                        && (active || (ws !== null && ws.toplevels
-                            && ws.toplevels.values.length > 0)))
+                        && (active || WorkspaceModel.hasHyprlandWindows(ws)))
 
                 width: Math.max(root.theme.barWorkspaceMinWidth,
                                 label.implicitWidth + root.theme.barWorkspaceHorizontalPadding)

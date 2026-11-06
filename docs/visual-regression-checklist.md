@@ -107,6 +107,19 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 - [ ] Verificações estáticas e logs sem erros relevantes; evidências visuais e de
   interação registradas separadamente.
 
+### Regressão — workspace ocupado não exibido, 06/11/2026
+
+- Reproduzido no host: `hyprctl workspaces -j` reportou workspace 3 com uma
+  janela; a barra o omitia, e o log do Quickshell informou que recebeu
+  `openwindow` para um workspace ainda não rastreado. Reiniciar o serviço sem
+  a correção não alterou o resultado.
+- A barra agora considera a contagem `windows` do snapshot do Hyprland junto aos
+  toplevels rastreados e atualiza o snapshot após abrir, fechar ou mover janelas.
+- Três casos da função de ocupação passaram em execução isolada com Node. O
+  `qmltestrunner` e o `qmllint` locais encerraram sem diagnóstico; a captura
+  visual após reinstalação ficou inconclusiva porque uma janela fullscreen
+  cobria a barra. Repetir a verificação visual com a barra visível.
+
 ### Evidência — ícones da barra, 24/10/2026
 
 - Sessão ativa: `/tmp/bar-vector-refinement.png`; busca, workspaces 1/2/3/5,

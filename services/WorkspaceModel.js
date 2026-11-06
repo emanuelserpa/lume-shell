@@ -31,3 +31,12 @@ function adjacentWindowset(windowsets, currentName, direction) {
     const nextIndex = (currentIndex + step + values.length) % values.length
     return values[nextIndex] ?? null
 }
+
+function hasHyprlandWindows(workspace) {
+    const snapshotCount = Number(workspace?.lastIpcObject?.windows ?? 0)
+    if (Number.isFinite(snapshotCount) && snapshotCount > 0)
+        return true
+
+    const toplevels = workspace?.toplevels?.values
+    return Array.isArray(toplevels) && toplevels.length > 0
+}

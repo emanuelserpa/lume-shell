@@ -30,6 +30,21 @@ TestCase {
         compare(WorkspaceModel.adjacentWindowset(values, "2", 1), null)
     }
 
+    function test_hyprlandOccupancyUsesSnapshotWhenToplevelWasNotTracked() {
+        verify(WorkspaceModel.hasHyprlandWindows({
+            lastIpcObject: { windows: 1 },
+            toplevels: { values: [] }
+        }))
+        verify(WorkspaceModel.hasHyprlandWindows({
+            lastIpcObject: { windows: 0 },
+            toplevels: { values: [{}] }
+        }))
+        verify(!WorkspaceModel.hasHyprlandWindows({
+            lastIpcObject: { windows: 0 },
+            toplevels: { values: [] }
+        }))
+    }
+
     function test_numericWorkspaceNumberNormalizesBackendIds() {
         compare(WorkspaceModel.numericWorkspaceNumber({ id: "3" }, { hyprland: true, maximum: 10 }), 3)
         compare(WorkspaceModel.numericWorkspaceNumber({ name: "4" }, { protocol: true, maximum: 10 }), 4)
