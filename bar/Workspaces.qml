@@ -169,9 +169,16 @@ Item {
                     hoverEnabled: true
 
                     onClicked: {
+                        // Hyprland display names can differ from workspace
+                        // identity after `renameworkspace`; dispatch by the
+                        // stable numeric ID when available.
+                        if (root.hyprlandActive && parent.ws !== null) {
+                            const id = Number(parent.ws.id)
+                            root.focusWorkspace(id > 0 ? id : parent.ws.name)
+                        }
                         // ext-workspace-v1 provides the same activation request
                         // for workspaces and tags across supported compositors.
-                        if (parent.ws !== null && parent.ws.canActivate !== false
+                        else if (parent.ws !== null && parent.ws.canActivate !== false
                                 && typeof parent.ws.activate === "function")
                             parent.ws.activate()
                         else if (root.mangoActive) {
