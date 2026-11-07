@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
-import "../services/CompositorBackend.js" as CompositorBackend
+import qs.services
 
 Item {
     id: root
@@ -12,8 +12,7 @@ Item {
     property bool focusGrabEnabled: true
     signal dismissed()
 
-    readonly property bool hyprlandSession:
-        CompositorBackend.kindForDesktop(Quickshell.env("XDG_CURRENT_DESKTOP") ?? "") === "hyprland"
+    readonly property bool hyprlandSession: CompositorState.hyprlandNativeEnabled
 
     width: 0
     height: 0

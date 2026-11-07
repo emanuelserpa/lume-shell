@@ -281,12 +281,18 @@ Avoid large technical error dumps in normal UI.
 
 ## Compositor Boundary & Agnosticism
 
+`services/CompositorState.qml` reads `LUME_COMPOSITOR_MODE` (`auto`,
+`wayland`, or `hyprland`), reports protocol-backed state exposed by Quickshell,
+and centralizes safe toplevel activation/close requests. An empty Quickshell
+protocol model is reported as `unreported`; it is not treated as proof that a
+protocol is absent. `scripts/doctor.sh` can separately report compositor
+advertisements through optional `wayland-info`.
+
 The shell UI is decoupled from compositor-specific CLI commands and syntax:
 - General UI components use Quickshell APIs or project helpers for compositor actions. `bar/Submap.qml` obtains the Hyprland-only modal submap through the compositor dispatcher.
 - All compositor dispatch actions (such as switching workspaces or focusing windows) are routed through `scripts/compositor-dispatch.sh`.
 - The dispatcher encapsulates multi-format support (e.g. Hyprland Lua dispatch vs classic hyprlang dispatch) without leaking syntax into QML.
-- Workspace display and activation prefer the native Hyprland workspace API on Hyprland and Mango's `mmsg` adapter on Mango. labwc uses Quickshell's generic `WindowManager` `ext-workspace-v1` API; native backends fall back to it when available. The bar scopes generic windowsets through `screenProjection(screen)`.
-- Mango's `mmsg` watcher supplies tag state and focused-output data; activation stays behind `scripts/compositor-dispatch.sh`. The Mango IPC signature is imported into the systemd user manager by the session startup helper.
+- Workspace display and activation use Hyprland's native model for occupancy and stable IDs, and Quickshell `WindowManager` `ext-workspace-v1` for other compositors. The bar scopes generic windowsets through `screenProjection(screen)`. Mango's `mmsg` watcher remains active in `auto` mode for focused-output state; its workspace snapshot is a fallback when the protocol supplies no windowsets.
 - Spotlight uses Hyprland client metadata on Hyprland and Quickshell's `ToplevelManager` foreign-toplevel protocol elsewhere for the `~` window list and actions. The `!` process-kill mode uses Hyprland PID data because the protocol does not expose PIDs.
 - Click-opened detail popups use Quickshell `PopupWindow` focus grabbing
   (`grabFocus: true`). Check outside-click dismissal on each supported compositor;

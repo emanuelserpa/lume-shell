@@ -1,7 +1,7 @@
 # Maintainer: Emanuel Serpa
 pkgname=lume-shell
 pkgver="${_release_pkgver:-0.1.0}"
-pkgrel=12
+pkgrel=13
 pkgdesc='Wayland desktop shell built with Quickshell'
 arch=('x86_64')
 url='https://github.com/emanuelserpa/lume-shell'
@@ -25,8 +25,10 @@ optdepends=(
   'fd: Spotlight file search'
   'grim: screenshots'
   'slurp: region screenshots'
+  'wayland-utils: compositor protocol diagnostics'
   'hyprland: Hyprland compositor integration'
   'labwc: labwc compositor integration'
+  'mangowm: Mango focused-output and workspace compatibility state'
   'pacman-contrib: repository update indicator'
 )
 makedepends=('git' 'tar')
@@ -74,7 +76,8 @@ package() {
   install -Dm644 "$startdir/lume-shell.service" \
     "$pkgdir/usr/lib/systemd/user/lume-shell.service"
   install -Dm644 "$root/README.md" "$pkgdir/usr/share/doc/lume-shell/README.md"
-  for doc in arch-packaging-plan dependency-inventory; do
+  for doc in arch-packaging-plan dependency-inventory compositor-integration \
+    wayland-install wayland-compositor-research; do
     if [[ -f "$root/docs/$doc.md" ]]; then
       install -Dm644 "$root/docs/$doc.md" \
         "$pkgdir/usr/share/doc/lume-shell/$doc.md"

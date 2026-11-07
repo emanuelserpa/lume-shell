@@ -4,7 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.components
-import "CompositorBackend.js" as CompositorBackend
+import qs.services
 
 Item {
     id: root
@@ -13,8 +13,7 @@ Item {
     width: 0
     height: 0
 
-    readonly property bool supported:
-        CompositorBackend.kindForDesktop(Quickshell.env("XDG_CURRENT_DESKTOP") ?? "") === "hyprland"
+    readonly property bool supported: CompositorState.hyprlandNativeEnabled
     property bool opened: false
     property bool openAfterRefresh: false
     property bool loading: false
@@ -42,7 +41,7 @@ Item {
 
     function refresh() {
         if (!root.supported) {
-            root.error = "A seleção de projeção está disponível nesta sessão Hyprland."
+            root.error = "A seleção de projeção requer a integração nativa do Hyprland."
             return
         }
         root.loading = true

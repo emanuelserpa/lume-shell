@@ -1,8 +1,7 @@
 import QtQuick
 import Quickshell
-import Quickshell.Wayland
 import qs.components
-import "../services/CompositorBackend.js" as CompositorBackend
+import qs.services
 
 // Etapa 5 do fatiamento do Spotlight: fontes de busca por modo
 // (arquivos `@`, emojis `;`, janelas `~`/`!`). Cada seção é dona do seu
@@ -108,18 +107,10 @@ Item {
     property var windowItems: []
     property var killItems: []
     readonly property bool hyprlandNativeWindowProviderActive:
-        CompositorBackend.hasHyprlandNativeFeatures(Quickshell.env("XDG_CURRENT_DESKTOP") ?? "")
+        CompositorState.hyprlandNativeEnabled
 
     function protocolWindowItems() {
-        return ToplevelManager.toplevels.values.map(function(window) {
-            return {
-                title: window.title || window.appId || "Janela",
-                class: window.appId || "Aplicativo",
-                handle: window,
-                pid: "",
-                workspaceName: ""
-            }
-        })
+        return CompositorState.protocolWindowItems()
     }
 
     function refreshWindows() {
@@ -130,8 +121,8 @@ Item {
             return
         }
 
-        // Other compositors use zwlr-foreign-toplevel-management-v1 for
-        // listing, activation and close requests.
+        // The same Quickshell foreign-toplevel provider serves every
+        // compositor when its native Hyprland metadata is not selected.
         root.windowItems = root.protocolWindowItems()
         root.killItems = root.windowItems
     }

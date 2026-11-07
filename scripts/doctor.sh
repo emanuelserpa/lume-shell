@@ -104,7 +104,7 @@ for item in data["python_modules"]:
 for item in data["qml_modules"]:
     assert item.get("import") and item.get("arch_package")
 for profile, requirements in data["profiles"].items():
-    assert profile in {"hyprland", "labwc", "mango"}
+    assert profile in {"hyprland", "labwc", "mango", "wayland"}
     assert isinstance(requirements, list)
     for item in requirements:
         assert item.get("command") and item.get("purpose")
@@ -228,6 +228,18 @@ PY
 
 printf 'Diagnóstico Lume / Quickshell — %s\n\n' "$REPO_ROOT"
 
+compositor_mode="${LUME_COMPOSITOR_MODE:-auto}"
+compositor_mode="${compositor_mode,,}"
+case "$compositor_mode" in
+    auto|wayland|hyprland)
+        ok "Modo de integração solicitado: $compositor_mode"
+        ;;
+    *)
+        fail "LUME_COMPOSITOR_MODE inválido: $compositor_mode (use auto, wayland ou hyprland)"
+        compositor_mode="auto"
+        ;;
+esac
+
 # Base process and shell requirements.
 check_dependency_manifest
 required_file "$REPO_ROOT/shell.qml" "raiz da configuração Quickshell"
@@ -255,7 +267,16 @@ done
 # belonging to other sessions installed on the same machine.
 desktop="${XDG_CURRENT_DESKTOP:-} ${DESKTOP_SESSION:-}"
 desktop="${desktop,,}"
-if [[ "$desktop" == *hyprland* ]]; then
+session_hyprland=false
+[[ "$desktop" == *hyprland* ]] && session_hyprland=true
+
+if [[ "$compositor_mode" == "hyprland" && "$session_hyprland" != true ]]; then
+    fail "Modo Hyprland solicitado fora de uma sessão Hyprland"
+    check_profile_manifest wayland
+elif [[ "$compositor_mode" == "wayland" ]]; then
+    ok "Integração genérica forçada; APIs nativas do compositor ficam desativadas"
+    check_profile_manifest wayland
+elif [[ "$desktop" == *hyprland* ]]; then
     check_profile_manifest hyprland
     check_hyprlock_profile "Hyprland"
     required_file "$CONFIG_HOME/hypr/hyprland.lua" "configuração Hyprland ativa"
@@ -292,7 +313,33 @@ elif [[ "$desktop" == *mango* ]]; then
     check_profile_manifest mango
     required_file "$CONFIG_HOME/mango/config.conf" "configuração Mango"
 else
-    warn "Compositor ativo não identificado (XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP:-vazio}); verificações específicas ignoradas"
+    check_profile_manifest wayland
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+        ok "Sessão Wayland ativa (${XDG_CURRENT_DESKTOP:-compositor não identificado})"
+    else
+        warn "Compositor ativo não identificado (XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP:-vazio}); verificações específicas ignoradas"
+    fi
+fi
+
+# Report the compositor's advertised protocols when wayland-info is installed.
+# This is separate from Quickshell's API exposure and never treats an empty
+# workspace/window list as proof that a protocol is absent.
+if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wayland-info >/dev/null 2>&1; then
+    protocol_info="$(timeout 4s wayland-info 2>&1)"
+    if [[ $? -eq 0 ]]; then
+        for protocol in ext_workspace_manager_v1 zwlr_foreign_toplevel_manager_v1 \
+            ext_foreign_toplevel_list_v1 zwlr_output_manager_v1 zwlr_layer_shell_v1; do
+            if grep -Fq "$protocol" <<< "$protocol_info"; then
+                ok "Wayland anuncia $protocol"
+            else
+                warn "Wayland não anuncia $protocol"
+            fi
+        done
+    else
+        warn "Não foi possível consultar os protocolos Wayland neste contexto"
+    fi
+elif [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+    warn "wayland-info ausente; anúncio de protocolos não consultado (pacote wayland-utils)"
 fi
 
 # Verify CPU boost persistence integration added by scripts/install-cpu-boost-system.sh.

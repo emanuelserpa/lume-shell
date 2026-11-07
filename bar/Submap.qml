@@ -2,14 +2,14 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import qs.services
 import qs.components
 
 Pill {
     id: root
 
     property string submap: ""
-    readonly property bool hyprlandActive:
-        (Quickshell.env("XDG_CURRENT_DESKTOP") ?? "").toLowerCase().split(":").includes("hyprland")
+    readonly property bool hyprlandActive: CompositorState.hyprlandNativeEnabled
 
     visible: hyprlandActive && submap.length > 0
     text: submap

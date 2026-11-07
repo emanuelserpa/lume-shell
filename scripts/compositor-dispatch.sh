@@ -79,8 +79,9 @@ if [ -n "${LABWC_PID:-}" ] || [[ "${XDG_CURRENT_DESKTOP:-}" == *labwc* ]]; then
     esac
 fi
 
-# Hyprland dispatch handling
-if command -v hyprctl >/dev/null 2>&1; then
+# Hyprland dispatch handling. A binary installed on the system does not mean
+# the current Wayland session is Hyprland.
+if [[ ":${CURRENT_DESKTOP}:" == *:hyprland:* ]] && command -v hyprctl >/dev/null 2>&1; then
     case "$ACTION" in
         submap)
             exec hyprctl submap

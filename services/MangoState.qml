@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 import "CompositorBackend.js" as CompositorBackend
 import "MangoWorkspace.js" as MangoWorkspace
 
@@ -51,7 +52,9 @@ Item {
         // all-monitors includes the focused-output flag as well as tags.
         // This keeps workspace pills and monitor-targeted OSDs in sync.
         command: ["mmsg", "watch", "all-monitors"]
-        running: root.available
+        // The workspace protocol does not report which output is focused.
+        // Keep this one IPC stream for bar projection and OSD placement.
+        running: root.available && CompositorState.mangoCompatibilityEnabled
 
         stdout: SplitParser {
             onRead: function(line) {

@@ -2,6 +2,14 @@
 
 // Keep the compositor's Windowset objects intact so activation still goes
 // through Quickshell's ext-workspace-v1 protocol implementation.
+function visibleWindowsets(windowsets, excludeOverview) {
+    return (windowsets ?? []).filter(function(windowset) {
+        const name = String(windowset?.name ?? "")
+        return windowset?.shouldDisplay !== false
+            && !(excludeOverview && name.toLowerCase() === "overview")
+    })
+}
+
 function numericWindowsets(windowsets, maximum) {
     const parsedLimit = Number(maximum)
     const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : null

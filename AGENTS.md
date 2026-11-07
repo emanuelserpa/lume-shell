@@ -87,12 +87,14 @@ This project is already in daily use. Avoid regressions. If a subsystem is docum
 - Existing audio popup is considered stable.
 - Existing Weather now supports saved cities and should remain compact in the bar.
 - Do not hardcode compositor CLIs (e.g. `hyprctl`, `swaymsg`) or compositor-specific config syntax (e.g. `hl.dsp` Lua strings) in UI QML files. Dispatch actions must pass through `scripts/compositor-dispatch.sh`. `bar/Submap.qml` is the sole dedicated modal submap indicator component.
+- Prefer Quickshell's shared Wayland protocol APIs for workspaces and toplevels. Keep compositor-specific adapters for confirmed capability or version gaps; do not infer that a protocol is absent only because its object list is empty.
 
 
 ## Architectural Direction
 
 This project is evolving from a personal Quickshell configuration into a
-self-contained desktop shell built on Quickshell + Hyprland.
+self-contained desktop shell built on Quickshell, with Hyprland integration
+and shared Wayland protocol support for compatible compositors.
 
 This is an incremental direction, NOT a request for large refactors.
 

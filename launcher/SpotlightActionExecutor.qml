@@ -98,8 +98,8 @@ Item {
             return true
         case "focus-window":
             closeRequested()
-            if (data.handle && typeof data.handle.activate === "function")
-                data.handle.activate()
+            if (data.handle)
+                CompositorState.activateToplevel(data.handle)
             else
                 Quickshell.execDetached([
                     Quickshell.shellDir + "/scripts/compositor-dispatch.sh",
@@ -110,8 +110,8 @@ Item {
             return true
         case "close-window":
             closeRequested()
-            if (data.handle && typeof data.handle.close === "function")
-                data.handle.close()
+            if (data.handle)
+                CompositorState.closeToplevel(data.handle)
             else
                 Quickshell.execDetached([
                     Quickshell.shellDir + "/scripts/compositor-dispatch.sh",
@@ -178,7 +178,7 @@ Item {
         }
         if (item.kind === "close_window" && data.handle) {
             closeRequested()
-            data.handle.close()
+            CompositorState.closeToplevel(data.handle)
             return
         }
         if (item.kind === "system" && data.command) {
@@ -258,7 +258,7 @@ Item {
         }
         if (item.kind === "window" && data.handle) {
             closeRequested()
-            data.handle.activate()
+            CompositorState.activateToplevel(data.handle)
             return
         }
         if (item.kind === "window" && data.address) {

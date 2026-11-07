@@ -136,6 +136,13 @@
       "arch_source": "official repositories"
     },
     {
+      "command": "wayland-info",
+      "level": "feature",
+      "purpose": "diagnóstico dos protocolos anunciados pelo compositor",
+      "arch_package": "wayland-utils",
+      "arch_source": "official repositories"
+    },
+    {
       "command": "curl",
       "level": "feature",
       "purpose": "dados de clima",
@@ -510,12 +517,13 @@
     "mango": [
       {
         "command": "mmsg",
-        "level": "required",
-        "purpose": "IPC e workspaces Mango",
+        "level": "feature",
+        "purpose": "saída focada e fallback compatível de workspaces Mango",
         "arch_package": "mangowm",
         "arch_source": "AUR"
       }
-    ]
+    ],
+    "wayland": []
   },
   "services": [
     {

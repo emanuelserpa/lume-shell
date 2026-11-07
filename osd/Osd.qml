@@ -48,19 +48,18 @@ PanelWindow {
     property bool osdMuted: false
 
     readonly property var hyprMonitor:
-        MangoState.mangoSession ? null : Hyprland.monitorFor(root.screen)
+        CompositorState.hyprlandNativeEnabled ? Hyprland.monitorFor(root.screen) : null
     readonly property bool onFocusedMonitor: {
-        if (MangoState.mangoSession) {
-            if (MangoState.focusedOutput.length > 0) {
-                // QuickshellScreenInfo exposes name at runtime; qmllint metadata omits it.
-                // qmllint disable missing-property
-                return root.screen ? root.screen.name === MangoState.focusedOutput : false
-                // qmllint enable missing-property
-            }
-            return Quickshell.screens.length === 1
+        if (CompositorState.mangoCompatibilityEnabled && MangoState.focusedOutput.length > 0) {
+            // QuickshellScreenInfo exposes name at runtime; qmllint metadata omits it.
+            // qmllint disable missing-property
+            return root.screen ? root.screen.name === MangoState.focusedOutput : false
+            // qmllint enable missing-property
         }
-        return root.hyprMonitor === null || root.hyprMonitor === undefined
-            ? true : Boolean(root.hyprMonitor.focused)
+        if (CompositorState.hyprlandNativeEnabled && root.hyprMonitor !== null
+                && root.hyprMonitor !== undefined)
+            return Boolean(root.hyprMonitor.focused)
+        return Quickshell.screens.length === 0 || root.screen === Quickshell.screens[0]
     }
 
     function showGeneric(kind, label, icon, newValue, maximum, duration, isMuted) {

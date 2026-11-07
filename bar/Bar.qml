@@ -14,13 +14,12 @@ PanelWindow {
 
     property var launcherController: null
     readonly property bool projectionOwner: {
-        const desktop = (Quickshell.env("XDG_CURRENT_DESKTOP") ?? "").toLowerCase()
-        if (desktop.includes("mango") && MangoState.focusedOutput.length > 0)
+        if (CompositorState.mangoCompatibilityEnabled && MangoState.focusedOutput.length > 0)
             // QuickshellScreenInfo exposes name at runtime; qmllint metadata omits it.
             // qmllint disable missing-property
             return root.screen.name === MangoState.focusedOutput
             // qmllint enable missing-property
-        if (desktop.includes("hyprland")) {
+        if (CompositorState.hyprlandNativeEnabled) {
             const monitor = Hyprland.monitorFor(root.screen)
             if (monitor !== null && monitor !== undefined)
                 return Boolean(monitor.focused)
@@ -205,5 +204,6 @@ PanelWindow {
             target: rightIsland
             ownerActive: root.projectionOwner
         }
+
     }
 }

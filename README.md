@@ -17,7 +17,8 @@ clipboard history, weather, power controls, and dynamic themes.
 
 ## Requirements
 
-Quickshell 0.3.x, a Wayland compositor (Hyprland, labwc, or MangoWC), PipeWire,
+Quickshell 0.3.x, a Wayland compositor (Hyprland, Sway, niri, MangoWC, labwc,
+or another compositor with the required protocols), PipeWire,
 Python 3 with `requests` and `Pillow`, Noto Sans, Nerd Fonts, and Kitty.
 Optional integrations use the corresponding system tools, such as `nmcli`,
 `bluetoothctl`, `checkupdates`, `brightnessctl`, `upower`, `grim`, and `slurp`.
@@ -34,8 +35,11 @@ checkout, clone this repository and run a separate instance with
 git clone https://github.com/emanuelserpa/lume-shell.git ~/.config/quickshell
 ```
 
-Compositor integration is optional. See the current setup guides for
-[Hyprland](docs/hyprland-install.md) and [labwc](docs/labwc-install.md).
+Compositor integration is capability based. See the setup guides for
+[generic Wayland](docs/wayland-install.md), [Hyprland](docs/hyprland-install.md),
+and [labwc](docs/labwc-install.md). Sway, niri and Mango use shared Wayland
+protocols for workspaces and window actions when their installed versions
+advertise them.
 
 ## Development
 

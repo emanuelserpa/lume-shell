@@ -11,7 +11,7 @@ for design and implementation, read `docs/architecture.md`,
 
 | Area | Mounted components and behavior |
 | --- | --- |
-| Left | `StartButton` (`bar-search`) opens universal search; Left at the start of the search field opens its categorized app menu; `Workspaces` (native Hyprland API, Mango IPC adapter, or labwc `ext-workspace-v1`, with generic/native fallbacks); `Submap` uses the compositor dispatcher and appears only on Hyprland. |
+| Left | `StartButton` (`bar-search`) opens universal search; Left at the start of the search field opens its categorized app menu; `Workspaces` uses Hyprland's native model or Quickshell `ext-workspace-v1` on other compositors, with Mango IPC for focused-output state and as a workspace fallback; `Submap` uses the compositor dispatcher and appears only on Hyprland. |
 | Center | Autonomous `Weather` and `Clock` modules backed by `services/WeatherState.qml`; `Clock` owns `CenterDashboardPopup`, which contains weather, calendar, and the next two national and Ceará holidays. |
 | Between center and right | Conditional `MediaIsland` (Spotify) and `StatusIsland` (`bar/StatusIsland.qml`) for active session modes (DND moon, idle-inhibition coffee, active screen recording via `services/ScreenRecordingState.qml`); `StatusIsland` takes priority over `MediaIsland` when horizontal space is tight, and each indicator deactivates its active mode on click. |
 | Right (inside to edge) | Pluggable, self-contained modules (`{ theme: barTheme; plain: true }`): `Tray`, `Network`, `Bluetooth`, conditional `Printer`, `SystemMonitor`, conditional `UpdateControl`, `Battery`, `Audio`, and `NotificationControl`. Each module renders its own pill and anchors its own popup directly to itself; `NotificationControl` also hosts `ScreenRecordingPopup` backed by `services/ScreenRecordingState.qml`. |
@@ -55,7 +55,7 @@ Design decisions: [design guidelines](design-guidelines.md),
 No modo `:sistema` do Spotlight, “Informações do Sistema” abre um painel central
 com dados do hardware, sistema e pacotes obtidos pelo Fastfetch. O painel fica
 aberto ao clicar fora ou na barra; somente `Esc` o fecha.
-|Compositor support | `services/WorkspaceModel.js` normalizes protocol windowsets; `services/MangoState.qml` and `services/MangoWorkspace.js` provide Mango fallback state; `services/CompositorBackend.js`, `scripts/compositor-dispatch.sh`, `docs/compositor-integration.md` |
+|Compositor support | `services/CompositorState.qml` selects native/generic providers and reports exposed capability state; `services/WorkspaceModel.js` filters protocol windowsets while preserving their objects; `services/MangoState.qml` and `services/MangoWorkspace.js` provide focused-output/fallback state; `scripts/compositor-dispatch.sh`, `docs/compositor-integration.md`, `docs/wayland-compositor-research.md` |
 | Display projection | `bar/DisplayProjectionPopup.qml`, `services/DisplayProjectionState.qml`, `scripts/display-projection.py`, `docs/compositor-integration.md` (Hyprland only) |
 
 ## Maintenance notes
