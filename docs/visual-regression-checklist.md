@@ -26,6 +26,11 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
   com lista expandida, persistência após reinício e ação de abertura do log. A
   instância ativa instalada é `/usr/share/lume-shell`; seus IPCs não expõem
   calendário/atualizações, e o `PopupWindow` não apareceu no harness isolado.
+- Rechecagem em 2026-11-08 neste ambiente: `quickshell ipc show` não encontrou
+  instância em execução para a configuração padrão; `pgrep` também não encontrou
+  processo Quickshell. O barramento de serviços do usuário está inacessível no
+  sandbox. Portanto não foi possível inspecionar os popups instalados nem
+  simular suspensão nesta sessão; o item permanece aberto.
 
 ## Barra
 
