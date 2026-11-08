@@ -586,5 +586,48 @@ class ClipboardCaptureRetryTestCase(unittest.TestCase):
         run.assert_not_called()
         record.assert_not_called()
 
+    def test_paused_watch_callback_with_large_pipe_does_not_capture(self):
+        import subprocess
+
+        with tempfile.TemporaryDirectory(prefix="clipboard-paused-callback-") as tmp:
+            root = Path(tmp)
+            state_dir = root / "state" / "quickshell"
+            data_dir = root / "data"
+            cache_dir = root / "cache"
+            fake_bin = root / "bin"
+            state_dir.mkdir(parents=True)
+            fake_bin.mkdir()
+            wl_log = root / "wl-paste-called"
+            (state_dir / "clipboard-capture.json").write_text(
+                json.dumps({"paused": True}), encoding="utf-8")
+            fake_wl_paste = fake_bin / "wl-paste"
+            fake_wl_paste.write_text(
+                "#!/bin/sh\nprintf called >>\"$CLIPBOARD_WL_PASTE_LOG\"\nexit 99\n",
+                encoding="utf-8")
+            fake_wl_paste.chmod(0o755)
+
+            env = os.environ.copy()
+            env.update({
+                "XDG_STATE_HOME": str(root / "state"),
+                "XDG_DATA_HOME": str(data_dir),
+                "XDG_CACHE_HOME": str(cache_dir),
+                "CLIPBOARD_WL_PASTE_LOG": str(wl_log),
+                "PATH": str(fake_bin) + os.pathsep + env.get("PATH", ""),
+            })
+            completed = subprocess.run(
+                [sys.executable, str(SCRIPTS_DIR / "clipboard-daemon.py"), "--capture"],
+                input=b"large paused selection" * 100_000,
+                capture_output=True,
+                timeout=10,
+                env=env,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr.decode(errors="replace"))
+            self.assertFalse(wl_log.exists(), "paused callback must not query wl-paste")
+            self.assertFalse(
+                (data_dir / "quickshell" / "clipboard" / "clipboard.db").exists(),
+                "paused callback must not create or write the clipboard database",
+            )
+
 if __name__ == "__main__":
     unittest.main()

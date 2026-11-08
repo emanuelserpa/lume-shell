@@ -114,9 +114,14 @@ Este backlog complementa, e não substitui, o plano ativo em
   SQLite/WAL/backups. Implementada pausa/retomada persistente pelo preview; o
   callback drena o pipe, mas não lê nem guarda novos conteúdos enquanto pausado.
   Testes cobrem preferência, comandos pause/resume e recusa de captura. Remoção
-  limpa blob, thumbnail e índice/cache; falta validar a interação visual e
-  ausência de novos itens por callback real. Limites forenses e ausência de
-  detecção automática de senhas estão em `docs/clipboard.md`.
+  limpa blob, thumbnail e índice/cache. Um teste de subprocesso chama o entrypoint
+  real `--capture` com a preferência pausada e 2,1 MiB no stdin; conclui sem
+  invocar um `wl-paste` sentinela nem criar banco SQLite. O teste direcionado
+  passou; a suíte completa será repetida com esta inclusão. Isso prova o fluxo
+  do callback fora do Wayland, não o comportamento após colar na sessão. Falta
+  conferir o estado visual e a ausência de novos itens com eventos reais do
+  compositor. Limites forenses e ausência de detecção automática de senhas estão
+  em `docs/clipboard.md`.
 - [ ] **P1-05 — Contrato público de empacotamento.** Escolher licença antes de
   distribuir a terceiros e ajustar PKGBUILD. Em Arch limpo/VM testar build,
   instalação, serviço, IPC, atualização, remoção, opcionais e ausência de

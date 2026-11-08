@@ -11,7 +11,8 @@ consulte o backlog e o plano indicados abaixo.
   backoff, fila limitada e aviso no histórico; a suíte offline está em 130/130.
   P1-03 teve falsos sucessos corrigidos, teste de integração de `Process` real e
   uma lacuna de erro no cartão do clima corrigida; falta revisão visual. P1-04
-  já tem pausa persistente de captura e limpeza de thumbs testadas; falta revisão visual.
+  já tem pausa persistente, callback real testado em isolamento e limpeza de
+  thumbs; falta revisão visual e evento real do compositor.
   P1-06 ganhou testes de recuperação em diretórios temporários; a aplicação nas
   integrações reais continua por conferir.
   P0-05 (CI do GitHub) está suspenso temporariamente a pedido do usuário; o

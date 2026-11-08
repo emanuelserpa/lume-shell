@@ -38,6 +38,12 @@ conteúdos sensíveis automaticamente. Se a preferência existir mas estiver
 corrompida ou inacessível, a captura fica pausada por segurança; apagar o arquivo
 restaura o padrão ativo.
 
+The paused `--capture` callback is covered through its real subprocess entrypoint
+with a 2.1 MiB stdin payload and temporary XDG directories. It exits without
+calling a sentinel `wl-paste` or creating the clipboard database. This isolates
+the pipe and persistence behavior; it does not replace checking the visual
+toggle or a real Wayland selection event.
+
 Remover um item também apaga seu blob e thumbnail quando não há mais referência
 no banco e atualiza o snapshot de compatibilidade. SQLite/WAL, snapshots do
 sistema de arquivos e backups podem manter cópias físicas; remoção do histórico
