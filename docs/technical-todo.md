@@ -97,7 +97,7 @@ Este backlog complementa, e não substitui, o plano ativo em
   da fila cobrem preservação dos pedidos mais novos, prioridade de controles,
   rejeição contabilizada, coalescência de `clear` e teto do backoff. `./scripts/validate.sh
   --offline`: 17 OK, QML 130/130. Falta revisão visual do aviso na sessão Wayland.
-- [ ] **P1-03 — Ações externas e respostas fora de ordem.** Simular stdout vazio,
+- [x] **P1-03 — Ações externas e respostas fora de ordem.** Simular stdout vazio,
   stderr, rc != 0, processo pendente, consulta reiniciada e resposta antiga após
   uma nova. Corrigido o falso sucesso confirmado em `CommandAction` e
   `CommandJson`: ambos agora exigem código zero e `CommandJson.restart()` aguarda
@@ -113,9 +113,13 @@ Este backlog complementa, e não substitui, o plano ativo em
   Quickshell 0.3.2. A revisão dos consumidores encontrou uma lacuna concreta no
   clima: o helper preservava a previsão em cache e anexava `error`, mas o cartão
   não mostrava esse diagnóstico. A linha de atualização agora exibe a falha em
-  vermelho sem ocultar a previsão e o tooltip revela o texto completo. `qmllint`
-  e `validate.sh --offline` verificam a alteração; ainda falta inspeção visual
-  das superfícies na sessão Wayland, então o item permanece aberto.
+  vermelho sem ocultar a previsão e o tooltip revela o texto completo. A revisão
+  visual em Wayland, com previsão antiga e falha simulada, confirmou que a
+  previsão permanece visível, o aviso vermelho cabe na linha e o hover mostra
+  todo o diagnóstico. Capturas em `/tmp/lume-p1-weather-error.png` e
+  `/tmp/lume-p1-weather-tooltip.png`. `./scripts/test-quickshell-processes.sh`
+  passou e `./scripts/validate.sh --offline` passou com 17 OK, 0 WARN/FAIL e
+  QML 130/130. P1-03 concluído.
 - [ ] **P1-04 — Privacidade do clipboard.** Adicionar pausa/retomada de captura e
   preferência persistente quando apropriado. Avaliar apenas sinais sensíveis
   realmente expostos; não prometer detecção infalível de senhas. Preservar
@@ -126,9 +130,10 @@ Este backlog complementa, e não substitui, o plano ativo em
   limpa blob, thumbnail e índice/cache. Um teste de subprocesso chama o entrypoint
   real `--capture` com a preferência pausada e 2,1 MiB no stdin; conclui sem
   invocar um `wl-paste` sentinela nem criar banco SQLite. O teste direcionado
-  passou; a suíte completa será repetida com esta inclusão. Isso prova o fluxo
-  do callback fora do Wayland, não o comportamento após colar na sessão. Falta
-  conferir o estado visual e a ausência de novos itens com eventos reais do
+  passou; depois desta inclusão, `./scripts/validate.sh --offline` passou com
+  17 OK, 0 WARN/FAIL e QML 130/130. Isso prova o fluxo do callback fora do
+  Wayland, não o comportamento após colar na sessão. Falta conferir o estado
+  visual e a ausência de novos itens com eventos reais do
   compositor. Limites forenses e ausência de detecção automática de senhas estão
   em `docs/clipboard.md`.
 - [ ] **P1-05 — Contrato público de empacotamento.** Escolher licença antes de

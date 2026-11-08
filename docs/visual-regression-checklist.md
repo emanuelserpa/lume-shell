@@ -46,6 +46,19 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
   ativação dos botões por mouse/teclado. O IPC disponível não controla esses
   estados, então P0-01 permanece aberto.
 
+### P1-03 — erro do clima (2026-11-08)
+
+- Harness Wayland com `WeatherCard` da árvore de trabalho, previsão válida em
+  cache (`stale: true`) e timeout simulado. A captura
+  `/tmp/lume-p1-weather-error.png` confirma que temperatura, previsão e selo de
+  dado antigo continuam visíveis; a falha aparece em vermelho, truncada para
+  caber na linha.
+- Hover sobre a linha exibiu o diagnóstico completo em
+  `/tmp/lume-p1-weather-tooltip.png`. Cursor restaurado à posição anterior e
+  harness encerrado após a captura. Nenhuma consulta externa foi iniciada.
+- `./scripts/test-quickshell-processes.sh`: passou. `./scripts/validate.sh
+  --offline`: 17 OK, 0 WARN, 0 FAIL; QML 130/130. P1-03 concluído.
+
 ## Barra
 
 - [ ] Altura/zona exclusiva seguem `barHeight` (37); recuo `barPanelInset` (3).

@@ -11,9 +11,10 @@ consulte o backlog e o plano indicados abaixo.
   P1-02 foi reproduzido em simulação controlada e corrigido com watchdog,
   backoff, fila limitada e aviso no histórico; a suíte offline está em 130/130.
   P1-03 teve falsos sucessos corrigidos, teste de integração de `Process` real e
-  uma lacuna de erro no cartão do clima corrigida; falta revisão visual. P1-04
-  já tem pausa persistente, callback real testado em isolamento e limpeza de
-  thumbs; falta revisão visual e evento real do compositor.
+  lacuna de erro no cartão do clima corrigida; revisão Wayland confirmou aviso e
+  tooltip, e o item foi fechado. P1-04 já tem pausa persistente, callback real
+  testado em isolamento e limpeza de thumbs; falta revisão visual e evento real
+  do compositor.
   P1-06 ganhou testes de recuperação em diretórios temporários; na sessão ativa,
   o gerenciador reportou Chameleon e 11 adaptadores em sync, mas aparência dos
   aplicativos e recuperação real continuam por conferir.
