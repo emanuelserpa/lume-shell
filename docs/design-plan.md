@@ -50,8 +50,11 @@ Concluir o item **P0-01** em [pendências técnicas](technical-todo.md): calend�
 reativo, combinações de estado do popup de atualização e acesso persistente a
 resultado/log. Esse backlog contém os cenários e critérios detalhados, evitando
 manter duas listas de implementação. A atualização de datas do calendário agora
-é função pura e simulável; ainda faltam os estados integrados do popup e a
-retomada real após suspensão antes de encerrar a fase.
+é função pura e simulável. Um harness integrado em `PanelWindow` confirmou que
+o popup cabe com lista expandida durante execução e erro; ainda faltam a abertura
+pela barra instalada, interação e persistência após reabertura, além da retomada
+real após suspensão, antes de encerrar a fase. Evidências e limites estão no
+checklist visual e no P0-01.
 
 Aceitação e evidências: conforme P0-01 no backlog. Não instalar pacotes nem
 mudar o relógio real para testar.

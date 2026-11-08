@@ -36,14 +36,18 @@ Este backlog complementa, e não substitui, o plano ativo em
   31/mar → 1/abr, 31/dez → 1/jan e navegação manual preservada; `validate.sh
   --offline` passou com 123 testes QML. Captura isolada do calendário em
   `/tmp/lume-p0-harness-panel.png` confirma a composição do mês navegado, Hoje,
-  progresso anual e feriados. Na sessão ativa de 2026-11-08, Hyprland/eDP-1
-  1920×1080 escala 1 e `lume-shell.service` estavam ativos; IPC instalado não
-  expõe calendário/atualizações. `update-log.py status` indicou ausência de
-  resultado e `update-log.py open` abriu o caminho configurado sem disparar
-  atualização; a janela temporária foi encerrada. Evidência detalhada em
-  `docs/visual-regression-checklist.md`. Continua aberto: teste real após
-  suspensão e inspeção visual integrada do popup com lista expandida durante
-  execução/erro, além de reabertura visual do log e estado persistido.
+  progresso anual e feriados. Em 2026-11-08, o harness integrado em `PanelWindow`
+  exibiu o popup com lista expandida durante execução e erro; ambos cabem na tela,
+  com mensagem e ações visíveis (`/tmp/lume-p0-update-review-running.png` e
+  `/tmp/lume-p0-update-review-error.png`). O teste usa dados simulados e desativa
+  `grabFocus` por não receber clique real. `visual-check.sh` confirmou serviço
+  ativo, barra de 37 px e fontes. O pacote ativo é `0.1.0-12`, diferente da
+  árvore de trabalho; IPC instalado não expõe calendário/atualizações.
+  `update-log.py status` indicou ausência de resultado e `update-log.py open`
+  abriu o caminho configurado sem iniciar atualização; a janela temporária foi
+  encerrada. Evidência e limites em `docs/visual-regression-checklist.md`.
+  Continua aberto: retomada após suspensão, abertura pela barra na instância
+  instalada, ativação real dos botões e persistência visual após reabertura.
 - [x] **P0-02 — Preservar arquivos locais em `scripts/validate.sh`.** A combinação
   `py_compile` + remoções abrangentes de `__pycache__` pode apagar caches
   preexistentes. Validar sem bytecode ou limpar apenas temporários próprios.

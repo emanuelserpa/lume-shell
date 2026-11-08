@@ -24,17 +24,27 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 - `./scripts/validate.sh --offline`: 17 OK, 0 WARN, 0 FAIL; testes QML 123/123
   (execução registrada para as alterações iniciais deste item).
   Os testes simulam as duas viradas e preservação do mês navegado.
+- `./scripts/visual-check.sh` passou na sessão: serviço ativo, layer Quickshell
+  presente, barra com 37 px e fontes exigidas instaladas.
+- Harness integrado em `PanelWindow` com dados simulados, execução e erro:
+  `/tmp/lume-p0-update-review-running.png` e
+  `/tmp/lume-p0-update-review-error.png`. Em ambos, a lista expandida cabe no
+  popup; o estado de erro e as ações ficam visíveis. O harness desativa `grabFocus`
+  porque não recebe clique real; portanto não valida o caminho de foco/abertura
+  usado pela barra nem o estado do shell instalado.
 - `quickshell ipc --path /usr/share/lume-shell show` responde, mas só expõe
   spotlight, displayProjection, media e notifications; não há alvos para abrir
-  calendário/atualizações. `PopupWindow` também não apareceu no harness isolado.
+  calendário/atualizações. O pacote instalado é `lume-shell 0.1.0-12` e seus
+  `WeatherCard.qml`, `SystemUpdatePopup.qml` e `CalendarCard.qml` diferem da
+  árvore atual; a captura integrada usa a árvore de trabalho.
 - Em 2026-11-08, `python3 -B scripts/update-log.py status` retornou
   `has_status: false`; `python3 -B scripts/update-log.py open` retornou sucesso
   com o caminho `/home/emanuel/.cache/quickshell/update.log`, sem iniciar uma
   atualização. A janela temporária de `tail` foi encerrada após o teste.
-- Continuam sem verificação: retomada real após suspensão; popup de atualização
-  com lista expandida durante execução/erro; persistência visual após reabertura;
-  clipping e interação dos botões. A sessão está ativa, mas esses estados não
-  são controláveis pelo IPC disponível. P0-01 permanece aberto.
+- Continuam sem verificação: retomada real após suspensão; abertura do popup pela
+  barra na instância instalada; estado visual persistido após fechar/reabrir; e
+  ativação dos botões por mouse/teclado. O IPC disponível não controla esses
+  estados, então P0-01 permanece aberto.
 
 ## Barra
 

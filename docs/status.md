@@ -5,7 +5,8 @@ consulte o backlog e o plano indicados abaixo.
 
 - **Próxima prioridade:** concluir a verificação visual de P0-01 no
   [plano visual](design-plan.md); a lógica de calendário/log tem cobertura
-  automatizada, mas os estados do popup ainda precisam ser vistos na sessão.
+  automatizada e o popup foi conferido em harness integrado nos estados de
+  execução/erro; falta validar interação e retomada na instância instalada.
 - **Progresso técnico:** P0-02 a P0-04 e P1-01 passaram validação offline.
   P1-02 foi reproduzido em simulação controlada e corrigido com watchdog,
   backoff, fila limitada e aviso no histórico; a suíte offline está em 130/130.
