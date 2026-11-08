@@ -95,6 +95,11 @@ Do not assume automatic geolocation is precise.
 Bar stays compact.
 City names belong in tooltip/popup, not permanently in the bar.
 
+When the weather helper returns a cached forecast with a refresh error, keep the
+forecast visible and show the error in the dashboard's update row. The row is
+red and elides to fit; hovering reveals the complete diagnostic. If no cache is
+available, the same row still exposes why the forecast is unavailable.
+
 When many cities are saved, the list must remain scrollable.
 
 ## Potential future improvements

@@ -101,8 +101,12 @@ Este backlog complementa, e não substitui, o plano ativo em
   valida sucesso, JSON válido com saída 7 e stderr, stdout vazio com saída zero,
   `CommandAction` em sucesso/falha e processo pendente por mais de 2 s cujo
   restart descarta a resposta antiga e publica apenas a nova. Passou em
-  Quickshell 0.3.2. Falta revisar o feedback visual das falhas nas superfícies;
-  item ainda aberto.
+  Quickshell 0.3.2. A revisão dos consumidores encontrou uma lacuna concreta no
+  clima: o helper preservava a previsão em cache e anexava `error`, mas o cartão
+  não mostrava esse diagnóstico. A linha de atualização agora exibe a falha em
+  vermelho sem ocultar a previsão e o tooltip revela o texto completo. `qmllint`
+  e `validate.sh --offline` verificam a alteração; ainda falta inspeção visual
+  das superfícies na sessão Wayland, então o item permanece aberto.
 - [ ] **P1-04 — Privacidade do clipboard.** Adicionar pausa/retomada de captura e
   preferência persistente quando apropriado. Avaliar apenas sinais sensíveis
   realmente expostos; não prometer detecção infalível de senhas. Preservar

@@ -744,17 +744,37 @@ Rectangle {
                     }
 
                     Text {
+                        id: weatherRefreshStatus
                         renderType: Text.NativeRendering
-                        text: root.weatherData?.updated_at
-                              ? "Atualizado às " + Qt.formatDateTime(new Date(root.weatherData.updated_at), "HH:mm")
-                              : "Previsão Open-Meteo"
-                        color: root.theme.grey
+                        width: root.weatherData?.error
+                               ? Math.max(0, parent.width - 150)
+                               : implicitWidth
+                        text: root.weatherData?.error
+                              ? "Falha: " + root.weatherData.error
+                              : (root.weatherData?.updated_at
+                                 ? "Atualizado às " + Qt.formatDateTime(new Date(root.weatherData.updated_at), "HH:mm")
+                                 : "Previsão Open-Meteo")
+                        color: root.weatherData?.error
+                               ? root.theme.red
+                               : root.theme.grey
                         font.family: root.theme.fontFamily
                         font.pixelSize: root.theme.dashboardMetaFontSize
+                        elide: Text.ElideRight
                         anchors.verticalCenter: parent.verticalCenter
+
+                        HoverHandler { id: weatherRefreshStatusHover }
+                        ToolTipBubble {
+                            theme: root.theme
+                            target: weatherRefreshStatus
+                            text: String(root.weatherData?.error ?? "")
+                            requestedVisible: weatherRefreshStatusHover.hovered
+                        }
                     }
 
-                    Item { width: Math.max(0, parent.width - 200); height: 1 }
+                    Item {
+                        width: root.weatherData?.error ? 0 : Math.max(0, parent.width - 200)
+                        height: 1
+                    }
 
                     Text {
                         renderType: Text.NativeRendering
