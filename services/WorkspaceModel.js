@@ -24,6 +24,26 @@ function numericWindowsets(windowsets, maximum) {
     })
 }
 
+function numericWorkspaceNumber(workspace, options) {
+    const settings = options ?? {}
+    let raw
+    if (settings.hyprland)
+        raw = workspace?.id
+    else if (settings.protocol)
+        raw = workspace?.name
+    else if (settings.mango)
+        raw = workspace?.number ?? workspace?.name ?? workspace?.id
+    else
+        raw = workspace?.number ?? workspace?.id ?? workspace?.name
+
+    const value = Number(raw)
+    const maximum = Number(settings.maximum)
+    if (!Number.isInteger(value) || value < 1
+            || (Number.isFinite(maximum) && maximum > 0 && value > maximum))
+        return 0
+    return value
+}
+
 function adjacentWindowset(windowsets, currentName, direction) {
     const values = windowsets ?? []
     if (values.length < 2)

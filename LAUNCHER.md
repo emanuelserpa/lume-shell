@@ -1,4 +1,4 @@
-# Spotlight launcher — v0.20.27
+# Spotlight launcher
 
 Native Quickshell Spotlight-style launcher. With the Arch package installed,
 use `lume-shell spotlight clipboard` (or `actions`, `emoji`, `windows`, and

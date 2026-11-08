@@ -43,11 +43,15 @@ advertise them.
 
 ## Development
 
-Read `AGENTS.md`, `docs/current-state.md`, `docs/architecture.md`, and the
-relevant feature guide before changing behavior.
+Start with the [documentation index](docs/README.md). For code changes, read
+[contribution rules](AGENTS.md) and the guide for the affected feature.
+
+The [project dashboard](dashboard/) summarizes the current priority and recent
+commits.
 
 ```sh
 ./scripts/validate.sh
 ```
 
-See `docs/visual-regression-checklist.md` for manual visual checks.
+See [build and validation](docs/deploy-and-validation.md) for checks and
+[visual review](docs/visual-regression-checklist.md) for desktop scenarios.

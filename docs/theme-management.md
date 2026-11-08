@@ -106,6 +106,12 @@ colors. Wallpaper selection is persisted separately in
 `$XDG_STATE_HOME/quickshell/wallpaper.json`. On session startup, `restore`
 reapplies the saved wallpaper when available.
 
+The gallery loads only its five visible thumbnails. WebP/AVIF previews use
+Pillow and JPEG-XL uses ImageMagick to generate cached JPEGs for Qt. Arrow keys
+or the wheel select an image; Enter or double-click applies it through
+awww/swww. Folder selection uses zenity; Spotlight temporarily unmaps so the
+native picker remains accessible, then returns to theme mode.
+
 ```bash
 python3 ~/.config/quickshell/scripts/wallpaper-action.py get
 python3 ~/.config/quickshell/scripts/wallpaper-action.py restore

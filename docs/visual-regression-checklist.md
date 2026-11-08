@@ -39,11 +39,11 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 - [ ] Largura reduzida usa a rolagem/paginação prevista no dashboard sem cortes.
 - [ ] Atualizações têm pill e popup próprios; estados vazio, carregando, etapa,
   sucesso e falha não são confundidos.
-- [ ] “Ver progresso no terminal” acompanha a execução; indisponibilidade de
-  terminal/log deve ter diagnóstico compreensível.
+- [ ] A ação do log permanece após o fim da atualização e reabertura do shell;
+  terminal ou arquivo indisponível mostra diagnóstico compreensível.
 - [ ] Conferir pacote expandido + execução + mensagem longa; botões acessíveis.
-- [ ] Conferir acesso ao resultado quando a contagem chega a zero (pendência
-  identificada no plano; não presumir resolvida).
+- [ ] Conferir acesso ao resultado quando a contagem chega a zero e após reinício
+  do shell, inclusive com log no fallback de `/tmp`.
 
 ## Quick Settings e dispositivos
 
@@ -77,6 +77,9 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
   contraste e troca do wallpaper durante geração.
 - [ ] Clipboard permite até 200 itens; busca, seleção por ID, preview e ações
   funcionam; Enter restaura ao clipboard sem pressupor colagem automática no app.
+- [ ] Clipboard: pausa/retomada de captura tem estado visível, persiste ao
+  reiniciar o shell e só grava seleções copiadas após retomar; erro de gravação
+  fica visível e o controle funciona por teclado.
 - [ ] Ícones/tipografia seguem as escalas spotlight; seleção usa pares de tokens.
 - [ ] Texto longo acessível no preview; imagem mantém proporção; roda usa convenção.
 - [ ] Informações do Sistema fecha por Escape e não por clique fora.

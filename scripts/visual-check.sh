@@ -19,12 +19,14 @@ FAIL_COUNT=0
 CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-}"
 CURRENT_DESKTOP="${CURRENT_DESKTOP,,}"
 
-# 1. Quickshell Service Health
-echo -e "${BOLD}[1/4] Checking quickshell.service status...${RESET}"
-if systemctl --user is-active --quiet quickshell.service; then
-    echo -e "  ${GREEN}✓${RESET} quickshell.service is running (active)"
+# 1. Lume Service Health
+echo -e "${BOLD}[1/4] Checking the active shell service...${RESET}"
+if systemctl --user is-active --quiet lume-shell.service; then
+    echo -e "  ${GREEN}✓${RESET} lume-shell.service is running (active)"
+elif systemctl --user is-active --quiet quickshell.service; then
+    echo -e "  ${YELLOW}!${RESET} Legacy quickshell.service is active; package unit is lume-shell.service"
 else
-    echo -e "  ${RED}✗${RESET} quickshell.service is NOT running"
+    echo -e "  ${RED}✗${RESET} No active lume-shell.service or legacy quickshell.service"
     FAIL_COUNT=$((FAIL_COUNT + 1))
 fi
 
@@ -46,7 +48,7 @@ if [[ ":${CURRENT_DESKTOP}:" == *:hyprland:* ]] && command -v hyprctl >/dev/null
         FAIL_COUNT=$((FAIL_COUNT + 1))
     fi
 else
-    echo -e "  ${YELLOW}!${RESET} Hyprland layer check skipped for this session"
+    echo -e "  ${YELLOW}!${RESET} Hyprland layer check not applicable to this compositor"
 fi
 
 # 3. Typography Verification (Noto Sans & JetBrainsMono)

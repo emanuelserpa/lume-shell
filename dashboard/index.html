@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Lume · Status do projeto</title>
+  <style>
+    :root { color-scheme: light dark; --bg:#f4f5f7; --panel:#fff; --ink:#20242b; --muted:#747b87; --line:#e5e7eb; --accent:#7057d9; --accent-soft:#eeeafd; --green:#25845b; --shadow:0 12px 36px #20242b0d; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#111318; --panel:#191c23; --ink:#edf0f5; --muted:#a0a6b2; --line:#2b303a; --accent:#b6a5ff; --accent-soft:#2c2645; --green:#72d5a3; --shadow:0 12px 36px #0003; } }
+    * { box-sizing:border-box }
+    body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif }
+    a { color:inherit; text-decoration-color:var(--accent); text-underline-offset:3px }
+    header { border-bottom:1px solid var(--line); background:var(--panel) }
+    .wrap { width:min(1100px,calc(100% - 36px)); margin:auto }
+    .top { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:20px }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:750; letter-spacing:-.03em; font-size:19px }
+    .mark { width:32px; height:32px; display:grid; place-items:center; color:white; background:var(--accent); border-radius:11px; font-weight:800 }
+    nav { display:flex; gap:20px; color:var(--muted); font-size:13px } nav a { text-decoration:none } nav a:hover { color:var(--ink) }
+    main { padding:42px 0 64px } .eyebrow { color:var(--accent); text-transform:uppercase; letter-spacing:.13em; font-size:11px; font-weight:750 }
+    h1 { font-size:clamp(29px,5vw,43px); line-height:1.1; letter-spacing:-.045em; margin:8px 0 10px }
+    .intro { color:var(--muted); margin:0 0 30px; max-width:660px }
+    .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:21px; box-shadow:var(--shadow); min-width:0 }
+    .wide { grid-column:span 8 } .side { grid-column:span 4 } .half { grid-column:span 6 }
+    h2 { font-size:15px; margin:0 0 15px; letter-spacing:-.015em } h3 { font-size:13px; margin:20px 0 8px }
+    .priority { border-left:3px solid var(--accent); padding:2px 0 2px 13px; margin:0 0 14px }
+    .priority strong { display:block; font-size:16px } .priority p { margin:5px 0 0; color:var(--muted) }
+    .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:21px }
+    .metric { padding:13px; border-radius:12px; background:var(--bg) } .metric b { display:block; font-size:24px; letter-spacing:-.04em } .metric span { font-size:11px; color:var(--muted) }
+    .bar { height:7px; border-radius:9px; overflow:hidden; background:var(--line); margin:12px 0 6px } .bar i { display:block; height:100%; background:var(--accent); border-radius:inherit; transition:width .3s }
+    .subtle { font-size:12px; color:var(--muted) }
+    .task-list,.commit-list { display:grid; gap:9px; padding:0; margin:0; list-style:none }
+    .task { display:grid; grid-template-columns:44px 1fr; gap:10px; align-items:start; padding:10px 0; border-top:1px solid var(--line) }
+    .tag { display:inline-grid; place-items:center; border-radius:7px; padding:3px 5px; font-size:10px; font-weight:800; color:var(--accent); background:var(--accent-soft) }
+    .task p { margin:0; font-size:13px; line-height:1.45 }
+    .commit { display:grid; grid-template-columns:68px 1fr; gap:10px; padding:9px 0; border-top:1px solid var(--line); font-size:12px }
+    .commit time { color:var(--muted); font-variant-numeric:tabular-nums } .commit a { text-decoration:none } .commit a:hover { text-decoration:underline }
+    .links { display:flex; flex-wrap:wrap; gap:9px } .links a { padding:7px 10px; border:1px solid var(--line); border-radius:9px; font-size:12px; text-decoration:none }
+    .links a:hover { border-color:var(--accent); color:var(--accent) }
+    .loading { color:var(--muted); font-size:13px } footer { text-align:center; color:var(--muted); font-size:11px; padding:22px 0 0 }
+    @media(max-width:760px) { .wide,.side,.half { grid-column:span 12 } nav { gap:12px } .top { align-items:flex-start; padding:18px 0 } }
+    @media(max-width:460px) { nav { flex-wrap:wrap; justify-content:flex-end } .metrics { grid-template-columns:1fr 1fr } .metrics .metric:last-child { grid-column:span 2 } }
+  </style>
+</head>
+<body>
+  <header><div class="wrap top">
+    <div class="brand"><span class="mark">L</span><span>Lume <span style="color:var(--muted);font-weight:500">/ projeto</span></span></div>
+    <nav aria-label="Navegação"><a href="../README.md">Projeto</a><a href="../docs/README.md">Documentação</a><a href="https://github.com/emanuelserpa/lume-shell">GitHub ↗</a></nav>
+  </div></header>
+  <main class="wrap">
+    <div class="eyebrow">Painel de desenvolvimento</div>
+    <h1>Estado do projeto</h1>
+    <p class="intro">Prioridades, pendências técnicas e mudanças recentes do Lume. O status e o backlog vêm diretamente da documentação do repositório.</p>
+    <div class="grid">
+      <section class="card wide"><h2>Agora</h2><div id="priority" class="loading">Lendo status do projeto…</div>
+        <div class="bar" aria-label="Progresso do backlog"><i id="progress" style="width:0%"></i></div><div id="progress-label" class="subtle">Carregando pendências…</div>
+        <div class="metrics"><div class="metric"><b id="open-count">—</b><span>itens em aberto</span></div><div class="metric"><b id="done-count">—</b><span>itens concluídos</span></div><div class="metric"><b>4</b><span>fases visuais planejadas</span></div></div>
+      </section>
+      <section class="card side"><h2>Documentação</h2><div class="links"><a href="../docs/status.md">Status</a><a href="../docs/technical-todo.md">Backlog técnico</a><a href="../docs/design-plan.md">Plano visual</a><a href="../docs/architecture.md">Arquitetura</a></div><h3>Planos específicos</h3><div class="links"><a href="../docs/spotlight-raycast-plan.md">Spotlight</a><a href="../docs/wallpaper-color-plan.md">Temas</a><a href="../docs/wayland-backend-plan.md">Wayland</a></div></section>
+      <section class="card half"><h2>Pendências prioritárias</h2><div id="tasks" class="loading">Lendo backlog…</div></section>
+      <section class="card half"><h2>Atualizações recentes</h2><div id="commits" class="loading">Buscando commits…</div></section>
+    </div>
+    <footer id="updated">Sem dependências externas para renderizar o painel. Atualizado ao abrir.</footer>
+  </main>
+  <script>
+    const $ = id => document.getElementById(id);
+    const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    async function loadDocs() {
+      const [sr,tr] = await Promise.all([fetch("../docs/status.md"),fetch("../docs/technical-todo.md")]);
+      if (!sr.ok || !tr.ok) throw Error("Não foi possível ler status e backlog. Abra por um servidor HTTP.");
+      const [status,todo] = await Promise.all([sr.text(),tr.text()]);
+      const m = status.match(/\*\*Próxima prioridade:\*\*\s*([^\n]+)/);
+      const label = m ? m[1].replace(/\[([^\]]+)\]\([^)]+\)/g,"$1").replace(/\*\*/g,"").trim() : "Consulte o backlog técnico";
+      $("priority").innerHTML = `<div class="priority"><strong>${esc(label)}</strong><p>Critérios e cenários de validação estão no backlog técnico.</p></div>`;
+      const items = [...todo.matchAll(/^- \[([ xX])\] \*\*(P\d-\d+) — ([^*]+)\*\.?([^\n]*(?:\n  [^\n]*)*)/gm)].map(x=>({done:x[1].toLowerCase()==="x",id:x[2],title:x[3].trim()}));
+      const total=items.length,done=items.filter(x=>x.done).length,open=total-done,pct=total?Math.round(done*100/total):0;
+      $("progress").style.width=`${pct}%`; $("progress-label").textContent=`${pct}% do backlog marcado como concluído · ${done} de ${total} itens`;
+      $("open-count").textContent=open; $("done-count").textContent=done;
+      const next=items.filter(x=>!x.done).slice(0,6);
+      $("tasks").innerHTML=next.length?`<ul class="task-list">${next.map(x=>`<li class="task"><span class="tag">${esc(x.id)}</span><p>${esc(x.title)}</p></li>`).join("")}</ul>`:`<p class="subtle">Nenhuma pendência aberta no backlog.</p>`;
+      $("updated").textContent=`Status e backlog lidos do repositório · atualizado ${new Intl.DateTimeFormat("pt-BR",{dateStyle:"medium",timeStyle:"short"}).format(new Date())}`;
+    }
+    async function loadCommits() {
+      const r=await fetch("https://api.github.com/repos/emanuelserpa/lume-shell/commits?per_page=6",{headers:{Accept:"application/vnd.github+json"}}); if(!r.ok) throw Error();
+      const data=await r.json(); $("commits").innerHTML=`<ul class="commit-list">${data.map(c=>`<li class="commit"><time>${new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"short"}).format(new Date(c.commit.author.date))}</time><a href="${esc(c.html_url)}">${esc(c.commit.message.split("\n")[0])}</a></li>`).join("")}</ul>`;
+    }
+    loadDocs().catch(e=>$("priority").innerHTML=`<p class="subtle">${esc(e.message)}</p>`);
+    loadCommits().catch(()=>$("commits").innerHTML='<p class="subtle">Feed do GitHub indisponível. O restante do painel continua funcionando.</p>');
+  </script>
+</body>
+</html>

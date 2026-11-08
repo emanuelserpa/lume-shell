@@ -27,6 +27,22 @@ O callback do observador consome o conteúdo enviado por `wl-paste --watch` no
 `stdin` antes de consultar MIME e gravar o item. Isso impede que uma captura
 PNG grande bloqueie o pipe e paralise eventos seguintes.
 
+O botão **Pausar** no preview do clipboard persiste a preferência em
+`$XDG_STATE_HOME/quickshell/clipboard-capture.json` (ou
+`~/.local/state/quickshell/clipboard-capture.json`). Enquanto pausado, os
+callbacks ainda drenam o pipe do Wayland, mas não consultam MIME nem armazenam a
+seleção. **Retomar** volta a capturar as próximas mudanças; não importa
+retroativamente o conteúdo atual. A preferência sobrevive à reinicialização do
+shell. O recurso pausa toda captura e não tenta reconhecer senhas ou outros
+conteúdos sensíveis automaticamente. Se a preferência existir mas estiver
+corrompida ou inacessível, a captura fica pausada por segurança; apagar o arquivo
+restaura o padrão ativo.
+
+Remover um item também apaga seu blob e thumbnail quando não há mais referência
+no banco e atualiza o snapshot de compatibilidade. SQLite/WAL, snapshots do
+sistema de arquivos e backups podem manter cópias físicas; remoção do histórico
+não é garantia de apagamento forense.
+
 ---
 
 ## Arquitetura do Sistema
@@ -68,7 +84,7 @@ scripts/clipboard-daemon.py (--capture)
 
 ### Diretório de Cache (XDG Cache)
 `~/.cache/quickshell/`
-- **`clipboard-index.json`**: índice serializado mantido em cache para suporte e compatibilidade transparente com o frontend.
+- **`clipboard-index.json`**: snapshot serializado de compatibilidade, atualizado pelo caminho legado; o SQLite é a fonte de verdade.
 
 ---
 
@@ -166,7 +182,7 @@ Ao pressionar `Shift+Delete` (ou clicar em `󰆴 Del` no cabeçalho do preview):
 - O item é removido imediatamente da lista local na interface, proporcionando feedback visual com latência zero.
 - O comando `clipboard-remove <id> <signature>` é enviado ao backend.
 - O SQLite deleta a linha permanentemente e o arquivo blob correspondente é apagado caso não esteja em uso.
-- O cache `clipboard-index.json` é sincronizado para evitar que o item reapareça em reinicializações da busca.
+- A remoção atualiza `clipboard-index.json` quando ele existe, evitando que o item reapareça em consumidores legados após reinicializações. O cache é gravado por substituição atômica e pode ser descartado se estiver inválido; o SQLite continua sendo a fonte de verdade.
 
 ---
 

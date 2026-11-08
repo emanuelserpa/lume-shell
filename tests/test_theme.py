@@ -289,6 +289,48 @@ class TestThemeManager(unittest.TestCase):
         # Sem paleta não escreve nem registra ok.
         self.assertFalse(tm.sync_labwc_theme(palette=None, config_home=cfg_home))
 
+    def test_labwc_write_failure_preserves_previous_file_and_retry_recovers(self):
+        sample = tm.THEMES["catppuccin-mocha"]
+        cfg_home = Path(os.environ["XDG_CONFIG_HOME"])
+        target = cfg_home / "labwc" / "themerc-override"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("previous-valid-config\n", encoding="utf-8")
+        original_replace = Path.replace
+
+        def fail_theme_replace(path, destination):
+            if path == target.with_suffix(".tmp"):
+                raise OSError("simulated interrupted write")
+            return original_replace(path, destination)
+
+        with patch.object(Path, "replace", new=fail_theme_replace):
+            self.assertFalse(tm.sync_labwc_theme(sample, config_home=cfg_home))
+
+        self.assertEqual(target.read_text(encoding="utf-8"), "previous-valid-config\n")
+        self.assertFalse(tm.adapter_in_sync("labwc", "catppuccin-mocha", sample))
+        self.assertTrue(tm.sync_labwc_theme(sample, config_home=cfg_home))
+        self.assertTrue(tm.adapter_in_sync("labwc", "catppuccin-mocha", sample))
+
+    def test_gtk_invalid_settings_are_reported_out_of_sync_until_repaired(self):
+        sample = tm.THEMES["catppuccin-mocha"]
+        cfg_home = Path(os.environ["XDG_CONFIG_HOME"])
+        gtk3_settings = cfg_home / "gtk-3.0" / "settings.ini"
+        gtk3_settings.parent.mkdir(parents=True, exist_ok=True)
+        gtk3_settings.write_text("[Settings\ninvalid", encoding="utf-8")
+        themes_dir = Path(self._tmpdir.name) / "home" / ".themes"
+
+        with patch.object(tm.shutil, "which", return_value=None):
+            self.assertTrue(tm.sync_gtk_theme(
+                "catppuccin-mocha", sample,
+                config_home=cfg_home, themes_dir=themes_dir))
+        self.assertFalse(tm.adapter_in_sync("gtk", "catppuccin-mocha", sample))
+
+        gtk3_settings.write_text("[Settings]\n", encoding="utf-8")
+        with patch.object(tm.shutil, "which", return_value=None):
+            self.assertTrue(tm.sync_gtk_theme(
+                "catppuccin-mocha", sample,
+                config_home=cfg_home, themes_dir=themes_dir))
+        self.assertTrue(tm.adapter_in_sync("gtk", "catppuccin-mocha", sample))
+
     def test_sync_mango_theme(self):
         sample = tm.THEMES["catppuccin-mocha"]
         cfg_home = Path(os.environ["XDG_CONFIG_HOME"])

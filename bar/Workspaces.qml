@@ -88,6 +88,7 @@ Item {
             delegate: Rectangle {
                 id: workspaceDelegate
                 required property var modelData
+                required property int index
                 readonly property bool belongsToScreen: {
                     if (!root.hyprlandActive)
                         return true
@@ -177,7 +178,8 @@ Item {
                         // identity after `renameworkspace`; dispatch by the
                         // stable numeric ID when available.
                         if (root.hyprlandActive && parent.ws !== null) {
-                            const id = Number(parent.ws.id)
+                            const id = WorkspaceModel.numericWorkspaceNumber(
+                                parent.ws, { hyprland: true })
                             root.focusWorkspace(id > 0 ? id : parent.ws.name)
                         }
                         // ext-workspace-v1 is the shared activation path for
@@ -187,8 +189,9 @@ Item {
                                 && typeof parent.ws.activate === "function")
                             parent.ws.activate()
                         else if (root.mangoActive) {
-                            const tag = Number(parent.ws?.number ?? parent.ws?.name ?? parent.ws?.id)
-                            if (Number.isInteger(tag))
+                            const tag = WorkspaceModel.numericWorkspaceNumber(
+                                parent.ws, { mango: true })
+                            if (tag > 0)
                                 MangoState.dispatchWorkspace(tag, root.screen?.name ?? "")
                         }
                         else

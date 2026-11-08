@@ -1,5 +1,6 @@
 # Maintainer: Emanuel Serpa
 pkgname=lume-shell
+# Local source-build fallback; release workflow supplies the Git tag version.
 pkgver="${_release_pkgver:-0.1.0}"
 pkgrel=13
 pkgdesc='Wayland desktop shell built with Quickshell'

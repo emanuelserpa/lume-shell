@@ -4,10 +4,9 @@ set -u
 
 MODE="${1:-all}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-LOG_DIR="${XDG_CACHE_HOME:-${HOME:-/tmp}/.cache}/quickshell"
-mkdir -p -- "$LOG_DIR" || true
-LOG_FILE="$LOG_DIR/update.log"
-: > "$LOG_FILE" 2>/dev/null || LOG_FILE="/tmp/quickshell-update-${UID:-unknown}.log"
+LOG_FILE="$(python3 -B "$SCRIPT_DIR/update-log.py" prepare 2>/dev/null)" \
+  || LOG_FILE="/tmp/quickshell-update-${UID:-unknown}.log"
+[[ -n "$LOG_FILE" ]] || LOG_FILE="/tmp/quickshell-update-${UID:-unknown}.log"
 
 FAILED=()
 STEP=0
@@ -157,3 +156,4 @@ else
 fi
 printf '{"type":"done","ok":%s,"text":"%s"}\n' "$ok" "$summary"
 printf '%s\n' "$summary" >>"$LOG_FILE"
+python3 -B "$SCRIPT_DIR/update-log.py" record-status "$ok" "$summary" "$LOG_FILE" >/dev/null 2>&1 || true

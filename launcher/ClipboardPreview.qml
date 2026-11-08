@@ -124,6 +124,7 @@ Item {
             Row {
                 id: headerActions
                 anchors.right: parent.right
+                anchors.rightMargin: captureToggle.visible ? root.themeColors.spacingTokens.sm : 0
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: root.themeColors.spacingTokens.sm
                 visible: root.result !== null && root.result.kind === "clipboard"
@@ -207,6 +208,39 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.openImageRequested()
+                    }
+                }
+            }
+
+            Text {
+                id: captureToggle
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.store.capturePauseKnown
+                text: root.store.captureControlRunning
+                      ? "Salvando…"
+                      : (root.store.captureControlError.length > 0
+                         ? "Erro · tentar"
+                         : (root.store.capturePaused ? "▶ Retomar" : "Ⅱ Pausar"))
+                color: root.store.captureControlError.length > 0
+                       ? root.themeColors.error
+                       : (captureMouse.containsMouse
+                          ? root.themeColors.primary : root.launcherMuted)
+                opacity: captureMouse.containsMouse ? 1.0 : 0.75
+                font.family: root.themeColors.fontFamily
+                font.pixelSize: root.themeColors.spotlightBodyFontSize
+
+                MouseArea {
+                    id: captureMouse
+                    anchors.fill: parent
+                    anchors.margins: -4
+                    enabled: !root.store.captureControlRunning
+                    hoverEnabled: true
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: {
+                        const desired = root.store.captureControlError.length > 0
+                            ? root.store.capturePaused : !root.store.capturePaused
+                        root.store.setCapturePaused(desired)
                     }
                 }
             }

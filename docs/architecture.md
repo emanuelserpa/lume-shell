@@ -1,333 +1,145 @@
 # Architecture
 
-## Overview
+Lume uses Quickshell/QML for surfaces and small Python/shell helpers for system
+integration. See [current-state](current-state.md) for owners and
+[shell-uml](shell-uml.md) for diagrams.
 
-The shell is organized around Quickshell QML components and small Python/shell helpers.
-The mounted component relationships are shown in [`shell-uml.md`](shell-uml.md).
+## Boundaries
 
-Main areas:
+`System APIs → services/helpers → UI surfaces → shared visual components`
 
-- `shell.qml`
-- `bar/`
-- `components/`
-- `scripts/`
-- optional config/state files
+UI components own presentation and user interaction. Services own shared state
+and lifecycle; helpers normalize external data. Keep local state local unless
+sharing, synchronization, or an API boundary makes a service useful.
 
-## Bar composition
+`bar/Bar.qml` deliberately lists modules explicitly. Preserve ordering,
+geometry, centering, focus, and popup behavior. The full constraints live in
+[AGENTS.md](../AGENTS.md) and the [stability contract](stability-contract.md).
 
-`bar/Bar.qml` is intentionally explicit.
+## QML conventions
 
-Do not dynamically instantiate the entire bar via `Repeater`/`Loader` without explicit approval.
-
-The explicit layout protects:
-- spacing;
-- vertical alignment;
-- center positioning;
-- hover behavior;
-- predictable module widths.
-
-## Component philosophy
-
-Spotlight keeps its providers local to `launcher/`:
-`SpotlightSearchController.qml` routes app, window and command searches,
-`SpotlightQueryRouter.qml` maps each query mode to its provider and normalizes
-results, and `SpotlightResult.qml` gives each result a common contract.
-`SpotlightRanking.qml` combines apps, windows and actions for nonempty root
-queries; the empty root query still lists apps. Legacy result fields remain
-available to the current activation and preview paths.
-`SpotlightModeLogic.js` owns query-mode classification and action-prefix
-metadata; `SpotlightActionLogic.js` provides pure grouping, navigation and
-action-resolution rules. `SpotlightActionExecutor.qml` performs the resolved
-operations and reports launcher-specific work such as closing, navigating,
-session confirmation and usage ranking through signals, leaving input focus
-and ranking process ownership with `Spotlight.qml`.
-
-A module generally consists of:
-- compact bar item;
-- optional popup;
-- optional helper script;
-- state refresh logic.
-
-Keep module boundaries understandable and local.
-
-## QML Code Quality
-
-Use these practices when adding or refactoring QML. They follow Qt's
-[QML coding conventions](https://doc.qt.io/qt-6/qml-codingconventions.html)
-and the stability rules in `AGENTS.md`:
-
-- Give components explicit inputs with `required property` declarations and
-  communicate user actions through signals. Do not reach into another QML
-  component's `id` or depend on an implicit parent context.
-- Qualify access to the current component through its root `id` so bindings
-  show where state comes from.
-- Extract a shared component when multiple surfaces implement the same visual
-  and interaction contract. Pass variations such as size and theme through
-  properties; keep one-off layout local.
-- Popup headers use `components/PopupHeader.qml`; list surface, hover, and
-  selected-state treatment use `components/PopupListRow.qml`. Their slots keep
-  domain content and actions in the owning popup. Use `ScrollableList` for
-  vertical lists that need the shared conventional wheel handler. It supports
-  both Column-backed content and virtualized `model`/`delegate` rows; its
-  footer, scrollbar, empty state, and search field are optional. Use
-  `SettingToggleRow` when a labeled setting is controlled by a switch. Keep
-  specialized grids, notification cards, and protocol delegates local.
-- Keep presentation in UI components and system interaction, parsing, and
-  shared lifecycle state in existing services or helpers. Add a service only
-  when it meets the criteria in `AGENTS.md`.
-- Keep functions focused and signal handlers readable. Move repeated or
-  multi-step logic into named functions instead of compressing it into
-  bindings or one-line handlers.
-- Isolate tests from the live desktop and filesystem. Use temporary
-  directories and mock process boundaries so tests work without writing to
-  `/run`, invoking a compositor, or depending on user services.
-- Preserve the documented UI and behavior contracts. Prefer focused changes
-  with regression checks over broad cleanup of stable surfaces.
-- `scripts/validate.sh` runs `qmllint` on every QML file and supplies each
-  project `qmldir`, so local module imports are checked with the project
-  structure available. QML files with nested components use
-  `pragma ComponentBehavior: Bound` where outer IDs are referenced. In
-  addition to syntax and type errors, validation requires zero lint warnings
-  and treats 13 quality checks (such as deprecated APIs, duplicate imports,
-  stale reads, `eval`, and unreachable code) as errors. Delegate model values
-  and references to outer component state are explicitly qualified.
-  Suppressions are limited to known gaps in the installed Qt/Quickshell
-  metadata, including `PanelWindow`, popup anchor enums, `QMargins`, and a few
-  plugin types; each suppression is scoped to the affected declaration.
-- Put notification content normalization and filtering in
-  `services/NotificationContent.js`; its QML tests exercise that same module
-  through `qmltestrunner` rather than maintaining a Python copy of the rules.
-- Keep color conversion and semantic palette math in `scripts/theme_colors.py`;
-  theme adapters and persistence remain in the CLI manager.
-- Keep built-in theme data and terminal theme-name mappings in
-  `scripts/theme_catalog.py`. `scripts/theme-manager.py` owns runtime state,
-  wallpaper-derived palettes, persistence, and adapter synchronization.
-- Keep literal QML palette values in `Theme.qml` and `services/ThemeState.qml`;
-  reusable components must receive theme tokens. `scripts/validate.sh` enforces
-  this boundary.
+- Declare inputs with `required property`, qualify bindings with the root ID,
+  and communicate actions through signals. Avoid implicit parent context.
+- Use `pragma ComponentBehavior: Bound` when nested components reference outer
+  IDs; qualify delegate model values and outer state.
+- Keep handlers readable; move repeated/multistep work to named functions.
+- Reuse components for matching interaction contracts, not merely similar shapes.
+  Specialized grids, workspace delegates, notifications, and Spotlight results
+  may retain their own structures.
+- All surfaces consume `Theme.qml` tokens. Literal QML palettes stay in
+  `Theme.qml` and `services/ThemeState.qml`.
+- Scope lint suppressions to documented Qt/Quickshell metadata gaps, such as
+  PanelWindow, popup anchor enums, and QMargins. The validator supplies project
+  qmldirs and checks all QML files, including quality warnings.
 
 ## Shared UI behavior
 
-- `components/WheelKinetic.qml` owns the common direction and motion for wheel
-  input on scrollable `Flickable` and `ListView` surfaces.
-- `components/ScrollBar.qml` provides the shared vertical thumb, track click,
-  drag, and wheel forwarding for long lists.
-- `components/ScrollableList.qml` supports vertical Column-backed content and
-  virtualized model/delegate lists. It composes either view with `WheelKinetic`
-  and optional scrollbar, empty state, footer, and search-field slots.
-  Horizontal galleries and nested scrolling keep the lower-level primitives
-  directly because their interaction contracts differ.
-- `components/ActionFeedback.qml` shares busy/error state and optional timed
-  dismissal while each domain keeps ownership of its action process and text.
-- Popup feedback remains contextual rather than adding a duplicate global
-  banner: Network and Bluetooth show per-target state, Phone shows per-device
-  state, Printer uses `ActionFeedback`, Screen Recording shows its operation
-  result, and update backends expose their own busy/error results. Direct
-  control tiles report state through their active state or OSD. When adding an
-  action, preserve that domain signal and render helper failures visibly.
-- `components/PopupIconButton.qml` shares compact popup icon actions;
-  `PopupSettingsButton.qml` specializes it as the settings gear. Dimensions
-  and color tokens remain configurable for the printer, audio, and Quick
-  Settings variants.
-- `components/PopupHeader.qml` shares the icon, title, subtitle, and trailing
-  action layout for standard and compact headers in Audio, Brightness,
-  Bluetooth, Network, Phone, Printer, and System Update popups.
-  Each popup keeps its own status text, icon color, and action controls. Quick
-  Settings uses the same header for its section labels, live notification
-  count, and action groups. Hero rows (Battery), media controls, and toggles
-  remain local content because they are not popup title headers.
-- `components/PopupListRow.qml` shares the active, hover, border, and clipping
-  treatment of Wi-Fi and VPN rows in `NetworkPopup.qml`, Bluetooth device rows,
-  and printer/print-job rows. Domain contents and actions stay in each delegate
-  because connected, discovery, printing, and network actions differ. Its
-  default content slot is hidden when the standard icon/title layout is active;
-  pointer handlers for those rows must use the named `interactionHandlers`
-  slot so the handler remains attached to a visible item. This applies to
-  `TapHandler` and `MouseArea` children alike.
-  Gotcha: ids defined inside the `trailing:` Component are invisible outside
-  it, so a row-level `interactionHandlers` tap cannot hit-test against a
-  trailing item id. Expose geometry through delegate properties (e.g. a key
-  action size/flag on the row) instead of referencing the trailing id.
-  Toast cards, Spotlight results/actions, application menu entries, and wallpaper
-  previews retain their own surfaces because they carry different lifecycle,
-  selection, animation, or content behavior.
-- `components/EmptyState.qml` shares the icon, title, optional subtitle, and
-  alignment for empty views in notifications, network, Bluetooth, updates,
-  printing, and Spotlight. Each surface supplies its original copy and tokens.
-- `components/SearchField.qml` shares the TextInput base and placeholder
-  treatment across Spotlight, phone sharing, weather lookup, and Wi-Fi
-  password entry. Network and Bluetooth list filters use its optional
-  debounced query signal; each caller retains its own focus and action logic.
-- `components/MaterialSwitch.qml` provides the shared accessible switch for
-  Bluetooth, Wi-Fi, and VPN controls; `Theme.qml` supplies its interaction
-  state layers and palette roles.
-- `components/SettingToggleRow.qml` standardizes the labeled switch row and
-  is used by screen recording and VPN controls; dashboard toggles remain
-  `QuickTile` actions with a different layout and interaction contract.
-- `qs.controlcenter.SliderRow` shares pointer dragging, normalized track fill,
-  hover thumb, wheel stepping, and disabled-state behavior in Quick Settings,
-  AudioPopup (including application streams), and the brightness popup.
-  Per-stream mute and routing remain in the audio domain delegates.
-- `components/MediaSeekBar.qml` shares progress rendering, seeking, elapsed and
-  total-time formatting, and playback-progress animation between the compact
-  Quick Settings player and the full media popup. Callers retain their own
-  layout density and translate the normalized seek request to MPRIS position.
-- `components/CommandJson.qml` owns polling, process lifetime, and JSON decoding
-  for simple status helpers. Use a local `Process` where stdin, output parsing,
-  or action lifecycle needs domain-specific handling.
-- `services/CommandResult.js` normalizes versioned helper envelopes and legacy
-  flat helper JSON into `{ok, version, data, error}`. Error-only legacy payloads
-  also normalize as failures. `CommandJson.result` exposes that stable form;
-  `payload` remains a compatibility view of `data` while consumers migrate by
-  domain.
-- The battery popup consumes normalized `result.data` from its charge limit,
-  power-profile, and CPU boost helpers. Its local action processes use the
-  shared result decoder while retaining their own busy and refresh lifecycle.
-- Network, Bluetooth, KDE Connect, and printer actions use the same result
-  decoder for success and error feedback without moving action lifecycle into a
-  generic component.
-- Spotlight launcher-data processes use the shared decoder for app usage,
-  file/emoji/window queries, and clipboard snapshots/actions. Ranking, query
-  routing, selection, and keyboard behavior remain owned by their current
-  components; compositor IPC streams keep their protocol-specific parsers.
-- Direct JSON parsing in QML is limited to Mango's line-based compositor IPC
-  and the incremental speed-test event stream. Other
-  helper responses use `CommandResult.js` or `CommandJson`.
-- Brightness status and write helpers return the versioned JSON contract; QML
-  owns only optimistic display state and presents helper failures in the open
-  brightness popup. The OSD discovers the backlight device through the status
-  helper, then follows the device's sysfs files for live updates.
-- The shared update counts and backend detail objects are read from each
-  helper's normalized `CommandJson.result.data`.
-- The dashboard's game detector exposes its status through
-  `CommandJson.result.data`; helper failure leaves its status unavailable.
-- Theme-manager processes use `CommandResult.js`; failures are logged and
-  surfaced in the Settings header instead of being discarded by local JSON
-  parse catches.
-- `services/HolidayLogic.js` calculates recurring national holidays and Easter-
-  dependent Good Friday locally. `CalendarCard.qml` passes the active weather
-  region to add applicable state holidays without a runtime network request.
-- `bar/SystemMonitor.qml` consumes the normalized procfs snapshot from
-  `scripts/system-usage.py` every five seconds. CPU usage is calculated from
-  successive counter samples; memory usage is available from each sample.
-- `services/ProcessLifecycle.js` distinguishes a completed process from one
-  that failed before starting. Weather refresh and clipboard supervision use
-  this shared transition helper with `Process.runningChanged`, avoiding the
-  unresolved `QProcess::ExitStatus` metadata in `onExited`.
-- `services/MotionState.qml` exposes the shared motion policy through
-  `Theme.qml`. Quickshell handles visual transitions on every compositor;
-  Hyprland continues to animate its own windows and workspaces independently.
+| Component | Responsibility |
+| --- | --- |
+| `PopupHeader` | Title, subtitle, accessory, and trailing actions |
+| `PopupListRow` | Standard row slots and active/hover/border treatment |
+| `ScrollableList` | Column or virtualized list with optional footer, search, empty state, scrollbar |
+| `WheelKinetic`, `ScrollBar` | Common wheel motion, thumb dragging, track clicks; available directly for galleries/nested scrolling |
+| `PopupIconButton`, `PopupSettingsButton` | Compact actions; settings-gear variant |
+| `EmptyState`, `SearchField` | Empty-view layout; input/placeholder and optional debounced queries |
+| `MaterialSwitch`, `SettingToggleRow` | Accessible switch and labeled switch row |
+| `controlcenter/SliderRow` | Drag, wheel, normalized fill, hover, and disabled state |
+| `MediaSeekBar` | Progress, time labels, animation, normalized seek requests |
+| `ActionFeedback` | Busy/error presentation and optional timed dismissal |
 
-## Python helpers
+Domains retain processes, labels, selection, mute/routing, and MPRIS conversion.
+Display failures where the action lives; use global OSD only for shared feedback.
 
-Python is used when shell commands become awkward or when structured JSON is useful.
+**PopupListRow caveat:** its default-content slot is hidden when standard slots
+are active. Put pointer handlers in `interactionHandlers`. IDs inside a
+`trailing:` Component are not visible to the row-level handler; expose needed
+geometry through delegate properties. Do not bypass these boundaries by reaching
+into another component's IDs.
 
-Common pattern:
-- QML starts a process;
-- helper returns JSON;
-- QML displays structured state.
+Click-opened detail popups use `grabFocus: true`. Hover previews, Spotlight
+subpanels, SystemInfo, and desktop windows have distinct dismissal rules in the
+[design guide](design-guidelines.md). `MotionState` supplies shared QML motion
+policy through `Theme.qml`; compositor window animations remain independent.
 
-Prefer small single-purpose helpers over one huge daemon.
+## Helpers, state, and processes
 
-Standalone scripts share `scripts/command_utils.py` for bounded subprocess
-execution while preserving per-domain output and error contracts, and
-`scripts/network_utils.py` for the IPv4 DNS workaround used by weather and
-speed-test requests. The Arch, AUR, Flatpak, and Brew update checks serialize
-their common result envelope through `scripts/update_status_json.py`. Test
-suites share `tests/helpers.py` for loading hyphenated script filenames and
-reading fixtures.
+Use normalized `{ok, version, data, error}` responses. `CommandResult.js` accepts
+versioned and legacy flat JSON, including error-only failures.
+`CommandActionResult.js` also requires exit code zero before an action/query can
+report success and includes stderr or the parsed helper error on failure.
+`CommandAction` and `CommandJson` report a start failure if no `started` event is
+observed within two seconds.
+`CommandJson` owns status polling and process lifetime; its restart path waits
+for the stopped process to exit and discards that run's output before launching
+the latest query. Consume `result.data`; `payload` remains a compatibility view.
+Use local `Process` objects when stdin, streaming, or domain-specific lifecycle
+requires it.
 
-## State
+Mango IPC and incremental speed-test streams keep protocol-specific parsers.
+Other helper responses use the shared decoder. Keep normalization in one place:
+notification text in `NotificationContent.js`, theme math in `theme_colors.py`,
+and built-in theme data/terminal mappings in `theme_catalog.py`.
 
-Mutable runtime state should go under XDG state/cache locations.
+Shared helper utilities:
 
-Examples:
-- weather city selection:
-  `~/.local/state/quickshell/weather.json`
-- weather cache:
-  XDG cache path
+- `command_utils.py`: bounded subprocess execution.
+- `network_utils.py`: IPv4 DNS workaround for weather/speed tests.
+- `update_status_json.py`: common Arch/AUR/Flatpak/Brew update envelopes.
+- `ProcessLifecycle.js`: completion versus failure to start; used by weather and
+  clipboard instead of relying on unresolved QProcess exit-status metadata.
+- `tests/helpers.py`: fixture access and loading hyphenated helper filenames.
 
-Do not store frequently changing state in tracked config files unless there is a strong reason.
+Store mutable data in XDG state/cache locations, not tracked configuration.
+Prefer events/file observation; avoid excessive polling and background scans
+when the UI is closed. Never pass secrets in argv. Wi-Fi uses `nmcli --ask`
+over stdin. Existing nmcli, bluetoothctl, CUPS, and Open-Meteo backends remain
+valid choices; a shared service does not require replacing them.
 
-## Process strategy
+Feature guides own polling details, persistence formats, and error contracts.
+Tests should use temporary state and mock command boundaries, not the user's
+running desktop. See [validation](deploy-and-validation.md).
 
-Subprocesses are acceptable, but:
-- avoid excessive polling;
-- avoid background scans unless UI is open or explicitly refreshed;
-- avoid secrets in argv;
-- prefer event/file observation when possible.
+## Spotlight
 
-## Popup philosophy
+`SpotlightSearchController` coordinates searches; `SpotlightQueryRouter` maps
+query modes to providers and normalized `SpotlightResult` objects. Ranking
+combines apps/windows/actions for nonempty root queries; empty root lists apps.
+Legacy result fields remain for existing activation/preview paths.
 
-Popups should:
-- be cohesive;
-- avoid dead space;
-- avoid redundant cards;
-- use visual grouping only where it improves comprehension;
-- preserve the shell's compact tonal hierarchy through the active theme;
-  Catppuccin Mocha is the historical baseline, not a fixed palette requirement.
-
-See [design guidelines](design-guidelines.md) for the visual contract and
-[design plan](design-plan.md) for the current consistency backlog.
-
-## Error strategy
-
-Prefer contextual inline errors:
-- per-row connection state for network;
-- lightweight activity text;
-- generic OSD only for cross-cutting feedback.
-
-Avoid large technical error dumps in normal UI.
+`SpotlightModeLogic.js` classifies queries; `SpotlightActionLogic.js` resolves
+navigation/grouping/actions. `SpotlightActionExecutor` executes operations and
+signals launcher work such as closing, navigation, confirmation, and usage
+ranking. Focus and ranking-process ownership remain with `Spotlight.qml`.
+See the [Spotlight plan](spotlight-raycast-plan.md) and [clipboard guide](clipboard.md).
 
 ## Compositor Boundary & Agnosticism
 
-`services/CompositorState.qml` reads `LUME_COMPOSITOR_MODE` (`auto`,
-`wayland`, or `hyprland`), reports protocol-backed state exposed by Quickshell,
-and centralizes safe toplevel activation/close requests. An empty Quickshell
-protocol model is reported as `unreported`; it is not treated as proof that a
-protocol is absent. `scripts/doctor.sh` can separately report compositor
-advertisements through optional `wayland-info`.
+`CompositorState` selects `auto`, `wayland`, or `hyprland` through
+`LUME_COMPOSITOR_MODE`. Generic workspaces use `WindowManager` with
+`screenProjection(screen)`; window actions use `ToplevelManager`. Hyprland
+retains native occupancy, PID, and workspace metadata. Protocol window data
+does not provide PID-based process termination.
 
-The shell UI is decoupled from compositor-specific CLI commands and syntax:
-- General UI components use Quickshell APIs or project helpers for compositor actions. `bar/Submap.qml` obtains the Hyprland-only modal submap through the compositor dispatcher.
-- All compositor dispatch actions (such as switching workspaces or focusing windows) are routed through `scripts/compositor-dispatch.sh`.
-- The dispatcher encapsulates multi-format support (e.g. Hyprland Lua dispatch vs classic hyprlang dispatch) without leaking syntax into QML.
-- Workspace display and activation use Hyprland's native model for occupancy and stable IDs, and Quickshell `WindowManager` `ext-workspace-v1` for other compositors. The bar scopes generic windowsets through `screenProjection(screen)`. Mango's `mmsg` watcher remains active in `auto` mode for focused-output state; its workspace snapshot is a fallback when the protocol supplies no windowsets.
-- Spotlight uses Hyprland client metadata on Hyprland and Quickshell's `ToplevelManager` foreign-toplevel protocol elsewhere for the `~` window list and actions. The `!` process-kill mode uses Hyprland PID data because the protocol does not expose PIDs.
-- Click-opened detail popups use Quickshell `PopupWindow` focus grabbing
-  (`grabFocus: true`). Check outside-click dismissal on each supported compositor;
-  hover previews, Spotlight subpanels, SystemInfo and desktop windows have distinct
-  focus/dismissal contracts described in the design guide.
-- Compositor agnosticism is continuously guarded by automated checks in `scripts/validate.sh`.
+An empty model is `unreported`, not proof of missing protocol support. Doctor
+can inspect compositor announcements separately through optional `wayland-info`.
+Mango keeps one `mmsg` stream in `auto` for focused-output state and workspace
+fallback. Native CLI dispatch lives in `scripts/compositor-dispatch.sh`.
+See [compositor integration](compositor-integration.md) for capabilities,
+version limits, focused-output fallback, and projection restrictions.
 
 ## Theme System & Multi-Theme Architecture
 
-The shell supports dynamic, live-reloading themes across all surfaces without restarting Quickshell:
-- **Design Tokens**: `Theme.qml` remains the central design token contract for colors, radiuses, and typography. Its color properties are dynamically bound to `ThemeState.currentPalette`.
-- **Reactive State Singleton**: `services/ThemeState.qml` manages the active palette and provides reactive methods (`setTheme(id)` and `nextTheme()`).
-- **Persistence**: Theme selection persists across reboots in `~/.local/state/quickshell/theme.json`.
-- **Catalog**: Includes 7 popular community color palettes:
-  - `catppuccin-mocha` (default dark)
-  - `tokyo-night` (dark neon)
-  - `nord` (arctic cold dark)
-  - `gruvbox` (warm retro dark)
-  - `dracula` (high-contrast gothic dark)
-  - `rose-pine` (pine & lilac dark)
-  - `catppuccin-latte` (clean light mode)
-- **Control Points**:
-  - **CLI**: `scripts/theme-manager.py [list|get|set <id>|next]`
-  - **Chameleon**: `chameleon`, `chameleon-light`, and `chameleon-oled` share a wallpaper source color and use the vendored Python port of Material Color Utilities for Tonal Spot roles (version 3.0.2, 2021 specification; MIT license in `scripts/vendor/MATERIALYOUCOLOR-LICENSE`). Normal and OLED use dark roles; OLED has a black base. Light uses the full light scheme.
-  - **Spotlight Launcher**: Quick switcher via `:tema` or `:theme` filter and `: Alternar Tema` system action.
-  - **Wallpaper gallery**: `ThemePreviewPane.qml` presents the active wallpaper in the center of a five-card Cover Flow, with neighboring choices around it and animated scale, tilt, opacity and position. Arrow keys or the wheel change selection; a click selects and Enter or a double click applies it. Images load only for the five visible thumbnails even when the folder contains many images. WebP and AVIF previews use Pillow; JPEG-XL uses ImageMagick. These formats are converted to cached JPEGs because the installed Qt image plugins do not decode them. The folder and selected image persist in `~/.local/state/quickshell/wallpaper.json`. Applying a thumbnail uses awww/swww, refreshes `~/.cache/current_wallpaper` and the Chameleon palette. `folder` selects a new directory with zenity; Spotlight unmaps its layer window while the native picker is open and remaps in theme mode afterward so the picker stays visible. `restore` reapplies the saved image at session startup. The selected image and folder are restored from the shell state file.
-  - **Adapters**: every `set` / wallpaper-driven `update-wallpaper` also syncs
-    Kitty, optional Ghostty, Hyprland, hyprlock, GTK, btop, Qt/Kvantum and labwc
-    (`~/.config/labwc/themerc-override`, live-reloaded via
-    `labwc --reconfigure` inside a labwc session). Manual edits to generated
-    adapter files are replaced on the next sync.
-  - **No-blur fallback**: labwc has no blur, so `Theme.qml` floors
-    `backgroundAlpha` at 0.92 in labwc sessions (`labwcSession`); Hyprland
-    caps it at 0.68 and applies compositor blur to Quickshell layers/popups.
+`ThemeState` owns the reactive palette; `Theme.qml` exposes visual tokens.
+The theme CLI owns persistence, wallpaper-derived colors, and adapter sync;
+`theme_catalog.py` owns catalog data. Read the catalog instead of duplicating
+its theme count/list in documentation.
 
-See [`compositor-integration.md`](compositor-integration.md) for the capability
-matrix and rules for adding another compositor without coupling UI files to its
-transport.
+Theme Studio previews choices without changing the global palette, applies
+explicit selections, and persists wallpaper/color preferences. Chameleon has
+dark, light, and OLED variants. Shared tokens handle opacity/readability for
+compositors with or without blur. Gallery navigation lives in `GalleryNav.js`.
+
+See [theme management](theme-management.md) for commands, adapters, state paths,
+thumbnail conversion, picker behavior, and wallpaper restoration. Generated
+adapter files are replaced on subsequent syncs; use the documented customization
+points. Visual constraints belong in the [design guide](design-guidelines.md).

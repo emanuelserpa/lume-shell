@@ -30,6 +30,8 @@ class ClipboardBackendTestCase(unittest.TestCase):
         self.orig_cache = clipboard_store.CACHE_INDEX_FILE
         self.orig_change = clipboard_store.CHANGE_FILE
         self.orig_thumbs = clipboard_store.THUMBS_DIR
+        self.orig_capture_settings = clipboard_store.CAPTURE_SETTINGS_FILE
+        self.orig_state_dir = clipboard_store.STATE_DIR
 
         clipboard_store.BASE_DIR = self.test_dir / "clipboard"
         clipboard_store.DB_PATH = clipboard_store.BASE_DIR / "clipboard.db"
@@ -37,6 +39,8 @@ class ClipboardBackendTestCase(unittest.TestCase):
         clipboard_store.CACHE_INDEX_FILE = self.test_dir / "clipboard-index.json"
         clipboard_store.CHANGE_FILE = self.test_dir / "clipboard-change"
         clipboard_store.THUMBS_DIR = self.test_dir / "thumbs"
+        clipboard_store.CAPTURE_SETTINGS_FILE = self.test_dir / "state" / "clipboard-capture.json"
+        clipboard_store.STATE_DIR = self.test_dir / "state"
         clipboard_store.init_db()
 
     def tearDown(self):
@@ -46,6 +50,8 @@ class ClipboardBackendTestCase(unittest.TestCase):
         clipboard_store.CACHE_INDEX_FILE = self.orig_cache
         clipboard_store.CHANGE_FILE = self.orig_change
         clipboard_store.THUMBS_DIR = self.orig_thumbs
+        clipboard_store.CAPTURE_SETTINGS_FILE = self.orig_capture_settings
+        clipboard_store.STATE_DIR = self.orig_state_dir
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_case_a_simple_text(self):
@@ -315,6 +321,87 @@ class ClipboardBackendTestCase(unittest.TestCase):
         # Blob must be deleted because no other item references it
         self.assertFalse((clipboard_store.BLOBS_DIR / blob_path).exists())
 
+    def test_remove_updates_legacy_cache_and_preserves_shared_blob(self):
+        blob_path, content_hash = clipboard_store.save_blob(b"shared image", ".png")
+        first, _ = clipboard_store.record_item(
+            "image", "image/png", ["image/png"], "Imagem", "[Imagem]", 1, 0,
+            blob_path, content_hash,
+        )
+        second, _ = clipboard_store.record_item(
+            "image", "image/png", ["image/png"], "Imagem duplicada", "[Imagem]", 1, 0,
+            blob_path, "different-record-hash",
+        )
+        clipboard_store.CACHE_INDEX_FILE.write_text(json.dumps({
+            "available": True,
+            "items": [{"id": str(first)}, {"id": str(second)}],
+        }), encoding="utf-8")
+
+        ok, error = clipboard_store.remove_item(str(first), content_hash)
+
+        self.assertTrue(ok)
+        self.assertIsNone(error)
+        cache = json.loads(clipboard_store.CACHE_INDEX_FILE.read_text(encoding="utf-8"))
+        self.assertEqual(cache["items"], [{"id": str(second)}])
+        self.assertTrue((clipboard_store.BLOBS_DIR / blob_path).exists())
+        self.assertEqual([item["id"] for item in clipboard_store.get_snapshot(10)], [str(second)])
+
+    def test_remove_with_wrong_signature_keeps_database_and_cache(self):
+        item_id, _ = clipboard_store.record_item(
+            "text", "text/plain", ["text/plain"], "Keep", "Keep", 1, 4, None, "keep-hash"
+        )
+        cache = {"available": True, "items": [{"id": str(item_id)}]}
+        clipboard_store.CACHE_INDEX_FILE.write_text(json.dumps(cache), encoding="utf-8")
+
+        ok, error = clipboard_store.remove_item(str(item_id), "stale-signature")
+
+        self.assertFalse(ok)
+        self.assertEqual(error, "Item modificado")
+        self.assertEqual(len(clipboard_store.get_snapshot(10)), 1)
+        self.assertEqual(json.loads(clipboard_store.CACHE_INDEX_FILE.read_text(encoding="utf-8")), cache)
+
+    def test_remove_cleans_cached_thumbnail(self):
+        blob_path, content_hash = clipboard_store.save_blob(b"thumbnail source", ".png")
+        item_id, _ = clipboard_store.record_item(
+            "image", "image/png", ["image/png"], "Imagem", "[Imagem]", 1, 0,
+            blob_path, content_hash,
+        )
+        clipboard_store.THUMBS_DIR.mkdir(parents=True, exist_ok=True)
+        thumb = clipboard_store.THUMBS_DIR / f"{content_hash}.jpg"
+        thumb.write_bytes(b"cached thumb")
+
+        ok, error = clipboard_store.remove_item(str(item_id), content_hash)
+
+        self.assertTrue(ok)
+        self.assertIsNone(error)
+        self.assertFalse(thumb.exists())
+
+    def test_capture_pause_preference_persists_and_defaults_to_enabled(self):
+        self.assertFalse(clipboard_store.clipboard_capture_paused())
+        self.assertTrue(clipboard_store.set_clipboard_capture_paused(True))
+        self.assertTrue(clipboard_store.clipboard_capture_paused())
+        self.assertEqual(clipboard_store.CAPTURE_SETTINGS_FILE.stat().st_mode & 0o777, 0o600)
+        self.assertTrue(clipboard_store.set_clipboard_capture_paused(False))
+        self.assertFalse(clipboard_store.clipboard_capture_paused())
+        clipboard_store.CAPTURE_SETTINGS_FILE.write_text("invalid", encoding="utf-8")
+        self.assertTrue(clipboard_store.clipboard_capture_paused())
+
+    def test_capture_pause_cli_persists_pause_and_resume(self):
+        import subprocess
+
+        env = dict(os.environ, XDG_STATE_HOME=str(self.test_dir / "xdg-state"))
+
+        def action(*args):
+            completed = subprocess.run(
+                [sys.executable, str(SCRIPTS_DIR / "launcher-data.py"), *args],
+                capture_output=True, text=True, env=env, check=True,
+            )
+            return json.loads(completed.stdout)
+
+        self.assertFalse(action("clipboard-capture-state")["paused"])
+        self.assertTrue(action("clipboard-capture", "pause")["paused"])
+        self.assertTrue(action("clipboard-capture-state")["paused"])
+        self.assertFalse(action("clipboard-capture", "resume")["paused"])
+
     def test_case_k_persistence(self):
         clipboard_store.record_item("text", "text/plain", ["text/plain"], "Persist", "Persist", 1, 7, None, "hashP")
         # Reconnect
@@ -487,6 +574,17 @@ class ClipboardCaptureRetryTestCase(unittest.TestCase):
     def test_case_s_gives_up_on_persistently_empty(self):
         recorded, _ = self._run_with_reads(["image/png\n", b"", b"", b"", b"", b"", b""])
         self.assertEqual(recorded, {})
+
+    def test_paused_capture_does_not_probe_or_store_selection(self):
+        from unittest.mock import patch
+
+        with patch.object(self.daemon, "clipboard_capture_paused", return_value=True), \
+             patch.object(self.daemon.subprocess, "run") as run, \
+             patch.object(self.daemon, "record_item") as record:
+            self.daemon.capture_clipboard()
+
+        run.assert_not_called()
+        record.assert_not_called()
 
 if __name__ == "__main__":
     unittest.main()

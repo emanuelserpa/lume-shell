@@ -37,6 +37,13 @@ Item {
         return true
     }
 
+    function restoreLastResult() {
+        if (!savedResultProcess.running)
+            savedResultProcess.running = true
+    }
+
+    Component.onCompleted: root.restoreLastResult()
+
     function receiveUpdateStatus(line) {
         try {
             const status = JSON.parse(String(line).trim())
@@ -92,6 +99,27 @@ Item {
             root.updateSucceeded = exitCode === 0
             root.updateMessage = root.updateResult
             root.refreshUpdates()
+        }
+    }
+
+    Process {
+        id: savedResultProcess
+        command: ["python3", "-B", Quickshell.shellDir + "/scripts/update-log.py", "status"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const response = JSON.parse(this.text.trim())
+                    const data = response?.data ?? {}
+                    if (response?.ok && data.has_status && !root.updateRunning) {
+                        root.updateResult = String(data.text ?? "")
+                        root.updateSucceeded = Boolean(data.succeeded)
+                        root.updateMessage = root.updateResult
+                    }
+                } catch (error) {
+                    console.warn("UpdateState: não foi possível restaurar o último resultado:", error)
+                }
+            }
         }
     }
 

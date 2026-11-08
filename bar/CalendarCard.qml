@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.components
 import "../services/HolidayLogic.js" as HolidayLogic
+import "../services/CalendarDateLogic.js" as CalendarDateLogic
 
 Rectangle {
     id: root
@@ -40,7 +41,14 @@ Rectangle {
         interval: 60000
         repeat: true
         running: true
-        onTriggered: root.currentDate = new Date()
+        onTriggered: {
+            const followToday = CalendarDateLogic.followsCurrentMonth(
+                root.shownDate, root.currentDate)
+            const now = new Date()
+            root.currentDate = now
+            if (followToday)
+                root.shownDate = now
+        }
     }
 
     function monthName(m) {
@@ -55,8 +63,8 @@ Rectangle {
     readonly property var weekdayNames: startOnMonday
         ? ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
         : ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
-    readonly property bool isCurrentMonth: shownDate.getMonth() === root.currentDate.getMonth()
-                                           && shownDate.getFullYear() === root.currentDate.getFullYear()
+    readonly property bool isCurrentMonth:
+        CalendarDateLogic.followsCurrentMonth(root.shownDate, root.currentDate)
 
     function firstWeekday() {
         const d = new Date(shownDate.getFullYear(), shownDate.getMonth(), 1)

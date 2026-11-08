@@ -106,9 +106,8 @@ class TestContracts(unittest.TestCase):
             self.assertIn("80", payload["error"])
 
         # 4. Refuses to change limit while unplugged (no sudo invoked)
-        with patch.object(charge_limit_mod, "on_ac", return_value=False), \
-             patch.object(charge_limit_mod, "run") as mock_run:
-            ok, err = charge_limit_mod.apply_limit(100)
+        with patch.object(charge_limit_mod, "run") as mock_run:
+            ok, err = charge_limit_mod.apply_limit(100, ac_power=lambda: False)
             self.assertFalse(ok)
             self.assertIn("carregador", err)
             mock_run.assert_not_called()

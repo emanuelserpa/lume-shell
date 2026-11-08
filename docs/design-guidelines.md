@@ -15,7 +15,7 @@ observada, sem declarar que toda a interface já passou por auditoria visual.
   cores para implementar um componente.
 - Este guia: intenção visual, composição e critérios para novas mudanças.
 - [Checklist visual](visual-regression-checklist.md): verificação da entrega.
-- [Plano de design](design-plan.md): divergências, prioridades e trabalho futuro.
+- [Plano de design](design-plan.md): ordem visual ativa; tarefas detalhadas no backlog técnico.
 
 Se código e documentação divergirem, registrar a diferença com o arquivo de
 origem. Descrever o comportamento atual não transforma automaticamente um

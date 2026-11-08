@@ -28,6 +28,10 @@ Item {
     property bool fresh: false
     property string restoreError: ""
     property string error: ""
+    property bool capturePaused: false
+    property bool capturePauseKnown: false
+    property bool captureControlRunning: false
+    property string captureControlError: ""
     property bool deleteRunning: false
     property bool pendingChange: false
     readonly property bool restoreRunning: restoreProc.running
@@ -43,7 +47,32 @@ Item {
         if (!active) {
             changeDelay.stop()
             pendingChange = false
+        } else {
+            root.refreshCaptureState()
         }
+    }
+
+    function refreshCaptureState() {
+        if (captureControlProc.running)
+            return
+        captureControlError = ""
+        captureControlProc.command = [
+            "python3", Quickshell.shellDir + "/scripts/launcher-data.py",
+            "clipboard-capture-state"
+        ]
+        captureControlProc.running = true
+    }
+
+    function setCapturePaused(paused) {
+        if (captureControlProc.running)
+            return false
+        captureControlError = ""
+        captureControlProc.command = [
+            "python3", Quickshell.shellDir + "/scripts/launcher-data.py",
+            "clipboard-capture", paused ? "pause" : "resume"
+        ]
+        captureControlProc.running = true
+        return true
     }
 
     FileView {
@@ -271,5 +300,27 @@ Item {
         interval: 70
         repeat: false
         onTriggered: root.requestThumbnails()
+    }
+
+    Process {
+        id: captureControlProc
+        command: [
+            "python3", Quickshell.shellDir + "/scripts/launcher-data.py",
+            "clipboard-capture-state"
+        ]
+        onRunningChanged: root.captureControlRunning = running
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const response = CommandResult.decode(this.text)
+                const data = response.data
+                if (response.ok && typeof data.paused === "boolean") {
+                    root.capturePaused = data.paused
+                    root.capturePauseKnown = true
+                    root.captureControlError = ""
+                } else {
+                    root.captureControlError = String(response.error || "Falha ao atualizar captura.")
+                }
+            }
+        }
     }
 }

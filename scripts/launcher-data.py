@@ -262,6 +262,20 @@ def clipboard_thumbnails(request_json):
         "thumbnails": thumbs,
     })
 
+def clipboard_capture_state():
+    out({"ok": True, "paused": clipboard_store.clipboard_capture_paused()})
+
+def clipboard_capture_set(value):
+    value = str(value or "").strip().lower()
+    if value not in ("pause", "resume"):
+        out({"ok": False, "error": "Use pause ou resume."})
+        return
+    paused = value == "pause"
+    if not clipboard_store.set_clipboard_capture_paused(paused):
+        out({"ok": False, "error": "Não foi possível salvar a preferência de captura."})
+        return
+    out({"ok": True, "paused": paused})
+
 
 def _rofimoji_data_dirs():
     dirs = []
@@ -513,6 +527,10 @@ def main():
         except Exception:
             limit = 200
         clipboard_snapshot(max(1, min(limit, 200)))
+    elif action == "clipboard-capture-state":
+        clipboard_capture_state()
+    elif action == "clipboard-capture":
+        clipboard_capture_set(sys.argv[2] if len(sys.argv) > 2 else "")
     elif action == "clipboard-restore":
         clipboard_restore(sys.argv[2] if len(sys.argv) > 2 else "",
                           sys.argv[3] if len(sys.argv) > 3 else "")

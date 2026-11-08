@@ -20,12 +20,18 @@ PopupWindow {
     property int updateStage: 0
     property int updateStageCount: 0
     property int updateProgress: -1
-    readonly property string updateLogPath:
-        (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache")
-        + "/quickshell/update.log"
+    property string logActionError: ""
 
     signal refreshRequested()
     signal updateRequested(string backend)
+
+    CommandAction {
+        id: openLogAction
+        baseCommand: ["python3", "-B", Quickshell.shellDir + "/scripts/update-log.py"]
+        fallbackError: "Não foi possível abrir o log da atualização."
+        onSucceeded: root.logActionError = ""
+        onFailed: root.logActionError = "Não foi possível abrir o log: " + error
+    }
 
     readonly property int repoCount: Number(repoData?.count ?? 0)
     readonly property int aurCount: Number(aurData?.count ?? 0)
@@ -65,8 +71,8 @@ PopupWindow {
     // qmllint enable missing-property unqualified unresolved-type
 
     implicitWidth: 326
-    implicitHeight: showPackages ? 536
-        : (updateRunning ? 448 : (updateMessage.length > 0 ? 386 : 358))
+    implicitHeight: contentColumn.implicitHeight
+        + root.theme.popupInsets.standard * 2
 
     color: "transparent"
     surfaceFormat.opaque: false
@@ -106,6 +112,7 @@ PopupWindow {
         Keys.onEscapePressed: root.visible = false
 
         Column {
+            id: contentColumn
             anchors.fill: parent
             anchors.margins: root.theme.popupInsets.standard
             spacing: root.theme.spacingTokens.smPlus
@@ -238,7 +245,7 @@ PopupWindow {
                 width: parent.width
                 height: 28
                 radius: root.theme.radiusSm
-                visible: root.updateRunning
+                visible: root.updateRunning || root.updateMessage.length > 0
                 color: progressLogHover.hovered
                        ? root.theme.glassHoverSurface
                        : root.theme.glassCardSurface
@@ -258,7 +265,7 @@ PopupWindow {
                     }
 
                     Text {
-                        text: "Ver progresso no terminal"
+                        text: root.updateRunning ? "Ver progresso no terminal" : "Abrir log da atualização"
                         color: root.theme.primary
                         font.family: root.theme.fontFamily
                         font.pixelSize: root.theme.typeTokens.meta
@@ -269,11 +276,19 @@ PopupWindow {
 
                 HoverHandler { id: progressLogHover }
                 TapHandler {
-                    onTapped: Quickshell.execDetached([
-                        "kitty", "--hold", "sh", "-c",
-                        "tail -n 100 -f -- \"$1\"", "sh", root.updateLogPath
-                    ])
+                    enabled: !openLogAction.busy
+                    onTapped: openLogAction.run(["open"])
                 }
+            }
+
+            Text {
+                width: parent.width
+                visible: root.logActionError.length > 0
+                text: root.logActionError
+                color: root.theme.error
+                font.family: root.theme.fontFamily
+                font.pixelSize: root.theme.typeTokens.meta
+                wrapMode: Text.Wrap
             }
 
             Rectangle {

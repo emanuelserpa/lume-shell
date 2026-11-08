@@ -28,6 +28,7 @@ from clipboard_store import (
     IMAGE_EXTENSIONS,
     MAX_BLOB_BYTES,
     MAX_TEXT_BYTES,
+    clipboard_capture_paused,
     init_db,
     record_item,
     save_blob,
@@ -119,6 +120,8 @@ def _capture_bytes(mime, timeout, initial_types):
 
 
 def capture_clipboard():
+    if clipboard_capture_paused():
+        return
     if not shutil.which("wl-paste"):
         return
 

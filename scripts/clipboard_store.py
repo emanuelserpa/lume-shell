@@ -21,6 +21,8 @@ from pathlib import Path
 BASE_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "quickshell" / "clipboard"
 DB_PATH = BASE_DIR / "clipboard.db"
 BLOBS_DIR = BASE_DIR / "blobs"
+STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "quickshell"
+CAPTURE_SETTINGS_FILE = STATE_DIR / "clipboard-capture.json"
 
 CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "quickshell"
 CACHE_INDEX_FILE = CACHE_DIR / "clipboard-index.json"
@@ -95,6 +97,33 @@ def notify_change():
         CHANGE_FILE.write_text(str(time.time_ns()), encoding="ascii")
     except OSError:
         pass
+
+def clipboard_capture_paused():
+    """Return the persisted preference; unreadable state fails closed to paused."""
+    try:
+        settings = json.loads(CAPTURE_SETTINGS_FILE.read_text(encoding="utf-8"))
+        return bool(settings.get("paused", True)) if isinstance(settings, dict) else True
+    except FileNotFoundError:
+        return False
+    except (OSError, ValueError, TypeError):
+        return True
+
+def set_clipboard_capture_paused(paused):
+    """Persist capture pause atomically with private state-file permissions."""
+    tmp_file = CAPTURE_SETTINGS_FILE.with_suffix(CAPTURE_SETTINGS_FILE.suffix + ".tmp")
+    try:
+        STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
+        STATE_DIR.chmod(0o700)
+        tmp_file.write_text(json.dumps({"paused": bool(paused)}) + "\n", encoding="utf-8")
+        tmp_file.chmod(0o600)
+        tmp_file.replace(CAPTURE_SETTINGS_FILE)
+        return True
+    except OSError:
+        try:
+            tmp_file.unlink(missing_ok=True)
+        except OSError:
+            pass
+        return False
 
 def classify_text(clean_text):
     t = clean_text.strip()
@@ -409,14 +438,18 @@ def remove_item(item_id, signature=None):
         cur.execute("SELECT id, content_hash, blob_path FROM clipboard_items WHERE id = ?", (item_id,))
         row = cur.fetchone()
         if not row:
+            _remove_item_from_cache(item_id)
             return True, None
 
         if signature and row["content_hash"] != signature:
             return False, "Item modificado"
 
         blob_path = row["blob_path"]
+        content_hash = row["content_hash"]
         with conn:
             conn.execute("DELETE FROM clipboard_items WHERE id = ?", (item_id,))
+            cur.execute("SELECT 1 FROM clipboard_items WHERE content_hash = ? LIMIT 1", (content_hash,))
+            has_same_content = cur.fetchone() is not None
             if blob_path:
                 cur.execute("SELECT 1 FROM clipboard_items WHERE blob_path = ? LIMIT 1", (blob_path,))
                 if not cur.fetchone():
@@ -424,20 +457,39 @@ def remove_item(item_id, signature=None):
                         (BLOBS_DIR / blob_path).unlink(missing_ok=True)
                     except OSError:
                         pass
+        if not has_same_content:
+            try:
+                (THUMBS_DIR / f"{content_hash}.jpg").unlink(missing_ok=True)
+            except OSError:
+                pass
+        _remove_item_from_cache(item_id)
         notify_change()
         return True, None
     finally:
         conn.close()
 
-        # Sync cache if present
-        if CACHE_INDEX_FILE.exists():
-            try:
-                cached = json.loads(CACHE_INDEX_FILE.read_text(encoding="utf-8"))
-                if isinstance(cached, dict) and "items" in cached:
-                    cached["items"] = [it for it in cached["items"] if str(it.get("id")) != str(item_id)]
-                    CACHE_INDEX_FILE.write_text(json.dumps(cached, ensure_ascii=False), encoding="utf-8")
-            except Exception:
-                pass
+
+def _remove_item_from_cache(item_id):
+    """Keep the legacy cached snapshot consistent with a successful removal."""
+    if not CACHE_INDEX_FILE.exists():
+        return
+    try:
+        cached = json.loads(CACHE_INDEX_FILE.read_text(encoding="utf-8"))
+        if not isinstance(cached, dict) or not isinstance(cached.get("items"), list):
+            return
+        cached["items"] = [
+            item for item in cached["items"]
+            if not isinstance(item, dict) or str(item.get("id")) != str(item_id)
+        ]
+        tmp_file = CACHE_INDEX_FILE.with_suffix(CACHE_INDEX_FILE.suffix + ".tmp")
+        tmp_file.write_text(json.dumps(cached, ensure_ascii=False), encoding="utf-8")
+        tmp_file.replace(CACHE_INDEX_FILE)
+    except (OSError, ValueError, TypeError):
+        # The cache is disposable; the SQLite database remains authoritative.
+        try:
+            CACHE_INDEX_FILE.with_suffix(CACHE_INDEX_FILE.suffix + ".tmp").unlink(missing_ok=True)
+        except OSError:
+            pass
 
 def thumb_for_blob(content_hash, blob_path):
     """Return a cached downscaled thumbnail URI for a blob.
