@@ -14,6 +14,16 @@ The system is organized into modular QML components connected through a reactive
   - Connects to Quickshell's native `NotificationServer`.
   - Combines live server notifications, project-owned internal notifications, and persisted snapshots in newest-first order. A separate in-memory queue of the 20 latest notifications restores dismissed toasts; that queue resets with the shell session.
   - Sends compact snapshots to `scripts/notification_store.py`, a long-lived background SQLite writer using WAL. The database retains up to 2,000 notifications under `$XDG_DATA_HOME/quickshell/notifications/`; the latest 500 load into the history view. Dismissed items remain as archived history without live D-Bus action callbacks. Clear All clears both the live list and stored history.
+  - If the writer exits or fails to start, requests queue until its initial
+    `loaded` response. Restarts use exponential backoff from 1 to 60 seconds,
+    with a 2-second start watchdog. The in-memory queue is capped at 500: an
+    incoming request evicts the oldest queued `append` before any control
+    request; `clear` supersedes all queued work, and a
+    control request is rejected only when the full queue contains controls
+    alone. The popup reports unavailable storage and counts operations not
+    applied, so users can see when persisted history may be incomplete. This
+    queue is session-only; a shell restart clears its pending requests and
+    warning.
   - Persistent snapshots include app identity, summary, body, urgency, icon/image references, and receive time. Quickshell-owned `image://qsimage/` handles are copied to private PNG files while their notification objects are retained, so replacing a notification cannot invalidate images in history. App actions are intentionally not stored because their owners may no longer exist.
   - Clears tracked notifications in small timed batches so a large history does not monopolize the UI event loop.
   - Manages in-memory DND state and emits toast events when DND permits them. Critical notifications still emit toast events.

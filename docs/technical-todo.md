@@ -71,16 +71,23 @@ Este backlog complementa, e não substitui, o plano ativo em
   de verdade se o cache falhar. Testes cobrem remoção do banco/cache, blob
   compartilhado e rejeição de assinatura desatualizada. `python3 -B -m unittest
   tests.test_clipboard`: 34 testes aprovados, incluindo remoção de thumbnail.
-- [ ] **P1-02 — Histórico de notificações.** Risco a reproduzir: reinício fixo de
-  1 s e fila `pendingStoreRequests` sem limite. Simular helper ausente/falhando e
-  encerramentos repetidos; medir reinícios/log/memória. Só se reproduzido,
-  adicionar backoff limitado, fila limitada e indisponibilidade observável; não
-  descartar notificações sem política. O serviço real permaneceu ativo por 17 h
-  na observação anterior. Em 2026-11-08, o PID `1092862` estava ativo havia
-  83.474 s (~23 h) e `notification_store.py` PID `1092877` havia 83.472 s; no log
-  ativo, `rg` não encontrou erros do helper nem da resposta do histórico. Isso
-  continua sem reproduzir falha/reinícios. Requer simulação controlada antes de
-  alterar retry/fila.
+- [x] **P1-02 — Histórico de notificações.** O serviço real ficou ativo por
+  ~23 h sem erros do helper no log; a falha foi reproduzida em simulação isolada
+  antes de mudar o comportamento. `NotificationState` agora usa backoff
+  exponencial de 1 a 60 s, watchdog de 2 s para falha ao iniciar o processo e
+  fila limitada a 500 operações. Ao saturar, descarta primeiro os `append`
+  mais antigos, preserva operações de controle quando possível e coalesce uma
+  operação `clear`; se não houver `append` para remover, rejeita a operação de
+  controle mais nova. A contagem descartada e indisponibilidade aparecem no
+  popup de histórico. `./scripts/test-notification-store-recovery.sh` reproduziu:
+  helper encerrando com código 23, 3 inicializações/3 erros em 4 s, 39 pendentes
+  e retry em 4 s; `python3` ausente, zero inicializações, watchdog/falha visível
+  e retry em 1 s; saturação com 2.360 pedidos, 500 pendentes e 1.860 descartados
+  com aviso. Pico amostrado do processo Quickshell nos cenários: 2.400–2.404 KiB
+  RSS; é uma amostra curta da simulação, não baseline de idle. Testes de política
+  da fila cobrem preservação dos pedidos mais novos, prioridade de controles,
+  rejeição contabilizada, coalescência de `clear` e teto do backoff. `./scripts/validate.sh
+  --offline`: 17 OK, QML 130/130. Falta revisão visual do aviso na sessão Wayland.
 - [ ] **P1-03 — Ações externas e respostas fora de ordem.** Simular stdout vazio,
   stderr, rc != 0, processo pendente, consulta reiniciada e resposta antiga após
   uma nova. Corrigido o falso sucesso confirmado em `CommandAction` e
@@ -89,7 +96,7 @@ Este backlog complementa, e não substitui, o plano ativo em
   consulta atual. Um watchdog de 2 s reporta helper que não chega a iniciar, já
   que o `Process` disponível não expõe o erro de início como sinal QML. Cobertura
   pura para JSON vazio, stderr, código não zero, sucesso, start timeout e
-  transição de restart: suíte QML 123/123. O novo teste
+  transição de restart: suíte QML 130/130. O novo teste
   `./scripts/test-quickshell-processes.sh` usa `Process` real sem abrir janelas:
   valida sucesso, JSON válido com saída 7 e stderr, stdout vazio com saída zero,
   `CommandAction` em sucesso/falha e processo pendente por mais de 2 s cujo

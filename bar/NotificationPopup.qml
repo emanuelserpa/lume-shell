@@ -519,6 +519,16 @@ PopupWindow {
                 }
             }
 
+            Text {
+                visible: NotificationState.notificationStoreWarning.length > 0
+                width: parent.width
+                text: NotificationState.notificationStoreWarning
+                color: root.theme.yellow
+                font.family: root.theme.fontFamily
+                font.pixelSize: root.theme.typeTokens.meta
+                wrapMode: Text.WordWrap
+            }
+
             // 6. EMPTY STATE (quando não há notificações)
             Item {
                 visible: NotificationState.count === 0

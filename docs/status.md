@@ -7,6 +7,8 @@ consulte o backlog e o plano indicados abaixo.
   [plano visual](design-plan.md); a lógica de calendário/log tem cobertura
   automatizada, mas os estados do popup ainda precisam ser vistos na sessão.
 - **Progresso técnico:** P0-02 a P0-04 e P1-01 passaram validação offline.
+  P1-02 foi reproduzido em simulação controlada e corrigido com watchdog,
+  backoff, fila limitada e aviso no histórico; a suíte offline está em 130/130.
   P1-03 teve falsos sucessos corrigidos e agora conta com teste de integração de
   `Process` real; falta revisar o feedback visual das falhas. P1-04 já tem pausa
   persistente de captura e limpeza de thumbs testadas; falta revisão visual.

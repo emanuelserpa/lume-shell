@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
 import "NotificationContent.js" as NotificationContent
+import "NotificationStoreQueue.js" as NotificationStoreQueue
 
 QtObject {
     id: root
@@ -25,6 +26,36 @@ QtObject {
     property int notificationImageSerial: 0
     property var pendingStoreRequests: []
     property bool notificationStoreStarted: false
+    property bool notificationStoreAvailable: false
+    property int notificationStoreFailureCount: 0
+    property int notificationStoreDroppedRequests: 0
+    property int notificationStoreRestartAttempt: 0
+    property double notificationStoreLoadedAt: 0
+    readonly property int maximumPendingStoreRequests: 500
+    readonly property string notificationStoreWarning: {
+        if (root.notificationStoreDroppedRequests > 0) {
+            const count = root.notificationStoreDroppedRequests
+            const message = count === 1
+                ? "operação do histórico não foi aplicada"
+                : "operações do histórico não foram aplicadas"
+            let recovery = ""
+            if (!root.notificationStoreAvailable) {
+                recovery = root.notificationStoreStarted
+                    ? " O serviço ainda não respondeu."
+                    : " Nova tentativa em até "
+                        + Math.ceil(storeRestartTimer.interval / 1000) + " s."
+            }
+            return "Histórico incompleto: " + count + " " + message
+                + " durante a indisponibilidade." + recovery
+        }
+        if (!root.notificationStoreAvailable && root.notificationStoreFailureCount > 0) {
+            if (root.notificationStoreStarted)
+                return "Histórico indisponível. Aguardando resposta do serviço."
+            return "Histórico indisponível. Nova tentativa em até "
+                + Math.ceil(storeRestartTimer.interval / 1000) + " s."
+        }
+        return ""
+    }
     property int internalNotificationSerial: 0
     property string expiringInternalNotificationId: ""
     property string _lastFingerprint: ""
@@ -181,13 +212,43 @@ QtObject {
     }
 
     function sendStoreRequest(request) {
-        if (!root.notificationStoreStarted) {
-            const pending = root.pendingStoreRequests.slice()
-            pending.push(request)
-            root.pendingStoreRequests = pending
+        if (!root.notificationStoreAvailable) {
+            const queued = NotificationStoreQueue.enqueue(
+                root.pendingStoreRequests, request, root.maximumPendingStoreRequests)
+            root.pendingStoreRequests = queued.queue
+            if (queued.dropped > 0) {
+                root.notificationStoreDroppedRequests += queued.dropped
+                const noun = queued.dropped === 1 ? "operação descartada" : "operações descartadas"
+                console.warn("NotificationState: limite da fila do histórico atingido;",
+                             queued.dropped, noun)
+            }
             return
         }
         notificationStoreProcess.write(JSON.stringify(request) + "\n")
+    }
+
+    function startNotificationStore() {
+        if (notificationStoreProcess.running) return
+        storeStartFailureTimer.restart()
+        notificationStoreProcess.running = true
+    }
+
+    function scheduleNotificationStoreRestart() {
+        if (root.notificationStoreLoadedAt > 0
+                && Date.now() - root.notificationStoreLoadedAt >= 30000) {
+            root.notificationStoreRestartAttempt = 0
+        }
+        root.notificationStoreLoadedAt = 0
+        root.notificationStoreFailureCount++
+        root.notificationStoreRestartAttempt = Math.min(
+            7, root.notificationStoreRestartAttempt + 1)
+        const delay = NotificationStoreQueue.retryDelay(
+            root.notificationStoreRestartAttempt, 60000)
+        storeRestartTimer.interval = delay
+        console.warn("NotificationState: helper do histórico indisponível; nova tentativa em",
+                     delay, "ms (falhas consecutivas:",
+                     root.notificationStoreFailureCount, ")")
+        storeRestartTimer.restart()
     }
 
     function handleStoreResponse(line) {
@@ -195,6 +256,14 @@ QtObject {
             const response = JSON.parse(String(line).trim())
             if (response.type === "loaded") {
                 root.persistentHistory = response.items || []
+                root.notificationStoreAvailable = true
+                root.notificationStoreFailureCount = 0
+                root.notificationStoreRestartAttempt = 0
+                root.notificationStoreLoadedAt = Date.now()
+                const pending = root.pendingStoreRequests
+                root.pendingStoreRequests = []
+                for (const request of pending)
+                    root.notificationStoreProcess.write(JSON.stringify(request) + "\n")
             } else if (response.type === "stored" && response.inserted && response.item) {
                 const current = root.persistentHistory.slice()
                 const id = String(response.item.id)
@@ -222,6 +291,8 @@ QtObject {
             console.warn("NotificationState: resposta inválida do histórico:", error)
         }
     }
+
+    Component.onCompleted: root.startNotificationStore()
 
     function restorePrevious() {
         if (root.restoreHistory.length === 0) return false
@@ -377,7 +448,7 @@ QtObject {
     property Process notificationStoreProcess: Process {
         id: notificationStoreProcess
         command: ["python3", "-B", Quickshell.shellDir + "/scripts/notification_store.py"]
-        running: true
+        running: false
         stdinEnabled: true
 
         stdout: SplitParser {
@@ -389,17 +460,26 @@ QtObject {
         }
 
         onStarted: {
+            storeStartFailureTimer.stop()
             root.notificationStoreStarted = true
-            const pending = root.pendingStoreRequests
-            root.pendingStoreRequests = []
             root.notificationStoreProcess.write(JSON.stringify({"op": "load", "limit": 500}) + "\n")
-            for (const request of pending)
-                root.notificationStoreProcess.write(JSON.stringify(request) + "\n")
         }
 
         onExited: {
+            storeStartFailureTimer.stop()
             root.notificationStoreStarted = false
-            storeRestartTimer.restart()
+            root.notificationStoreAvailable = false
+            root.scheduleNotificationStoreRestart()
+        }
+    }
+
+    property Timer storeStartFailureTimer: Timer {
+        id: storeStartFailureTimer
+        interval: 2000
+        repeat: false
+        onTriggered: {
+            if (!root.notificationStoreStarted && !root.notificationStoreProcess.running)
+                root.scheduleNotificationStoreRestart()
         }
     }
 
@@ -408,8 +488,7 @@ QtObject {
         interval: 1000
         repeat: false
         onTriggered: {
-            if (!root.notificationStoreProcess.running)
-                root.notificationStoreProcess.running = true
+            root.startNotificationStore()
         }
     }
 
