@@ -14,6 +14,9 @@ consulte o backlog e o plano indicados abaixo.
   lacuna de erro no cartão do clima corrigida; revisão Wayland confirmou aviso e
   tooltip, e o item foi fechado. P1-04 fechou com pausa persistente, revisão dos
   estados Pausar/Retomar e seleção Wayland validada em Labwc headless isolado.
+  P1-05 teve build, instalação, IPC em Labwc headless, atualização e remoção
+  verificados em Arch descartável; ainda não pode ser fechado ou distribuído
+  enquanto a licença pública estiver indefinida.
   P1-06 ganhou testes de recuperação em diretórios temporários; na sessão ativa,
   o gerenciador reportou Chameleon e 11 adaptadores em sync, mas aparência dos
   aplicativos e recuperação real continuam por conferir.

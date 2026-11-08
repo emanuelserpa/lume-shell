@@ -144,17 +144,21 @@ Este backlog complementa, e não substitui, o plano ativo em
 - [ ] **P1-05 — Contrato público de empacotamento.** Escolher licença antes de
   distribuir a terceiros e ajustar PKGBUILD. Em Arch limpo/VM testar build,
   instalação, serviço, IPC, atualização, remoção, opcionais e ausência de
-  serviços duplicados. Consultas atuais ao GitHub retornaram zero tags, zero
+  serviços duplicados. Em 2026-11-08, um container Arch descartável construiu
+  `0.1.0-13` e `0.1.0-14` com dependências instaladas; `pacman -Qk` confirmou
+  379 arquivos sem ausências, `systemd-analyze verify` aceitou a unidade e o
+  pacote lista dependências opcionais. A versão `0.1.0-13` iniciou sob Labwc
+  headless e respondeu a `quickshell ipc`/comandos Spotlight; foi atualizada
+  para `0.1.0-14` e removida, incluindo binário e unidade. A instalação não
+  habilitou serviço automaticamente. Esse teste valida o pacote local, não
+  publicação/repositório nem integração numa sessão gráfica real. Consultas
+  atuais ao GitHub retornaram zero tags, zero
   releases e nenhum arquivo de licença. Portanto 0.1.0 é apenas fallback para
   builds locais, e o workflow injeta a versão de uma tag; o `CHANGELOG.md` agora
   identifica 1.2.0 como marco funcional, e o título de `LAUNCHER.md` deixou de
   apresentar v0.20.27 como versão do produto. Ainda falta escolher e publicar a
-  licença antes de distribuir; não vou inventá-la. O comando de build local
-  `makepkg --nodeps --force --noconfirm` gerou `lume-shell-0.1.0-13`;
-  `pacman -Qip` e o índice do archive confirmam metadados e arquivos, incluindo
-  os novos componentes. Dependências
-  foram explicitamente ignoradas, o pacote não foi instalado, e `namcap` não
-  está disponível no host; isso não substitui o teste em Arch limpo/VM.
+  licença antes de distribuir; não vou inventá-la. O campo `custom` no PKGBUILD
+  continua provisório e não autoriza redistribuição. `namcap` não foi usado.
 - [ ] **P1-06 — Temas e recuperação.** Risco a reproduzir com falhas isoladas de
   Kitty/GTK/labwc/Hyprland, configuração inválida e interrupção de escrita.
   Conferir aplicação real, estado reportado e repetição sem afetar adaptadores
