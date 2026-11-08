@@ -49,7 +49,9 @@ nenhuma mudança de runtime necessária para usar os documentos.
 Concluir o item **P0-01** em [pendências técnicas](technical-todo.md): calendário
 reativo, combinações de estado do popup de atualização e acesso persistente a
 resultado/log. Esse backlog contém os cenários e critérios detalhados, evitando
-manter duas listas de implementação.
+manter duas listas de implementação. A atualização de datas do calendário agora
+é função pura e simulável; ainda faltam os estados integrados do popup e a
+retomada real após suspensão antes de encerrar a fase.
 
 Aceitação e evidências: conforme P0-01 no backlog. Não instalar pacotes nem
 mudar o relógio real para testar.

@@ -42,12 +42,11 @@ Rectangle {
         repeat: true
         running: true
         onTriggered: {
-            const followToday = CalendarDateLogic.followsCurrentMonth(
-                root.shownDate, root.currentDate)
             const now = new Date()
-            root.currentDate = now
-            if (followToday)
-                root.shownDate = now
+            const refreshed = CalendarDateLogic.datesAfterRefresh(
+                root.shownDate, root.currentDate, now)
+            root.currentDate = refreshed.currentDate
+            root.shownDate = refreshed.shownDate
         }
     }
 

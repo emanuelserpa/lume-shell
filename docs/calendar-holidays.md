@@ -8,8 +8,10 @@ The calendar refreshes its local current date every minute, so the day highlight
 year progress, and upcoming holidays remain in sync when the dashboard stays
 open across midnight. When the displayed month is still the current month, the
 header date follows the new day too; browsing another month remains undisturbed.
-The month-following policy has pure rollover tests in
-`tests/qml/tst_calendar_date_logic.qml`.
+The refresh transition is isolated in `CalendarDateLogic.datesAfterRefresh` so
+month-end and year-end changes can be simulated without changing the system
+clock. `tests/qml/tst_calendar_date_logic.qml` covers those boundaries and
+preserving a manually browsed month.
 
 `services/HolidayLogic.js` contains the date rules and has no system or network
 dependency. It includes recurring Brazilian national holidays, calculates

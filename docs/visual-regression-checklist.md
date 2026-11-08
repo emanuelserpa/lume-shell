@@ -13,6 +13,20 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 - Evidências (capturas, logs, verificações de interação):
 - Limitações e pendências:
 
+### P0-01 — calendário e atualizações (2026-11-08)
+
+- Alterações em andamento sobre `7f15f96`; Quickshell 0.3.2, Hyprland,
+  captura 1920×1080; a escala da sessão não foi consultada.
+- Harness isolado da árvore de trabalho: `/tmp/lume-p0-harness-panel.png`.
+  Confere visualmente mês visitado, ação Hoje, progresso anual e feriados; não
+  é captura do shell instalado nem valida navegação/interação.
+- `./scripts/validate.sh --offline`: 17 OK, 0 WARN, 0 FAIL; testes QML 123/123.
+  Os testes simulam as duas viradas e preservação do mês navegado.
+- Não executados: retomada real após suspensão, estados do popup de atualização
+  com lista expandida, persistência após reinício e ação de abertura do log. A
+  instância ativa instalada é `/usr/share/lume-shell`; seus IPCs não expõem
+  calendário/atualizações, e o `PopupWindow` não apareceu no harness isolado.
+
 ## Barra
 
 - [ ] Altura/zona exclusiva seguem `barHeight` (37); recuo `barPanelInset` (3).

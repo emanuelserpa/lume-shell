@@ -32,7 +32,13 @@ Este backlog complementa, e não substitui, o plano ativo em
   acesso ao log após conclusão/reabertura, centralizar o caminho do log e
   apresentar erro legível se indisponível. Abrir log sem iniciar atualização.
   Aceite: relógio/falhas simulados, checklist visual, sem iniciar atualização
-  real.
+  real. A transição do calendário agora é simulável e tem cobertura QML para
+  31/mar → 1/abr, 31/dez → 1/jan e navegação manual preservada; `validate.sh
+  --offline` passou com 123 testes QML. Captura isolada do calendário em
+  `/tmp/lume-p0-harness-panel.png` confirma a composição do mês navegado, Hoje,
+  progresso anual e feriados. Continua aberto: teste real após suspensão e
+  inspeção visual integrada do popup com lista expandida durante execução/erro,
+  além de reabertura do log e estado persistido.
 - [x] **P0-02 — Preservar arquivos locais em `scripts/validate.sh`.** A combinação
   `py_compile` + remoções abrangentes de `__pycache__` pode apagar caches
   preexistentes. Validar sem bytecode ou limpar apenas temporários próprios.
