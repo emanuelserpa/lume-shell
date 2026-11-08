@@ -13,8 +13,9 @@ consulte o backlog e o plano indicados abaixo.
   uma lacuna de erro no cartão do clima corrigida; falta revisão visual. P1-04
   já tem pausa persistente, callback real testado em isolamento e limpeza de
   thumbs; falta revisão visual e evento real do compositor.
-  P1-06 ganhou testes de recuperação em diretórios temporários; a aplicação nas
-  integrações reais continua por conferir.
+  P1-06 ganhou testes de recuperação em diretórios temporários; na sessão ativa,
+  o gerenciador reportou Chameleon e 11 adaptadores em sync, mas aparência dos
+  aplicativos e recuperação real continuam por conferir.
   P0-05 (CI do GitHub) está suspenso temporariamente a pedido do usuário; o
   workflow de qualidade foi removido e o build de release não depende mais dele.
   Ao retomar, primeiro investigar as cinco falhas vistas no CI remoto; localmente
