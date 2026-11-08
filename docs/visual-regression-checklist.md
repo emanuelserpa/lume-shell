@@ -15,22 +15,26 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 
 ### P0-01 — calendário e atualizações (2026-11-08)
 
-- Alterações em andamento sobre `e0c37a2`; Quickshell 0.3.2, Hyprland,
-  captura 1920×1080; a escala da sessão não foi consultada.
+- Quickshell 0.3.2, Hyprland, monitor eDP-1 1920×1080, escala 1; serviço
+  `lume-shell.service` ativo. A árvore instalada pode divergir da árvore de
+  trabalho e não foi comparada neste teste.
 - Harness isolado da árvore de trabalho: `/tmp/lume-p0-harness-panel.png`.
   Confere visualmente mês visitado, ação Hoje, progresso anual e feriados; não
   é captura do shell instalado nem valida navegação/interação.
-- `./scripts/validate.sh --offline`: 17 OK, 0 WARN, 0 FAIL; testes QML 123/123.
+- `./scripts/validate.sh --offline`: 17 OK, 0 WARN, 0 FAIL; testes QML 123/123
+  (execução registrada para as alterações iniciais deste item).
   Os testes simulam as duas viradas e preservação do mês navegado.
-- Não executados: retomada real após suspensão, estados do popup de atualização
-  com lista expandida, persistência após reinício e ação de abertura do log. A
-  instância ativa instalada é `/usr/share/lume-shell`; seus IPCs não expõem
-  calendário/atualizações, e o `PopupWindow` não apareceu no harness isolado.
-- Rechecagem em 2026-11-08 neste ambiente: `quickshell ipc show` não encontrou
-  instância em execução para a configuração padrão; `pgrep` também não encontrou
-  processo Quickshell. O barramento de serviços do usuário está inacessível no
-  sandbox. Portanto não foi possível inspecionar os popups instalados nem
-  simular suspensão nesta sessão; o item permanece aberto.
+- `quickshell ipc --path /usr/share/lume-shell show` responde, mas só expõe
+  spotlight, displayProjection, media e notifications; não há alvos para abrir
+  calendário/atualizações. `PopupWindow` também não apareceu no harness isolado.
+- Em 2026-11-08, `python3 -B scripts/update-log.py status` retornou
+  `has_status: false`; `python3 -B scripts/update-log.py open` retornou sucesso
+  com o caminho `/home/emanuel/.cache/quickshell/update.log`, sem iniciar uma
+  atualização. A janela temporária de `tail` foi encerrada após o teste.
+- Continuam sem verificação: retomada real após suspensão; popup de atualização
+  com lista expandida durante execução/erro; persistência visual após reabertura;
+  clipping e interação dos botões. A sessão está ativa, mas esses estados não
+  são controláveis pelo IPC disponível. P0-01 permanece aberto.
 
 ## Barra
 

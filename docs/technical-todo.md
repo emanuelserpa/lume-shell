@@ -36,9 +36,14 @@ Este backlog complementa, e não substitui, o plano ativo em
   31/mar → 1/abr, 31/dez → 1/jan e navegação manual preservada; `validate.sh
   --offline` passou com 123 testes QML. Captura isolada do calendário em
   `/tmp/lume-p0-harness-panel.png` confirma a composição do mês navegado, Hoje,
-  progresso anual e feriados. Continua aberto: teste real após suspensão e
-  inspeção visual integrada do popup com lista expandida durante execução/erro,
-  além de reabertura do log e estado persistido.
+  progresso anual e feriados. Na sessão ativa de 2026-11-08, Hyprland/eDP-1
+  1920×1080 escala 1 e `lume-shell.service` estavam ativos; IPC instalado não
+  expõe calendário/atualizações. `update-log.py status` indicou ausência de
+  resultado e `update-log.py open` abriu o caminho configurado sem disparar
+  atualização; a janela temporária foi encerrada. Evidência detalhada em
+  `docs/visual-regression-checklist.md`. Continua aberto: teste real após
+  suspensão e inspeção visual integrada do popup com lista expandida durante
+  execução/erro, além de reabertura visual do log e estado persistido.
 - [x] **P0-02 — Preservar arquivos locais em `scripts/validate.sh`.** A combinação
   `py_compile` + remoções abrangentes de `__pycache__` pode apagar caches
   preexistentes. Validar sem bytecode ou limpar apenas temporários próprios.
