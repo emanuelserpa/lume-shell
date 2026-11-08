@@ -6,13 +6,7 @@ on:
       - 'v*'
 
 jobs:
-  quality:
-    uses: ./.github/workflows/quality.yml
-    permissions:
-      contents: read
-
   arch-package:
-    needs: quality
     runs-on: ubuntu-latest
     permissions:
       contents: read

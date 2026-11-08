@@ -49,19 +49,12 @@ Este backlog complementa, e não substitui, o plano ativo em
   explícito legado. Verificar unidade ativa, não só instalada. Condicionar
   verificações Hyprland ao compositor e avisar quando não aplicáveis. Aceite:
   sessão saudável do pacote passa; ausência de shell ativa falha.
-- [ ] **P0-05 — Adicionar CI de qualidade antes da release.** `quality.yml` para
-  PRs/pushes com runtime/metadados QML; Python unittest, QML offscreen, qmllint
-  rigoroso e verificações estáticas. Release depende da validação do mesmo
-  commit/tag e publica artefato/checksum somente após aprovação. Registrar
-  versões Qt/Quickshell. Aceite: falha intencional de sintaxe/teste/lint bloqueia
-  PR e release.
-
-  Implementado em `.github/workflows/quality.yml` e no workflow de release:
-  ambos validam o mesmo SHA, e a publicação usa o ambiente `release` após build
-  e validação. Essas alterações ainda estão somente no worktree: a API do GitHub
-  lista apenas o workflow de release atual, sem `quality.yml`. O repositório
-  também não tem o ambiente `release` nem revisores exigidos; publique o workflow
-  e configure a proteção antes de depender da aprovação manual.
+- [ ] **P0-05 — CI de qualidade no GitHub (suspenso por enquanto).** A pedido do
+  usuário, `quality.yml` foi removido e o workflow de pacote não depende mais de
+  CI. Antes de reativar: resolver as cinco falhas observadas na primeira execução
+  remota; a mesma suíte passou localmente (248 testes). O validador agora imprime
+  os tracebacks completos em caso de falha. Reavaliar a proteção de release e
+  exigir aprovação só quando o CI for retomado.
 
 ## P1 — Resiliência, integridade e distribuição
 

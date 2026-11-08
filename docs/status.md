@@ -12,8 +12,10 @@ consulte o backlog e o plano indicados abaixo.
   persistente de captura e limpeza de thumbs testadas; falta revisão visual.
   P1-06 ganhou testes de recuperação em diretórios temporários; a aplicação nas
   integrações reais continua por conferir.
-  P0-05 tem workflows no worktree, ainda ausentes da API do GitHub; requer
-  publicação dos arquivos e configuração do ambiente `release` com revisores.
+  P0-05 (CI do GitHub) está suspenso temporariamente a pedido do usuário; o
+  workflow de qualidade foi removido e o build de release não depende mais dele.
+  Ao retomar, primeiro investigar as cinco falhas vistas no CI remoto; localmente
+  a suíte completa passou com 248 testes.
   As demais pendências estão em [backlog técnico](technical-todo.md); não foram
   marcadas como concluídas sem reprodução ou decisão necessária.
 - **Planos de domínio:** [Spotlight](spotlight-raycast-plan.md),
