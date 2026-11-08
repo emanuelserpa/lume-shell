@@ -120,7 +120,7 @@ Este backlog complementa, e não substitui, o plano ativo em
   `/tmp/lume-p1-weather-tooltip.png`. `./scripts/test-quickshell-processes.sh`
   passou e `./scripts/validate.sh --offline` passou com 17 OK, 0 WARN/FAIL e
   QML 130/130. P1-03 concluído.
-- [ ] **P1-04 — Privacidade do clipboard.** Adicionar pausa/retomada de captura e
+- [x] **P1-04 — Privacidade do clipboard.** Adicionar pausa/retomada de captura e
   preferência persistente quando apropriado. Avaliar apenas sinais sensíveis
   realmente expostos; não prometer detecção infalível de senhas. Preservar
   limites, WAL, deduplicação e lock; documentar limites de apagamento forense de
@@ -132,10 +132,15 @@ Este backlog complementa, e não substitui, o plano ativo em
   invocar um `wl-paste` sentinela nem criar banco SQLite. O teste direcionado
   passou; depois desta inclusão, `./scripts/validate.sh --offline` passou com
   17 OK, 0 WARN/FAIL e QML 130/130. Isso prova o fluxo do callback fora do
-  Wayland, não o comportamento após colar na sessão. Falta conferir o estado
-  visual e a ausência de novos itens com eventos reais do
-  compositor. Limites forenses e ausência de detecção automática de senhas estão
-  em `docs/clipboard.md`.
+  Wayland. `scripts/test-clipboard-wayland-isolated.py` passou contra Labwc
+  headless: evento enviado pausado ausente do histórico; próximo evento após
+  retomar capturado; diretórios XDG e seleção isolados em temporário. A revisão
+  visual dos estados mostrou `ClipboardPreview` com Pausar e Retomar
+  em harness de estado controlado (`/tmp/lume-p1-clipboard-capturing.png` e
+  `/tmp/lume-p1-clipboard-paused-control.png`). A integração headless confirmou
+  os efeitos da pausa e retomada em seleções reais sem tocar no clipboard ativo.
+  `validate.sh --offline`: 17 OK, 0 WARN/FAIL, QML 130/130. Limites forenses e
+  ausência de detecção automática de senhas estão em `docs/clipboard.md`.
 - [ ] **P1-05 — Contrato público de empacotamento.** Escolher licença antes de
   distribuir a terceiros e ajustar PKGBUILD. Em Arch limpo/VM testar build,
   instalação, serviço, IPC, atualização, remoção, opcionais e ausência de

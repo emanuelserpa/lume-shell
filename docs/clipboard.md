@@ -40,9 +40,17 @@ restaura o padrão ativo.
 
 The paused `--capture` callback is covered through its real subprocess entrypoint
 with a 2.1 MiB stdin payload and temporary XDG directories. It exits without
-calling a sentinel `wl-paste` or creating the clipboard database. This isolates
-the pipe and persistence behavior; it does not replace checking the visual
-toggle or a real Wayland selection event.
+calling a sentinel `wl-paste` or creating the clipboard database. A second
+integration check runs the daemon against a headless Labwc compositor and
+`wl-copy`: an event sent while paused is absent from the isolated history, and
+the next event after resume is captured. The script
+`python3 -B scripts/test-clipboard-wayland-isolated.py` requires Labwc,
+`dbus-run-session`, and `wl-clipboard`; it uses temporary XDG directories and
+clears only its test compositor's selection on shutdown. It never connects to
+the active desktop clipboard. `ClipboardPreview` was also inspected in a
+Wayland harness with controlled stores in both Pausar and Retomar states; the
+headless integration check verifies the corresponding persistence and event
+effects.
 
 Remover um item também apaga seu blob e thumbnail quando não há mais referência
 no banco e atualiza o snapshot de compatibilidade. SQLite/WAL, snapshots do

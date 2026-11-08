@@ -59,6 +59,20 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 - `./scripts/test-quickshell-processes.sh`: passou. `./scripts/validate.sh
   --offline`: 17 OK, 0 WARN, 0 FAIL; QML 130/130. P1-03 concluído.
 
+### P1-04 — pausa da captura do clipboard (2026-11-08)
+
+- `python3 -B scripts/test-clipboard-wayland-isolated.py` passou contra Labwc
+  headless: sentinel colocado durante a pausa não entrou no histórico; após
+  retomar, a próxima seleção foi capturada. Socket, seleção e XDG foram isolados
+  em temporário; o teste limpou somente a seleção de teste ao encerrar.
+- Harness visual do `ClipboardPreview` com store controlado mostra os dois rótulos:
+  `/tmp/lume-p1-clipboard-capturing.png` (Pausar) e
+  `/tmp/lume-p1-clipboard-paused-control.png` (Retomar). Essas capturas verificam
+  o estado renderizado; a integração headless separada valida o efeito real na
+  persistência quando a seleção Wayland muda.
+- O harness foi encerrado; nenhuma seleção ou dado do clipboard ativo foi usado.
+  P1-04 concluído.
+
 ## Barra
 
 - [ ] Altura/zona exclusiva seguem `barHeight` (37); recuo `barPanelInset` (3).
