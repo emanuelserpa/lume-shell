@@ -457,7 +457,6 @@ test_rc=0
 python3 -B -m unittest discover -s "$REPO_ROOT/tests" -p "test_*.py" >"$test_out_file" 2>&1 || test_rc=$?
 
 test_summary="$(tail -n 3 "$test_out_file" | tr '\n' ' ')"
-rm -f "$test_out_file"
 
 if [ "$test_rc" -eq 0 ]; then
     # Extract test count if possible
@@ -468,7 +467,10 @@ if [ "$test_rc" -eq 0 ]; then
     fi
 else
     record_fail "Unit tests failed: $test_summary"
+    echo "--- Full unittest output (for CI diagnosis) ---" >&2
+    cat "$test_out_file" >&2
 fi
+rm -f "$test_out_file"
 
 qmltestrunner_bin=""
 for cand in /usr/lib/qt6/bin/qmltestrunner "$(command -v qmltestrunner 2>/dev/null || true)"; do
