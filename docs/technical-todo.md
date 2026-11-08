@@ -165,8 +165,9 @@ Este backlog complementa, e não substitui, o plano ativo em
   já sincronizados. Novos testes em diretórios temporários provam que uma
   substituição interrompida do arquivo do labwc preserva a configuração anterior
   e permite retry; settings.ini GTK inválido permanece fora de sync até reparo.
-  `python3 -B -m unittest tests.test_theme`: 41 aprovados. A suíte também verifica
-  isolamento entre adaptadores. Em 2026-11-08, a sessão estava em Hyprland
+  `python3 -B -m unittest tests.test_theme`: 41 aprovados; uma aplicação simulada
+  agora também confirma que exceções isoladas em Kitty/Hyprland/GTK/labwc são
+  reportadas sem impedir os demais adaptadores. Em 2026-11-08, a sessão estava em Hyprland
   (eDP-1, 1920×1080, escala 1), `lume-shell.service` estava ativo e
   `theme-manager.py get` reportou o tema Chameleon com os 11 adaptadores em
   sync. Esse status de arquivos não prova a aparência dos aplicativos. Falta

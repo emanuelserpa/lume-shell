@@ -640,19 +640,21 @@ class TestThemeManager(unittest.TestCase):
 
     def test_apply_all_adapters_isolates_failures(self):
         with patch.object(tm, "export_canonical_palette"), \
+             patch.object(tm, "sync_kitty_theme", side_effect=RuntimeError("unavailable")), \
              patch.object(tm, "sync_ghostty_theme", side_effect=RuntimeError("unavailable")), \
-             patch.object(tm, "sync_hyprland_theme", return_value=True), \
+             patch.object(tm, "sync_hyprland_theme", side_effect=RuntimeError("unavailable")), \
              patch.object(tm, "sync_hyprlock_theme", return_value=True), \
-             patch.object(tm, "sync_gtk_theme", return_value=True), \
+             patch.object(tm, "sync_gtk_theme", side_effect=RuntimeError("unavailable")), \
              patch.object(tm, "sync_btop_theme", return_value=True), \
              patch.object(tm, "sync_qt_theme", return_value=True), \
-             patch.object(tm, "sync_labwc_theme", return_value=True), \
+             patch.object(tm, "sync_labwc_theme", side_effect=RuntimeError("unavailable")), \
              patch.object(tm, "sync_fastfetch_theme", return_value=True):
             result = tm.apply_all_adapters("catppuccin-mocha", tm.THEMES["catppuccin-mocha"])
 
-        self.assertFalse(result["ghostty"])
-        self.assertTrue(result["hyprland"])
-        self.assertTrue(result["fastfetch"])
+        for adapter in ("kitty", "ghostty", "hyprland", "gtk", "labwc"):
+            self.assertFalse(result[adapter], adapter)
+        for adapter in ("hyprlock", "btop", "qt", "mango", "fastfetch"):
+            self.assertTrue(result[adapter], adapter)
 
     def test_sync_gtk_theme(self):
         import subprocess as _sp

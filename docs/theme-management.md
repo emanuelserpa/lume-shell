@@ -89,6 +89,13 @@ state directory for their full duration, preventing concurrent shell, CLI, and
 wallpaper operations from interleaving adapter writes. An application already in
 progress finishes before the latest selection is synchronized.
 
+Adapter failures are isolated: a failed Kitty, Hyprland, GTK, or labwc update
+does not prevent the other adapters from being attempted, and `get` reports
+which outputs remain out of sync. This status verifies generated files and
+settings; it cannot prove that an already-running application reloaded them.
+Recovery tests use temporary configuration directories so they do not alter the
+active desktop preferences.
+
 To revert from a wallpaper-derived Chameleon palette, select any static theme, such as
 `catppuccin-mocha`. The palette cache lives beside the theme state and is
 regenerated when the wallpaper path or modification time changes.
