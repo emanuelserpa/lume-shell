@@ -76,8 +76,11 @@ Este backlog complementa, e não substitui, o plano ativo em
   encerramentos repetidos; medir reinícios/log/memória. Só se reproduzido,
   adicionar backoff limitado, fila limitada e indisponibilidade observável; não
   descartar notificações sem política. O serviço real permaneceu ativo por 17 h
-  com `notification_store.py` em execução; essa observação não reproduz falha nem
-  reinícios. Requer simulação controlada antes de alterar retry/fila.
+  na observação anterior. Em 2026-11-08, o PID `1092862` estava ativo havia
+  83.474 s (~23 h) e `notification_store.py` PID `1092877` havia 83.472 s; no log
+  ativo, `rg` não encontrou erros do helper nem da resposta do histórico. Isso
+  continua sem reproduzir falha/reinícios. Requer simulação controlada antes de
+  alterar retry/fila.
 - [ ] **P1-03 — Ações externas e respostas fora de ordem.** Simular stdout vazio,
   stderr, rc != 0, processo pendente, consulta reiniciada e resposta antiga após
   uma nova. Corrigido o falso sucesso confirmado em `CommandAction` e
