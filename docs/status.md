@@ -7,8 +7,8 @@ consulte o backlog e o plano indicados abaixo.
   [plano visual](design-plan.md); a lógica de calendário/log tem cobertura
   automatizada, mas os estados do popup ainda precisam ser vistos na sessão.
 - **Progresso técnico:** P0-02 a P0-04 e P1-01 passaram validação offline.
-  P1-03 teve falsos sucessos corrigidos nos componentes comuns de processo; falta
-  validar a integração com processos reais e feedback visual. P1-04 já tem pausa
+  P1-03 teve falsos sucessos corrigidos e agora conta com teste de integração de
+  `Process` real; falta revisar o feedback visual das falhas. P1-04 já tem pausa
   persistente de captura e limpeza de thumbs testadas; falta revisão visual.
   P1-06 ganhou testes de recuperação em diretórios temporários; a aplicação nas
   integrações reais continua por conferir.

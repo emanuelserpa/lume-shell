@@ -89,8 +89,13 @@ Este backlog complementa, e não substitui, o plano ativo em
   consulta atual. Um watchdog de 2 s reporta helper que não chega a iniciar, já
   que o `Process` disponível não expõe o erro de início como sinal QML. Cobertura
   pura para JSON vazio, stderr, código não zero, sucesso, start timeout e
-  transição de restart: QML 121/121. Falta teste com `Process` real para processo
-  que inicia e fica pendente, ordenação de sinais e feedback visual; item aberto.
+  transição de restart: suíte QML 123/123. O novo teste
+  `./scripts/test-quickshell-processes.sh` usa `Process` real sem abrir janelas:
+  valida sucesso, JSON válido com saída 7 e stderr, stdout vazio com saída zero,
+  `CommandAction` em sucesso/falha e processo pendente por mais de 2 s cujo
+  restart descarta a resposta antiga e publica apenas a nova. Passou em
+  Quickshell 0.3.2. Falta revisar o feedback visual das falhas nas superfícies;
+  item ainda aberto.
 - [ ] **P1-04 — Privacidade do clipboard.** Adicionar pausa/retomada de captura e
   preferência persistente quando apropriado. Avaliar apenas sinais sensíveis
   realmente expostos; não prometer detecção infalível de senhas. Preservar

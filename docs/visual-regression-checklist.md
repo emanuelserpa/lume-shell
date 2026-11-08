@@ -15,7 +15,7 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 
 ### P0-01 — calendário e atualizações (2026-11-08)
 
-- Alterações em andamento sobre `7f15f96`; Quickshell 0.3.2, Hyprland,
+- Alterações em andamento sobre `e0c37a2`; Quickshell 0.3.2, Hyprland,
   captura 1920×1080; a escala da sessão não foi consultada.
 - Harness isolado da árvore de trabalho: `/tmp/lume-p0-harness-panel.png`.
   Confere visualmente mês visitado, ação Hoje, progresso anual e feriados; não
