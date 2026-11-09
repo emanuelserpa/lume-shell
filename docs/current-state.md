@@ -37,7 +37,7 @@ are not mounted in the current bar.
 | Notifications and Quick Settings | `services/NotificationState.qml`, `bar/NotificationPopup.qml` | [Notifications](notifications.md), [Quick Settings](control-center.md) |
 | OSD and recording | `osd/Osd.qml`, `services/ScreenRecordingState.qml` | [OSD](osd.md), [recording](screen-recording.md) |
 | Hardware monitoring | `bar/SystemMonitor.qml`, `bar/SystemMonitorPopup.qml` | [System monitor](system-monitor.md) |
-| Updates | `services/UpdateState.qml`, `bar/SystemUpdatePopup.qml`, `scripts/update_status_json.py`, `scripts/update-log.py` | Arch, AUR, Flatpak, Homebrew, Gear Lever AppImages; result/log recovery |
+| Updates | `bar/UpdateControl.qml`, `bar/SystemUpdatePopup.qml`, `services/UpdateState.qml`, `services/UpdateAvailability.js`, `scripts/update_status_json.py`, `scripts/update-log.py` | Arch, AUR, Flatpak, Homebrew, Gear Lever AppImages; result/log recovery |
 | Games and downloads | `scripts/game-status.py`, `launcher/DownloadPanel.qml`, `services/DownloadState.qml` | [Downloads](ytdlp-downloads.md); active games appear in Quick Settings |
 | Compositors | `services/CompositorState.qml`, `services/MangoState.qml`, `scripts/compositor-dispatch.sh` | [Integration](compositor-integration.md) |
 | Display projection | `services/DisplayProjectionState.qml`, `scripts/display-projection.py` | [Projection](display-projection.md), currently Hyprland only |

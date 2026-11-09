@@ -16,8 +16,11 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 ### P0-01 — calendário e atualizações (2026-11-08)
 
 - Quickshell 0.3.2, Hyprland, monitor eDP-1 1920×1080, escala 1; serviço
-  `lume-shell.service` ativo. A árvore instalada pode divergir da árvore de
-  trabalho e não foi comparada neste teste.
+  `lume-shell.service` ativo. Em 2026-11-08, `pacman -Q lume-shell` confirmou
+  `0.1.0-13`, instalado da árvore atual para permitir a revisão interativa;
+  `./scripts/visual-check.sh` passou com unidade ativa, layer-shell, barra de
+  37 px e fontes exigidas. Isso confirma a instalação e a superfície, não a
+  abertura do popup de atualizações.
 - Harness isolado da árvore de trabalho: `/tmp/lume-p0-harness-panel.png`.
   Confere visualmente mês visitado, ação Hoje, progresso anual e feriados; não
   é captura do shell instalado nem valida navegação/interação.
@@ -34,9 +37,9 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
   usado pela barra nem o estado do shell instalado.
 - `quickshell ipc --path /usr/share/lume-shell show` responde, mas só expõe
   spotlight, displayProjection, media e notifications; não há alvos para abrir
-  calendário/atualizações. O pacote instalado é `lume-shell 0.1.0-12` e seus
-  `WeatherCard.qml`, `SystemUpdatePopup.qml` e `CalendarCard.qml` diferem da
-  árvore atual; a captura integrada usa a árvore de trabalho.
+  calendário/atualizações. Na inspeção inicial, o pacote `0.1.0-12` diferia da
+  árvore atual; ele foi substituído por `0.1.0-13` para o teste interativo. As
+  capturas integradas anteriores continuam usando a árvore de trabalho.
 - Em 2026-11-08, `python3 -B scripts/update-log.py status` retornou
   `has_status: false`; `python3 -B scripts/update-log.py open` retornou sucesso
   com o caminho `/home/emanuel/.cache/quickshell/update.log`, sem iniciar uma
@@ -48,9 +51,11 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 
 ### P0-01 — nova conferência do estado instalado (2026-11-08)
 
-- `pacman -Q lume-shell` ainda retorna `0.1.0-12`; `systemctl --user status`
-  confirma `lume-shell.service` ativo usando `/usr/share/lume-shell`. O IPC
-  instalado continua sem alvos de calendário ou atualizações.
+- Em 2026-11-08, `pacman -Q lume-shell` retorna `0.1.0-14` e
+  `lume-shell.service` está ativo usando `/usr/share/lume-shell`. O IPC
+  instalado continua sem alvos de calendário ou atualizações. A abertura pela
+  barra depende de clique real; a revisão visual do popup instalado segue
+  pendente.
 - Tentei abrir o popup atual num `PanelWindow` temporário com `grabFocus: true`.
   O Quickshell/Wayland recusou o popup porque o painel ainda não havia recebido
   entrada (`Failed to create grabbing popup`); desligar o foco mostra o popup,
@@ -59,6 +64,30 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 - Portanto, a interação real requer testar a versão atual na instância instalada
   com entrada local, ou uma revisão automatizada que gere eventos no Wayland;
   as capturas com foco desativado continuam sendo somente revisão visual.
+
+### P0-01 — acesso ao resultado persistido (2026-11-08)
+
+- Revisão do código encontrou que `UpdateControl.available` considerava apenas
+  contagem e execução. Depois de uma atualização bem-sucedida com zero pendências,
+  o shell restaurava o resultado em `UpdateState`, mas escondia a pill que abre
+  o popup; assim, o usuário não podia consultar novamente o resultado/log.
+- `UpdateControl` agora também permanece disponível quando há resultado salvo;
+  quando não há pendências, cor e tooltip indicam sucesso/falha e mostram a
+  mensagem. `tests/qml/tst_update_availability.qml` cobre os quatro estados e
+  `./scripts/validate.sh --offline` passou com 17 OK, 0 WARN/FAIL e QML 136/136.
+- O pacote `0.1.0-14` instalado contém a correção; o serviço iniciou e
+  `./scripts/visual-check.sh` passou com layer-shell e barra de 37 px. A captura
+  recortada `/tmp/lume-bar-v14.png` confirma a pill visível na barra. Ainda falta
+  abrir o popup e testar fechar/reabrir com entrada real.
+
+### P0-04 — verificação após reiniciar o shell (2026-11-08)
+
+- A primeira sondagem após `systemctl --user restart lume-shell.service` ocorreu
+  antes de a barra ser mapeada e reportou ausência de layer-shell, embora a
+  unidade já estivesse ativa. Após dois segundos, a mesma verificação passou.
+- `visual-check.sh` agora espera até cinco segundos pela camada quando a unidade
+  está ativa. `tests.test_visual_check` reproduz duas respostas vazias seguidas
+  do compositor e confirma sucesso após a terceira consulta.
 
 ### P1-06 — aplicação de tema em runtime (2026-11-08)
 
@@ -76,8 +105,15 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
   `general:col.inactive_border = 88151218`, correspondentes às cores Chameleon
   com alpha. Não alterei opções do compositor.
 - Ainda não conferido visualmente: janela GTK, adaptadores labwc/Mango e reload
-  de aplicações já abertas. Uma chamada curta a Zenity encerrou sem screenshot;
-  ela não conta como revisão visual.
+  de aplicações já abertas. Em 2026-11-08, `python3 -B -m unittest
+  tests.test_theme` passou com 41 testes; Zenity emitiu aviso de accessibility
+  bus e não virou janela ativa no Hyprland, então não houve screenshot e isso
+  não conta como revisão visual. `./scripts/validate.sh --offline` passou com
+  17 OK, 0 WARN/FAIL e QML 136/136.
+- Uma segunda tentativa isolada sob Labwc headless forçou `GDK_BACKEND=wayland`
+  e copiou as configurações GTK do usuário para XDG temporário. Zenity permaneceu
+  ativo, mas `grim` capturou um quadro totalmente preto em
+  `/tmp/lume-p1-gtk-chameleon.png`; essa captura também não comprova renderização.
 
 ### P1-03 — erro do clima (2026-11-08)
 

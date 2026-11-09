@@ -79,6 +79,27 @@ printf '%s\\n' 'namespace: quickshell' 'xywh: 0 0 1920 37'
         self.assertIn("hyprctl layers", self.calls.read_text(encoding="utf-8"))
         self.assertIn("layer-shell surface detected", result.stdout)
 
+    def test_waits_for_layer_surface_after_service_start(self):
+        self._command("hyprctl", '''#!/bin/sh
+state="$VISUAL_TEST_CALLS.layer-attempts"
+attempt=0
+if [ -f "$state" ]; then attempt=$(cat "$state"); fi
+attempt=$((attempt + 1))
+printf '%s' "$attempt" > "$state"
+if [ "$attempt" -lt 3 ]; then
+  printf '%s\\n' 'namespace: not-ready'
+else
+  printf '%s\\n' 'namespace: quickshell' 'xywh: 0 0 1920 37'
+fi
+''')
+        result = self._run("lume-shell.service", "Hyprland")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("layer-shell surface detected", result.stdout)
+        self.assertEqual(
+            (self.root / "calls.layer-attempts").read_text(encoding="utf-8"),
+            "3",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

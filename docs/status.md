@@ -5,11 +5,13 @@ consulte o backlog e o plano indicados abaixo.
 
 - **Próxima prioridade:** concluir a verificação visual de P0-01 no
   [plano visual](design-plan.md); a lógica de calendário/log tem cobertura
-  automatizada e o popup foi conferido em harness integrado nos estados de
-  execução/erro; falta validar interação e retomada na instância instalada.
+  automatizada. A pill agora permanece disponível para reabrir resultado salvo
+  mesmo com zero pendências, coberta por quatro novos casos QML e instalada em
+  `0.1.0-14`; o shell carregou e a barra passou na verificação visual. Falta
+  validar abertura/interação e testar retomada na instância instalada.
 - **Progresso técnico:** P0-02 a P0-04 e P1-01 passaram validação offline.
   P1-02 foi reproduzido em simulação controlada e corrigido com watchdog,
-  backoff, fila limitada e aviso no histórico; a suíte offline está em 130/130.
+  backoff, fila limitada e aviso no histórico; a suíte offline está em 136/136.
   P1-03 teve falsos sucessos corrigidos, teste de integração de `Process` real e
   lacuna de erro no cartão do clima corrigida; revisão Wayland confirmou aviso e
   tooltip, e o item foi fechado. P1-04 fechou com pausa persistente, revisão dos

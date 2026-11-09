@@ -41,19 +41,30 @@ Este backlog complementa, e não substitui, o plano ativo em
   com mensagem e ações visíveis (`/tmp/lume-p0-update-review-running.png` e
   `/tmp/lume-p0-update-review-error.png`). O teste usa dados simulados e desativa
   `grabFocus` por não receber clique real. `visual-check.sh` confirmou serviço
-  ativo, barra de 37 px e fontes. O pacote ativo é `0.1.0-12`, diferente da
-  árvore de trabalho; IPC instalado não expõe calendário/atualizações.
+  ativo, barra de 37 px e fontes. Em 2026-11-08, foi instalado o pacote local
+  `0.1.0-13` para testar a árvore atual; o IPC instalado não expõe
+  calendário/atualizações e ainda falta abrir o popup pela barra com clique real.
   `update-log.py status` indicou ausência de resultado e `update-log.py open`
   abriu o caminho configurado sem iniciar atualização; a janela temporária foi
   encerrada. Evidência e limites em `docs/visual-regression-checklist.md`.
+  A revisão do fluxo encontrou que a pill sumia quando a contagem chegava a zero,
+  mesmo com resultado salvo restaurado após reiniciar o shell. `UpdateControl`
+  agora permanece visível para esse resultado, sinaliza sucesso/falha por cor e
+  expõe a mensagem no tooltip. `UpdateAvailability.js` e quatro casos QML cobrem
+  pendências, execução, resultado salvo e estado sem atualizações; a validação
+  offline passou com 17 OK e QML 136/136. Falta conferir o caminho no pacote
+  instalado, além dos testes de clique/retomada já listados.
   Continua aberto: retomada após suspensão, abertura pela barra na instância
   instalada, ativação real dos botões e persistência visual após reabertura.
-  Em 2026-11-09 a unidade instalada continuava ativa em `0.1.0-12`, sem IPC
-  para calendário/atualizações. Um harness Wayland com foco habilitado não
+  Na conferência seguinte, a unidade instalada continuava ativa, sem IPC para
+  calendário/atualizações. Um harness Wayland com foco habilitado não
   recebeu entrada e o compositor rejeitou o popup; com foco desabilitado ele
   só serve para captura visual. O harness foi fechado sem tocar na instância
   instalada. A nova tentativa e seu limite estão em
-  `docs/visual-regression-checklist.md`.
+  `docs/visual-regression-checklist.md`. Depois, `0.1.0-14` foi instalado com
+  a correção do resultado acessível; o shell iniciou e `visual-check.sh` passou
+  com a camada visível. Falta registrar a abertura/interação real do popup quando
+  o usuário clicar na barra.
 - [x] **P0-02 — Preservar arquivos locais em `scripts/validate.sh`.** A combinação
   `py_compile` + remoções abrangentes de `__pycache__` pode apagar caches
   preexistentes. Validar sem bytecode ou limpar apenas temporários próprios.
@@ -69,7 +80,11 @@ Este backlog complementa, e não substitui, o plano ativo em
   `lume-shell.service` primeiro; usar `quickshell.service` apenas como fallback
   explícito legado. Verificar unidade ativa, não só instalada. Condicionar
   verificações Hyprland ao compositor e avisar quando não aplicáveis. Aceite:
-  sessão saudável do pacote passa; ausência de shell ativa falha.
+  sessão saudável do pacote passa; ausência de shell ativa falha. A execução
+  logo após reiniciar revelou uma corrida entre unidade ativa e barra mapeada;
+  a sonda agora aguarda até cinco segundos e `tests.test_visual_check` cobre
+  camada ausente nas duas primeiras consultas. Se a camada continuar ausente,
+  a verificação ainda falha.
 - [ ] **P0-05 — CI de qualidade no GitHub (suspenso por enquanto).** A pedido do
   usuário, `quality.yml` foi removido e o workflow de pacote não depende mais de
   CI. Antes de reativar: resolver as cinco falhas observadas na primeira execução
@@ -162,9 +177,12 @@ Este backlog complementa, e não substitui, o plano ativo em
   releases e nenhum arquivo de licença. Portanto 0.1.0 é apenas fallback para
   builds locais, e o workflow injeta a versão de uma tag; o `CHANGELOG.md` agora
   identifica 1.2.0 como marco funcional, e o título de `LAUNCHER.md` deixou de
-  apresentar v0.20.27 como versão do produto. Ainda falta escolher e publicar a
-  licença antes de distribuir; não vou inventá-la. O campo `custom` no PKGBUILD
-  continua provisório e não autoriza redistribuição. `namcap` não foi usado.
+  apresentar v0.20.27 como versão do produto. Para o teste P0-01, o pacote local
+  `0.1.0-14` foi também instalado no host e o serviço passou na verificação
+  visual; isso não altera o estado de licença/distribuição. Ainda falta escolher
+  e publicar a licença antes de distribuir; não vou inventá-la. O campo `custom`
+  continua provisório no PKGBUILD e não autoriza redistribuição. `namcap` não foi
+  usado.
 - [ ] **P1-06 — Temas e recuperação.** Risco a reproduzir com falhas isoladas de
   Kitty/GTK/labwc/Hyprland, configuração inválida e interrupção de escrita.
   Conferir aplicação real, estado reportado e repetição sem afetar adaptadores
@@ -182,7 +200,11 @@ Este backlog complementa, e não substitui, o plano ativo em
   retornou `chameleon`/`prefer-dark`, e os arquivos GTK contêm as cores da
   paleta. Isso confirma aplicação/configuração carregada para Kitty e Hyprland,
   mas não a aparência renderizada de uma janela GTK nem reload de app aberta.
-  Falta revisão visual GTK; labwc/Mango não estão em execução para revisão real.
+  `python3 -B -m unittest tests.test_theme` passou com 41 testes e
+  `./scripts/validate.sh --offline` passou com 17 OK e QML 136/136. Uma tentativa
+  com Zenity emitiu aviso do accessibility bus e não virou janela ativa no
+  Hyprland, sem captura; portanto ainda falta revisão visual GTK. Labwc/Mango não
+  estão em execução para revisão real.
   Evidências e limites em `docs/visual-regression-checklist.md`.
 
 ## P2 — Qualidade visual e desempenho medidos

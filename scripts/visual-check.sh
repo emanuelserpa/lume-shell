@@ -16,14 +16,17 @@ RESET="\033[0m"
 echo -e "${BOLD}${CYAN}=== Quickshell Visual Regression & Surface Verification ===${RESET}\n"
 
 FAIL_COUNT=0
+SHELL_ACTIVE=false
 CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-}"
 CURRENT_DESKTOP="${CURRENT_DESKTOP,,}"
 
 # 1. Lume Service Health
 echo -e "${BOLD}[1/4] Checking the active shell service...${RESET}"
 if systemctl --user is-active --quiet lume-shell.service; then
+    SHELL_ACTIVE=true
     echo -e "  ${GREEN}✓${RESET} lume-shell.service is running (active)"
 elif systemctl --user is-active --quiet quickshell.service; then
+    SHELL_ACTIVE=true
     echo -e "  ${YELLOW}!${RESET} Legacy quickshell.service is active; package unit is lume-shell.service"
 else
     echo -e "  ${RED}✗${RESET} No active lume-shell.service or legacy quickshell.service"
@@ -33,7 +36,22 @@ fi
 # 2. Wayland Layer-Shell Surfaces (hyprctl layers)
 echo -e "\n${BOLD}[2/4] Verifying Wayland Layer-Shell surfaces...${RESET}"
 if [[ ":${CURRENT_DESKTOP}:" == *:hyprland:* ]] && command -v hyprctl >/dev/null 2>&1; then
-    layers_output="$(hyprctl layers 2>/dev/null || true)"
+    layers_output=""
+    if [[ "$SHELL_ACTIVE" == true ]]; then
+        # systemd can report the unit active before Quickshell has mapped its bar.
+        # Give the compositor a short bounded window to expose the layer surface.
+        for ((attempt = 0; attempt < 20; attempt++)); do
+            layers_output="$(hyprctl layers 2>/dev/null || true)"
+            if echo "$layers_output" | grep "namespace: quickshell" >/dev/null 2>&1; then
+                break
+            fi
+            if (( attempt < 19 )); then
+                sleep 0.25
+            fi
+        done
+    else
+        layers_output="$(hyprctl layers 2>/dev/null || true)"
+    fi
     if echo "$layers_output" | grep "namespace: quickshell" >/dev/null 2>&1; then
         echo -e "  ${GREEN}✓${RESET} quickshell layer-shell surface detected"
 

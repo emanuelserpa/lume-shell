@@ -269,9 +269,11 @@ Casos concretos:
 - Impressora com trabalhos no CUPS permanece acessível mesmo com falha na
   sondagem de rede. Não esconder a fila que permite diagnóstico/cancelamento.
 - Calendário usa data atual reativa para destaque, progresso anual e feriados.
-- UpdateControl aparece com pendências ou execução. O popup mostra etapas e,
-  durante a execução, oferece o terminal de progresso. Mensagens essenciais de
-  falha precisam continuar acessíveis; verificar isso no plano.
+- UpdateControl aparece com pendências, execução ou resultado salvo da última
+  atualização. Sem pendências, cor e tooltip identificam sucesso/falha e mantêm
+  o caminho para reabrir o resultado/log. O popup mostra etapas e, durante a
+  execução, oferece o terminal de progresso. Mensagens essenciais de falha
+  precisam continuar acessíveis; verificar isso no plano.
 - Dashboard central contém clima e calendário/feriados. Telemetria fica no
   SystemMonitor; atualizações ficam no seu próprio popup.
 - Toasts: atualmente 5,5 s normais, 3,5 s de baixa urgência e sem expiração
