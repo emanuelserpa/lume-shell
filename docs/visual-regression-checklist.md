@@ -46,6 +46,20 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
   ativação dos botões por mouse/teclado. O IPC disponível não controla esses
   estados, então P0-01 permanece aberto.
 
+### P0-01 — nova conferência do estado instalado (2026-11-09)
+
+- `pacman -Q lume-shell` ainda retorna `0.1.0-12`; `systemctl --user status`
+  confirma `lume-shell.service` ativo usando `/usr/share/lume-shell`. O IPC
+  instalado continua sem alvos de calendário ou atualizações.
+- Tentei abrir o popup atual num `PanelWindow` temporário com `grabFocus: true`.
+  O Quickshell/Wayland recusou o popup porque o painel ainda não havia recebido
+  entrada (`Failed to create grabbing popup`); desligar o foco mostra o popup,
+  mas não valida foco nem interação. O harness foi encerrado e o serviço
+  instalado permaneceu ativo. Não iniciei atualização nem alterei preferências.
+- Portanto, a interação real requer testar a versão atual na instância instalada
+  com entrada local, ou uma revisão automatizada que gere eventos no Wayland;
+  as capturas com foco desativado continuam sendo somente revisão visual.
+
 ### P1-03 — erro do clima (2026-11-08)
 
 - Harness Wayland com `WeatherCard` da árvore de trabalho, previsão válida em

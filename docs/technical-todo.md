@@ -48,6 +48,12 @@ Este backlog complementa, e não substitui, o plano ativo em
   encerrada. Evidência e limites em `docs/visual-regression-checklist.md`.
   Continua aberto: retomada após suspensão, abertura pela barra na instância
   instalada, ativação real dos botões e persistência visual após reabertura.
+  Em 2026-11-09 a unidade instalada continuava ativa em `0.1.0-12`, sem IPC
+  para calendário/atualizações. Um harness Wayland com foco habilitado não
+  recebeu entrada e o compositor rejeitou o popup; com foco desabilitado ele
+  só serve para captura visual. O harness foi fechado sem tocar na instância
+  instalada. A nova tentativa e seu limite estão em
+  `docs/visual-regression-checklist.md`.
 - [x] **P0-02 — Preservar arquivos locais em `scripts/validate.sh`.** A combinação
   `py_compile` + remoções abrangentes de `__pycache__` pode apagar caches
   preexistentes. Validar sem bytecode ou limpar apenas temporários próprios.
