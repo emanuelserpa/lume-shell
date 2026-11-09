@@ -94,8 +94,8 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 - `theme-manager.py get` reporta Chameleon e os 11 adaptadores como sincronizados.
   GSettings do usuário retorna `gtk-theme='chameleon'` e `color-scheme='prefer-dark'`;
   o `settings.ini` GTK3 e CSS libadwaita usam o mesmo fundo `#151218` e acento
-  `#d2bcfd`. Isso confirma configuração, mas ainda não confirma pixels numa
-  janela GTK real.
+  `#d2bcfd`. Essa primeira verificação confirmou a configuração, sem ainda
+  confirmar pixels numa janela GTK real.
 - Iniciei um servidor Kitty headless/oculto com a configuração real do usuário
   e consultei `kitten @ get-colors`: os valores efetivos foram `background
   #151218`, `foreground #e7e0e8`, `cursor #d2bcfd` e a paleta ANSI esperada.
@@ -104,16 +104,18 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 - Hyprland ativo retorna `general:col.active_border = eed2bcfd` e
   `general:col.inactive_border = 88151218`, correspondentes às cores Chameleon
   com alpha. Não alterei opções do compositor.
-- Ainda não conferido visualmente: janela GTK, adaptadores labwc/Mango e reload
-  de aplicações já abertas. Em 2026-11-08, `python3 -B -m unittest
+- Ainda não conferido visualmente: GTK4/libadwaita, adaptadores labwc/Mango e
+  reload de aplicações já abertas. Em 2026-11-08, `python3 -B -m unittest
   tests.test_theme` passou com 41 testes; Zenity emitiu aviso de accessibility
   bus e não virou janela ativa no Hyprland, então não houve screenshot e isso
   não conta como revisão visual. `./scripts/validate.sh --offline` passou com
   17 OK, 0 WARN/FAIL e QML 136/136.
-- Uma segunda tentativa isolada sob Labwc headless forçou `GDK_BACKEND=wayland`
-  e copiou as configurações GTK do usuário para XDG temporário. Zenity permaneceu
-  ativo, mas `grim` capturou um quadro totalmente preto em
-  `/tmp/lume-p1-gtk-chameleon.png`; essa captura também não comprova renderização.
+- Depois, um cliente GTK3 mínimo foi renderizado em Labwc headless/Pixman com
+  `GDK_BACKEND=wayland` e cópias temporárias das configurações do usuário. A
+  captura `/tmp/lume-p1-gtk-chameleon.png` mostra conteúdo escuro, rótulo claro,
+  campo e botão; a amostra do fundo da janela é `#151218`, igual ao CSS ativo.
+  Isso confirma a paleta no conteúdo GTK3. A decoração cinza da janela pertence
+  ao tema padrão do Labwc; não validei GTK4/libadwaita nem reload de app aberta.
 
 ### P1-03 — erro do clima (2026-11-08)
 

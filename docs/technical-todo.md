@@ -198,13 +198,15 @@ Este backlog complementa, e não substitui, o plano ativo em
   fundo `#151218`, foreground `#e7e0e8` e cursor `#d2bcfd`; Hyprland ativo
   retornou as bordas correspondentes (`eed2bcfd`/`88151218`). GSettings real
   retornou `chameleon`/`prefer-dark`, e os arquivos GTK contêm as cores da
-  paleta. Isso confirma aplicação/configuração carregada para Kitty e Hyprland,
-  mas não a aparência renderizada de uma janela GTK nem reload de app aberta.
+  paleta. Isso confirma aplicação/configuração carregada para Kitty e Hyprland;
+  naquela etapa ainda não havia conferência de pixels GTK nem reload de app.
   `python3 -B -m unittest tests.test_theme` passou com 41 testes e
   `./scripts/validate.sh --offline` passou com 17 OK e QML 136/136. Uma tentativa
   com Zenity emitiu aviso do accessibility bus e não virou janela ativa no
-  Hyprland, sem captura; portanto ainda falta revisão visual GTK. Labwc/Mango não
-  estão em execução para revisão real.
+  Hyprland. Depois, um cliente GTK3 mínimo em Labwc headless/Pixman mostrou
+  conteúdo no tema Chameleon; a amostra de fundo `#151218` corresponde ao CSS
+  gerado. A decoração da janela veio do tema padrão do Labwc. Ainda falta conferir
+  GTK4/libadwaita e reload de app aberta; Mango não está ativo para revisão real.
   Evidências e limites em `docs/visual-regression-checklist.md`.
 
 ## P2 — Qualidade visual e desempenho medidos

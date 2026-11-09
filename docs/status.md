@@ -19,9 +19,10 @@ consulte o backlog e o plano indicados abaixo.
   P1-05 teve build, instalação, IPC em Labwc headless, atualização e remoção
   verificados em Arch descartável; ainda não pode ser fechado ou distribuído
   enquanto a licença pública estiver indefinida.
-  P1-06 tem testes de falha isolada e novas confirmações de runtime: Kitty
-  carregou a paleta Chameleon por IPC e Hyprland reporta as cores correspondentes;
-  a aparência GTK e reload de aplicativos continuam por conferir.
+  P1-06 tem testes de falha isolada e confirmações de runtime: Kitty carregou a
+  paleta Chameleon por IPC, Hyprland reporta as cores correspondentes e uma janela
+  GTK3 mínima renderizou o fundo esperado em Labwc headless; GTK4/libadwaita,
+  reload de apps e Mango continuam por conferir.
   P0-05 (CI do GitHub) está suspenso temporariamente a pedido do usuário; o
   workflow de qualidade foi removido e o build de release não depende mais dele.
   Ao retomar, primeiro investigar as cinco falhas vistas no CI remoto; localmente
