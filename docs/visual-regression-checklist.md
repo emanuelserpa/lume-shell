@@ -46,7 +46,7 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
   ativação dos botões por mouse/teclado. O IPC disponível não controla esses
   estados, então P0-01 permanece aberto.
 
-### P0-01 — nova conferência do estado instalado (2026-11-09)
+### P0-01 — nova conferência do estado instalado (2026-11-08)
 
 - `pacman -Q lume-shell` ainda retorna `0.1.0-12`; `systemctl --user status`
   confirma `lume-shell.service` ativo usando `/usr/share/lume-shell`. O IPC
@@ -59,6 +59,25 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 - Portanto, a interação real requer testar a versão atual na instância instalada
   com entrada local, ou uma revisão automatizada que gere eventos no Wayland;
   as capturas com foco desativado continuam sendo somente revisão visual.
+
+### P1-06 — aplicação de tema em runtime (2026-11-08)
+
+- `theme-manager.py get` reporta Chameleon e os 11 adaptadores como sincronizados.
+  GSettings do usuário retorna `gtk-theme='chameleon'` e `color-scheme='prefer-dark'`;
+  o `settings.ini` GTK3 e CSS libadwaita usam o mesmo fundo `#151218` e acento
+  `#d2bcfd`. Isso confirma configuração, mas ainda não confirma pixels numa
+  janela GTK real.
+- Iniciei um servidor Kitty headless/oculto com a configuração real do usuário
+  e consultei `kitten @ get-colors`: os valores efetivos foram `background
+  #151218`, `foreground #e7e0e8`, `cursor #d2bcfd` e a paleta ANSI esperada.
+  O processo e o socket temporários foram encerrados/removidos. É verificação de
+  configuração efetivamente carregada, sem captura de renderização.
+- Hyprland ativo retorna `general:col.active_border = eed2bcfd` e
+  `general:col.inactive_border = 88151218`, correspondentes às cores Chameleon
+  com alpha. Não alterei opções do compositor.
+- Ainda não conferido visualmente: janela GTK, adaptadores labwc/Mango e reload
+  de aplicações já abertas. Uma chamada curta a Zenity encerrou sem screenshot;
+  ela não conta como revisão visual.
 
 ### P1-03 — erro do clima (2026-11-08)
 

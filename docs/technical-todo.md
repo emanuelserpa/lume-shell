@@ -176,9 +176,14 @@ Este backlog complementa, e não substitui, o plano ativo em
   reportadas sem impedir os demais adaptadores. Em 2026-11-08, a sessão estava em Hyprland
   (eDP-1, 1920×1080, escala 1), `lume-shell.service` estava ativo e
   `theme-manager.py get` reportou o tema Chameleon com os 11 adaptadores em
-  sync. Esse status de arquivos não prova a aparência dos aplicativos. Falta
-  validar a aplicação visual real e falhas isoladas no ambiente ativo sem
-  alterar preferências do usuário.
+  sync. Em 2026-11-08, Kitty headless com a configuração real reportou por IPC
+  fundo `#151218`, foreground `#e7e0e8` e cursor `#d2bcfd`; Hyprland ativo
+  retornou as bordas correspondentes (`eed2bcfd`/`88151218`). GSettings real
+  retornou `chameleon`/`prefer-dark`, e os arquivos GTK contêm as cores da
+  paleta. Isso confirma aplicação/configuração carregada para Kitty e Hyprland,
+  mas não a aparência renderizada de uma janela GTK nem reload de app aberta.
+  Falta revisão visual GTK; labwc/Mango não estão em execução para revisão real.
+  Evidências e limites em `docs/visual-regression-checklist.md`.
 
 ## P2 — Qualidade visual e desempenho medidos
 
