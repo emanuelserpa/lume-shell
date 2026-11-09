@@ -60,23 +60,6 @@ Item {
         }
     }
 
-    Timer {
-        id: workspaceRefresh
-        interval: 50
-        repeat: false
-        onTriggered: Hyprland.refreshWorkspaces()
-    }
-
-    Connections {
-        target: root.hyprlandActive ? Hyprland : null
-
-        function onRawEvent(event) {
-            if (event.name === "openwindow" || event.name === "closewindow"
-                    || event.name === "movewindowv2")
-                workspaceRefresh.restart()
-        }
-    }
-
     Row {
         id: row
         anchors.verticalCenter: parent.verticalCenter
@@ -89,11 +72,16 @@ Item {
                 id: workspaceDelegate
                 required property var modelData
                 required property int index
+                readonly property var monitor:
+                    root.hyprlandActive && root.screen ? Hyprland.monitorFor(root.screen) : null
+                // Keep this as a QML property binding so Quickshell's
+                // activeWorkspaceChanged signal invalidates the highlight.
+                readonly property var activeMonitorWorkspace:
+                    root.hyprlandActive ? monitor?.activeWorkspace ?? null : null
                 readonly property bool belongsToScreen: {
                     if (!root.hyprlandActive)
                         return true
 
-                    const monitor = root.screen ? Hyprland.monitorFor(root.screen) : null
                     const monitorName = String(monitor?.name ?? root.screen?.name ?? "")
                     const workspaceMonitor = String(modelData?.monitor?.name ?? "")
                     return !monitorName || !workspaceMonitor || workspaceMonitor === monitorName
@@ -101,7 +89,9 @@ Item {
                 property var ws: modelData
                 property int workspaceIndex: index
                 property bool active: root.hyprlandActive
-                    ? ws !== null && ws.active
+                    ? (activeMonitorWorkspace
+                        ? String(activeMonitorWorkspace.id) === String(ws?.id)
+                        : WorkspaceModel.isHyprlandWorkspaceActiveOnMonitor(ws, monitor))
                     : ws !== null ? ws.active : false
                 property bool urgent: ws !== null ? ws.urgent : false
 

@@ -68,3 +68,18 @@ function hasHyprlandWindows(workspace) {
     const toplevels = workspace?.toplevels?.values
     return Array.isArray(toplevels) && toplevels.length > 0
 }
+
+function isHyprlandWorkspaceActiveOnMonitor(workspace, monitor) {
+    if (!workspace)
+        return false
+
+    const monitorWorkspace = monitor?.activeWorkspace
+    if (monitorWorkspace !== null && monitorWorkspace !== undefined) {
+        if (workspace.id !== undefined && monitorWorkspace.id !== undefined)
+            return Number(workspace.id) === Number(monitorWorkspace.id)
+        return String(workspace.name ?? "") === String(monitorWorkspace.name ?? "")
+    }
+
+    // Older Quickshell builds may not expose the per-monitor workspace yet.
+    return Boolean(workspace.active)
+}

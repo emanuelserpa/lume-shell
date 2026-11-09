@@ -100,4 +100,29 @@ QtObject {
             return false
         }
     }
+
+    property Timer workspaceRefreshTimer: Timer {
+        interval: 50
+        repeat: false
+        onTriggered: Hyprland.refreshWorkspaces()
+    }
+
+    property Timer monitorRefreshTimer: Timer {
+        interval: 50
+        repeat: false
+        onTriggered: Hyprland.refreshMonitors()
+    }
+
+    property Connections hyprlandRefreshEvents: Connections {
+        target: root.hyprlandNativeEnabled ? Hyprland : null
+
+        function onRawEvent(event) {
+            if (["openwindow", "closewindow", "movewindowv2"].includes(event.name))
+                root.workspaceRefreshTimer.restart()
+
+            if (["workspace", "workspacev2", "focusedmon", "focusedmonv2"]
+                    .includes(event.name))
+                root.monitorRefreshTimer.restart()
+        }
+    }
 }

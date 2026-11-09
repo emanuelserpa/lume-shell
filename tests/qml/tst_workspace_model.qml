@@ -45,6 +45,23 @@ TestCase {
         }))
     }
 
+    function test_hyprlandActiveWorkspaceIsResolvedPerMonitor() {
+        const workspaceOnLaptop = { id: 3, active: true }
+        const workspaceOnExternal = { id: 2, active: false }
+
+        verify(WorkspaceModel.isHyprlandWorkspaceActiveOnMonitor(
+            workspaceOnLaptop, { activeWorkspace: { id: 3 } }))
+        verify(!WorkspaceModel.isHyprlandWorkspaceActiveOnMonitor(
+            workspaceOnLaptop, { activeWorkspace: { id: 2 } }))
+        verify(WorkspaceModel.isHyprlandWorkspaceActiveOnMonitor(
+            workspaceOnExternal, { activeWorkspace: { id: 2 } }))
+    }
+
+    function test_hyprlandActiveWorkspaceFallsBackWithoutMonitorState() {
+        verify(WorkspaceModel.isHyprlandWorkspaceActiveOnMonitor({ active: true }, null))
+        verify(!WorkspaceModel.isHyprlandWorkspaceActiveOnMonitor(null, null))
+    }
+
     function test_numericWorkspaceNumberNormalizesBackendIds() {
         compare(WorkspaceModel.numericWorkspaceNumber({ id: "3" }, { hyprland: true, maximum: 10 }), 3)
         compare(WorkspaceModel.numericWorkspaceNumber({ name: "4" }, { protocol: true, maximum: 10 }), 4)
