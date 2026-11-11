@@ -42,8 +42,13 @@ The system is organized into modular QML components connected through a reactive
     space. The app icon sits over the lower-right
     corner of a supplied notification image; without an image, it occupies the
     leading visual slot. Hover-revealed actions remain available. Critical
-    borders remain red.
+    urgency is marked by a red badge on the leading icon/image, including when
+    the notification has its own app icon; the toast perimeter stays neutral.
   - Maintains up to four visible toasts; this is separate from notification history.
+  - The newest card enters with a short downward motion and fade; dismissal fades
+    while moving slightly right. Existing cards take their new stack positions
+    immediately so the translucent stack itself does not animate vertically.
+    Swipe dismissal remains independent.
   - Uses Quickshell's foreign-toplevel state to defer normal toast cards while
     the active window is fullscreen; critical toasts remain visible. Deferred
     notifications stay in the toast queue and appear after fullscreen ends,
@@ -51,15 +56,16 @@ The system is organized into modular QML components connected through a reactive
   - A keyed ListModel preserves existing toast delegates, images and timers
     when messages arrive. Replacements update the same card and reset its timer;
     only the oldest card is evicted when the four-card limit is reached.
-  - Toasts enter with a short 24px glide from inside the column, scale and fade;
-    the animation keeps their right edge within the screen. The column uses a
-    velocity-based smoothed movement so a burst can retarget cards without
-    restarting them at a new speed. Exit removal waits for
-    `motionPopupExit` so the fade completes. Fullscreen hides normal cards and
-    pauses their timers without destroying their delegates. Critical cards
-    remain visible; hover pauses expiration.
-  - Rendered as a transparent `PanelWindow` anchored to `Edges.Top | Edges.Right`.
-  - Configured with `surfaceFormat.opaque: false` for Hyprland background blur.
+  - The `PanelWindow` keeps a stable full-height layer surface while notifications
+    change; its input mask follows the visible toast column so clicks elsewhere
+    pass through. Exit removal waits for `motionPopupExit` so the fade and short
+    rightward motion complete. Fullscreen hides normal cards and pauses their
+    timers without destroying their delegates. Critical cards remain visible;
+    hover pauses expiration.
+  - Rendered as a transparent `PanelWindow` anchored to the top, right and bottom.
+  - Uses the same translucent theme surface and glass border as the bar, with
+    the general compositor blur. Critical urgency stays marked by its red
+    badge; the card perimeter remains neutral.
   - Receives only the toast events allowed by DND, with critical notifications exempted.
   - Restored notifications are rendered as toast snapshots and do not change the tracked list or dismiss the original notification again.
 - **`services/BatteryAlertState.qml`**: One global UPower listener for low-battery alerts. It preserves the 20%, 10% and 5% thresholds, sends only while discharging, escalates once per threshold, resets on charger connection, and posts the charger-connected notice through `NotificationState`.
@@ -145,7 +151,7 @@ quick-settings panel remain native to Quickshell.
 | **Outer Border** | `theme.glassBorder` (`rgba(255, 255, 255, 0.12)`) | Translucent glass perimeter rim |
 | **Corner Radius** | `theme.radiusLg` (`16px`) | Softer notification-card corners inside the larger popup |
 | **Notification Cards** | `theme.popupBackground` / `theme.glassCardSurface` | Toast and history surfaces retain adaptive compositor-aware glass |
-| **Card Borders** | `theme.glassBorder` / `theme.adaptiveCardBorder` | Subtle perimeter; critical cards keep a red border |
+| **Card Borders** | `theme.glassBorder` / `theme.adaptiveCardBorder` | Subtle perimeter; critical urgency is marked by the red icon |
 | **Card Hover** | `theme.glassHoverSurface` / existing card hover token | Clear pointer feedback without changing the resting surface |
 | **Action Buttons** | `theme.surfaceVariantForeground`, `theme.glassHoverSurface` | Compact text actions appear on hover with a 30px hit area |
 | **Compositor Blur** | `surfaceFormat.opaque: false` | Enables native Hyprland window blur |

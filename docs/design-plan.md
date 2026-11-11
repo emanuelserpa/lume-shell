@@ -80,6 +80,11 @@ foco de outra janela. Registrar resultados por superfície e paleta.
 
 ## Fase 3 — Componentes e movimento (prioridade média)
 
+Correção localizada (11/11/2026): animação da pilha substituída por entrada
+curta de cima para baixo e saída à direita, mantendo cartões antigos imóveis.
+A janela do toast agora mantém geometria estável e restringe os cliques à pilha
+visível. Falta confirmar visualmente se isso elimina o rastro com blur ativo.
+
 **Objetivo:** reduzir divergências sem alterar os contratos estáveis.
 
 - Inventariar cabeçalhos, botões, linhas e estados vazios feitos manualmente;
@@ -87,8 +92,8 @@ foco de outra janela. Registrar resultados por superfície e paleta.
 - Corrigir primeiro duplicações tocadas pelas fases 1/2. Ações de domínio ficam
   fora dos componentes visuais genéricos.
 - Revisar conjuntamente PopupCard, visibilidade das janelas e timers de remoção
-  de toasts: os tempos atuais são diferentes e ocultação imediata pode impedir
-  a animação de saída. Verificar antes de mudar o contrato de movimento.
+  de toasts; confirmar os movimentos de entrada/saída com blur e os timers de
+  notificações normais e críticas.
 - Propor uma configuração de movimento reduzido em MotionState; atualmente
   `qmlAnimationsEnabled` é constante true. Preservar feedback de estado quando
   animações estiverem desativadas.

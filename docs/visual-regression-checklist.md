@@ -218,9 +218,13 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 ## Notificações e OSD
 
 - [ ] Toast usa PopupCard e tokens de movimento; distinguir abertura do swipe.
-- [ ] Margens atuais do toast: topo 45, direita 12; não sobrepor a barra.
+- [ ] Margens atuais do toast: topo 45; borda direita alinhada à ilha direita
+  da barra (recuo do painel + espaçamento médio do tema).
 - [ ] Timer normal 5.500 ms, baixa urgência 3.500, crítico sem expiração automática;
   hover pausa timer; notificações vazias filtradas e DND preservado.
+- [ ] Entrada curta desce do topo com fade; saída crítica e normal move à direita;
+  cartões existentes não deslizam; camada mantém geometria e cliques passam fora
+  dos cartões.
 - [ ] Histórico mantém viewport e rolagem existentes, limpar/DND e estado vazio.
 - [ ] OSD aparece sem tomar foco; volume, microfone e brilho mantêm valores e
   duração por evento; não impor duração universal a todos os tipos.

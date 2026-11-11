@@ -25,7 +25,7 @@ PanelWindow {
     // resolve its grouped top/right members.
     // qmllint disable unqualified unresolved-type
     margins.top: 45
-    margins.right: 12
+    margins.right: root.theme.barPanelInset + root.theme.spacingTokens.md
     // qmllint enable unqualified unresolved-type
     readonly property real swipeRunway: 160
     implicitWidth: root.theme.popupWidths.large + root.swipeRunway
@@ -54,7 +54,7 @@ PanelWindow {
 
     Timer {
         id: stackEntranceTimer
-        interval: root.theme.motionLayout + 80
+        interval: 16
         repeat: false
         onTriggered: {
             const ready = []
@@ -154,17 +154,8 @@ PanelWindow {
         width: parent.width
         spacing: root.theme.spacingTokens.md
 
-        move: Transition {
-            enabled: root.theme.qmlAnimationsEnabled
-            SmoothedAnimation {
-                properties: "y"
-                // Use one timing rule. SmoothedAnimation chooses whichever is
-                // faster when velocity and duration are both set, which made
-                // short and long stack shifts finish at noticeably different speeds.
-                velocity: -1
-                duration: root.theme.motionLayout + 60
-            }
-        }
+        // Existing cards move to their new slots immediately. Only the new
+        // card animates, keeping the translucent stack from leaving trails.
 
         Repeater {
             model: toastModel
@@ -178,134 +169,129 @@ PanelWindow {
                 readonly property var n: toastDelegate.toastInfo.notification
                 readonly property bool isCritical: n && n.urgency === NotificationUrgency.Critical
                 readonly property bool hasContent: NotificationState.notificationHasUsefulContent(n)
-                width: root.width
+                width: parent.width
                 implicitHeight: toastCard.height
                 height: implicitHeight
 
                 PopupCard {
                     id: toastCard
+                    property real swipeOffset: 0
+                    property real swipeDistance: 0
                     anchors.left: parent.left
                     anchors.leftMargin: root.swipeRunway + toastCard.swipeOffset
-                property real swipeOffset: 0
-                property real swipeDistance: 0
-
-                visible: toastDelegate.hasContent && (!root.fullscreenActive || toastDelegate.isCritical)
-                width: root.theme.popupWidths.large
-                // Keep the right edge fixed during entry; the stack layout
-                // owns the wrapper position while this card owns its runway.
-                scale: 1
-                popupOffset: 0
-                implicitHeight: toastDelegate.hasContent ? (toastContent.implicitHeight + root.theme.popupInsets.large * 2) : 0
-                height: implicitHeight
-                theme: root.theme
-                focus: false
-                cornerRadius: root.theme.radiusPopup
-                frameColor: toastDelegate.isCritical ? root.theme.red : root.theme.glassBorder
-                cardColor: root.theme.popupBackground
-                opened: Boolean(toastDelegate.toastInfo.entered) && !dying
-
-                readonly property bool dying: root.closingIds.indexOf(toastDelegate.toastInfo.id) !== -1
-
-                onDyingChanged: {
-                    if (dying) removeTimer.start()
-                    else removeTimer.stop()
-                }
-
-                Timer {
-                    id: removeTimer
-                    interval: root.theme.qmlAnimationsEnabled ? root.theme.motionPopupExit : 0
-                    repeat: false
-                    onTriggered: root.removeToast(toastDelegate.toastInfo.id)
-                }
-
-                Behavior on border.color {
-                    enabled: root.theme.qmlAnimationsEnabled
-                    ColorAnimation { duration: root.theme.motionFast; easing.type: root.theme.motionEasing }
-                }
-                Timer {
-                    id: dismissTimer
-                    interval: toastDelegate.toastInfo?.timeout ?? 0
-                    running: toastCard.visible && (toastDelegate.toastInfo?.timeout ?? 0) > 0 && !cardHover.hovered && !toastCard.dying
-                    repeat: false
-                    onTriggered: root.closeToast(toastDelegate.toastInfo.id)
-                }
-
-                readonly property double receivedAt: toastDelegate.toastInfo.created
-                onReceivedAtChanged: {
-                    if (dismissTimer.running) dismissTimer.restart()
-                }
-
-                HoverHandler {
-                    id: cardHover
-                }
-
-                DragHandler {
-                    id: toastSwipe
-                    target: null
-                    xAxis.enabled: true
-                    yAxis.enabled: false
-                    onActiveChanged: {
-                        if (active) {
-                            toastCard.swipeDistance = 0
-                            toastReturnAnimation.stop()
-                            toastDismissAnimation.stop()
-                            return
-                        }
-                        const distance = toastCard.swipeDistance
-                        if (distance <= -Math.max(72, toastCard.width * 0.28)) {
-                            toastDismissAnimation.to = -root.swipeRunway - toastCard.width
-                            toastDismissAnimation.start()
-                        } else {
-                            toastReturnAnimation.start()
-                        }
-                    }
-                    onTranslationChanged: {
-                        if (active) {
-                            toastCard.swipeDistance = translation.x
-                            toastCard.swipeOffset = Math.max(
-                                -root.swipeRunway, Math.min(0, translation.x))
-                        }
-                    }
-                }
-
-                NumberAnimation {
-                    id: toastReturnAnimation
-                    target: toastCard
-                    property: "swipeOffset"
-                    to: 0
-                    duration: 180
-                    easing.type: Easing.OutCubic
-                }
-
-                NumberAnimation {
-                    id: toastDismissAnimation
-                    target: toastCard
-                    property: "swipeOffset"
-                    duration: 150
-                    easing.type: Easing.InCubic
-                    onFinished: {
-                        NotificationState.dismissFromHistory(toastDelegate.n)
-                        root.closeToast(toastDelegate.toastInfo.id)
-                    }
-                }
-
-                NotificationCardContent {
-                    id: toastContent
+                    visible: toastDelegate.hasContent && (!root.fullscreenActive || toastDelegate.isCritical)
+                    width: root.theme.popupWidths.large
+                    scale: 1
+                    popupOffset: 0
+                    implicitHeight: toastDelegate.hasContent ? (toastContent.implicitHeight + root.theme.popupInsets.large * 2) : 0
+                    height: implicitHeight
                     theme: root.theme
-                    notification: toastDelegate.n
-                    expanded: cardHover.hovered
-                    dismissible: true
-                    dismissButtonAlwaysVisible: true
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.margins: root.theme.popupInsets.large
-                    onActivated: root.closeToast(toastDelegate.toastInfo.id)
-                    onDismissRequested: {
-                        NotificationState.dismissFromHistory(toastDelegate.n)
-                        root.closeToast(toastDelegate.toastInfo.id)
+                    focus: false
+                    cornerRadius: root.theme.radiusPopup
+                    // Keep urgency in the existing red icon; the perimeter and
+                    // surface match the bar's translucent glass.
+                    cardColor: root.theme.barIslandSurface
+                    frameColor: root.theme.barIslandBorder
+                    opened: Boolean(toastDelegate.toastInfo.entered) && !dying
+
+                    readonly property bool dying: root.closingIds.indexOf(toastDelegate.toastInfo.id) !== -1
+
+                    onDyingChanged: {
+                        if (dying) removeTimer.start()
+                        else removeTimer.stop()
                     }
-                }
+
+                    Timer {
+                        id: removeTimer
+                        interval: root.theme.qmlAnimationsEnabled ? root.theme.motionPopupExit : 0
+                        repeat: false
+                        onTriggered: root.removeToast(toastDelegate.toastInfo.id)
+                    }
+
+                    Timer {
+                        id: dismissTimer
+                        interval: toastDelegate.toastInfo?.timeout ?? 0
+                        running: toastCard.visible && (toastDelegate.toastInfo?.timeout ?? 0) > 0 && !cardHover.hovered && !toastCard.dying
+                        repeat: false
+                        onTriggered: root.closeToast(toastDelegate.toastInfo.id)
+                    }
+
+                    readonly property double receivedAt: toastDelegate.toastInfo.created
+                    onReceivedAtChanged: {
+                        if (dismissTimer.running) dismissTimer.restart()
+                    }
+
+                    HoverHandler {
+                        id: cardHover
+                    }
+
+                    DragHandler {
+                        id: toastSwipe
+                        target: null
+                        xAxis.enabled: true
+                        yAxis.enabled: false
+                        onActiveChanged: {
+                            if (active) {
+                                toastCard.swipeDistance = 0
+                                toastReturnAnimation.stop()
+                                toastDismissAnimation.stop()
+                                return
+                            }
+                            const distance = toastCard.swipeDistance
+                            if (distance <= -Math.max(72, toastCard.width * 0.28)) {
+                                toastDismissAnimation.to = -root.swipeRunway - toastCard.width
+                                toastDismissAnimation.start()
+                            } else {
+                                toastReturnAnimation.start()
+                            }
+                        }
+                        onTranslationChanged: {
+                            if (active) {
+                                toastCard.swipeDistance = translation.x
+                                toastCard.swipeOffset = Math.max(
+                                    -root.swipeRunway, Math.min(0, translation.x))
+                            }
+                        }
+                    }
+
+                    NumberAnimation {
+                        id: toastReturnAnimation
+                        target: toastCard
+                        property: "swipeOffset"
+                        to: 0
+                        duration: 180
+                        easing.type: Easing.OutCubic
+                    }
+
+                    NumberAnimation {
+                        id: toastDismissAnimation
+                        target: toastCard
+                        property: "swipeOffset"
+                        duration: 150
+                        easing.type: Easing.InCubic
+                        onFinished: {
+                            NotificationState.dismissFromHistory(toastDelegate.n)
+                            root.closeToast(toastDelegate.toastInfo.id)
+                        }
+                    }
+
+                    NotificationCardContent {
+                        id: toastContent
+                        theme: root.theme
+                        notification: toastDelegate.n
+                        expanded: cardHover.hovered
+                        dismissible: true
+                        dismissButtonAlwaysVisible: true
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: root.theme.popupInsets.large
+                        onActivated: root.closeToast(toastDelegate.toastInfo.id)
+                        onDismissRequested: {
+                            NotificationState.dismissFromHistory(toastDelegate.n)
+                            root.closeToast(toastDelegate.toastInfo.id)
+                        }
+                    }
                 }
             }
         }
