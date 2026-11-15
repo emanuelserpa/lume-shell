@@ -35,5 +35,6 @@ Para uma instância de desenvolvimento, defina
 
 O workflow de release compila a tag exata `vX.Y.Z` e anexa o pacote Arch à
 GitHub Release. A validação em uma instalação Arch limpa deve preceder a
-primeira distribuição do pacote. O projeto ainda precisa declarar uma licença
-própria antes que terceiros possam reutilizar o código.
+primeira distribuição do pacote. O pacote registra a licença MIT e instala o
+arquivo `LICENSE` em `/usr/share/licenses/lume-shell/LICENSE`. Ativos e
+dependências de terceiros mantêm suas licenças próprias.

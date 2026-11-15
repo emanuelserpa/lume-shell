@@ -2,12 +2,11 @@
 pkgname=lume-shell
 # Local source-build fallback; release workflow supplies the Git tag version.
 pkgver="${_release_pkgver:-0.1.0}"
-pkgrel=22
+pkgrel=23
 pkgdesc='Wayland desktop shell built with Quickshell'
 arch=('x86_64')
 url='https://github.com/emanuelserpa/lume-shell'
-# Upstream has not declared a license yet; do not publish this recipe until it does.
-license=('custom')
+license=('MIT')
 depends=('quickshell' 'qt6-5compat' 'qt6-declarative' 'python' 'python-requests'
   'python-pillow' 'systemd' 'fontconfig' 'kitty')
 optdepends=(
@@ -68,6 +67,8 @@ package() {
   local share="$pkgdir/usr/share/lume-shell"
   install -d "$share" "$pkgdir/usr/bin" \
     "$pkgdir/usr/lib/systemd/user" "$pkgdir/usr/share/doc/lume-shell"
+  install -Dm644 "$root/LICENSE" \
+    "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   for entry in shell.qml Theme.qml qmldir assets bar components controlcenter \
     data launcher notifications osd references scripts services; do

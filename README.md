@@ -1,8 +1,8 @@
 # Lume Shell
 
-Lume is a Wayland desktop shell built with Quickshell. It provides a compact
-status bar, Spotlight launcher, quick settings, native notifications, OSD,
-clipboard history, weather, power controls, and dynamic themes.
+Lume is a Wayland desktop shell built with Quickshell.
+
+![Lume's Spotlight launcher on an empty workspace, with the current status bar](assets/screenshots/lume-shell-spotlight.png)
 
 ## Features
 
@@ -11,7 +11,7 @@ clipboard history, weather, power controls, and dynamic themes.
 - **Spotlight** for apps, files, windows, clipboard, system actions, emoji,
   shell commands, and calculations.
 - **Clipboard history** backed by `wl-clipboard`, SQLite, and local image storage.
-- **Theme Studio** with static palettes and wallpaper-adaptive Chameleon themes.
+- **Theme Studio** with built-in palettes and wallpaper-based Chameleon themes.
 - **Native notifications**, audio and brightness OSD, night light, power
   profiles, and multi-city Open-Meteo weather.
 
@@ -43,15 +43,17 @@ advertise them.
 
 ## Development
 
-Start with the [documentation index](docs/README.md). For code changes, read
-[contribution rules](AGENTS.md) and the guide for the affected feature.
-
-The [project dashboard](dashboard/) summarizes the current priority and recent
-commits.
+Start with the [documentation index](docs/README.md) for setup, architecture,
+and feature guides.
 
 ```sh
 ./scripts/validate.sh
 ```
 
-See [build and validation](docs/deploy-and-validation.md) for checks and
-[visual review](docs/visual-regression-checklist.md) for desktop scenarios.
+See [build and validation](docs/deploy-and-validation.md) for details about
+the checks.
+
+## License
+
+Lume is licensed under the [MIT License](LICENSE). Third-party assets and
+dependencies retain their own licenses.
