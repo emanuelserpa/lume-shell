@@ -265,13 +265,6 @@ PopupWindow {
                     }
                 }
 
-                CloseButton {
-                    id: closeBtn
-                    theme: root.theme
-                    buttonSize: 24
-                    anchors.verticalCenter: parent.verticalCenter
-                    onClicked: root.visible = false
-                }
             }
 
             // Expandable Player Selector Drawer (when clicked):

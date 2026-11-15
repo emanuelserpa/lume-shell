@@ -154,8 +154,9 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
   detalhes via Quick Settings. Não esperar Phone na barra atual.
 - [ ] Printer, gravação, monitor, bateria, áudio, indicadores, atualizações e
   notificações não colidem quando contagens e textos crescem.
-- [ ] MediaIsland só aparece com Spotify/título e espaço disponível; clique e
-  play/pause funcionam. Hover preview legado só é verificado se estiver em uso.
+- [ ] MediaIsland aparece com mídia ativa de qualquer player MPRIS e espaço
+  disponível; clique, seleção e play/pause funcionam. Hover preview legado só
+  é verificado se estiver em uso.
 - [ ] Áudio mantém scroll de volume, clique para detalhes e botão direito para mute.
 
 ## Dashboard e atualizações

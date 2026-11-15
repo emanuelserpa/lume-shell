@@ -13,7 +13,7 @@ surfaces. Its layout is explicit in `bar/Bar.qml`; geometry comes from `Theme.qm
 | --- | --- |
 | Left | StartButton, Workspaces; conditional Hyprland Submap |
 | Center | Weather and Clock; Clock opens the weather/calendar dashboard |
-| Between center and right | Spotify MediaIsland and active-mode StatusIsland; status takes priority when space is tight |
+| Between center and right | MPRIS MediaIsland and active-mode StatusIsland; status takes priority when space is tight |
 | Right | Tray, Network, Bluetooth, Printer, SystemMonitor, UpdateControl, Battery, Audio, NotificationControl |
 
 Visibility can be conditional even when a component is mounted. NotificationControl

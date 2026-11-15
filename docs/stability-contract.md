@@ -6,8 +6,10 @@ These areas have been iterated heavily and should not be casually changed.
 
 ### Media bar + media popup
 Considered stable after multiple layout fixes.
-The mounted `MediaIsland.qml` is Spotify-specific, opens by click and is
-conditional on available bar space.
+The mounted `MediaIsland.qml` shows the selected active MPRIS player, opens by
+click and is conditional on available bar space. When multiple players have
+active playback or track metadata, the MediaPopup header opens the player
+selector; choosing a row changes the shared `MediaState` selection.
 The popup's alternate-player rows use a fixed delegate pool. Keep that model
 stable: rebinding a JavaScript array of MPRIS QObject instances during player
 teardown crashed both `QQuickRepeater` and `QQmlInstantiator` in Qt 6.11.

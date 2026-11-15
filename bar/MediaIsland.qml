@@ -7,29 +7,48 @@ Item {
 
     required property var theme
 
-    readonly property var spotifyPlayer: MediaState.players.find(player => {
-        const identity = (String(player?.identity ?? "") + " " + String(player?.dbusName ?? "")).toLowerCase()
-        return identity.includes("spotify")
-            && String(player?.trackTitle ?? "").trim().length > 0
-    }) ?? null
-    readonly property string trackTitle: String(spotifyPlayer?.trackTitle ?? "").trim()
-    readonly property string artist: spotifyPlayer ? MediaState.displayArtist(spotifyPlayer) : ""
-    readonly property string artUrl: String(spotifyPlayer?.trackArtUrl ?? "").trim()
-    readonly property real lengthSec: Number(spotifyPlayer?.length ?? 0)
-    readonly property real positionSec: Number(spotifyPlayer?.position ?? 0)
+    readonly property var mediaPlayers: MediaState.players.filter(player =>
+        player && (player.isPlaying || String(player.trackTitle ?? "").trim().length > 0)
+    )
+    readonly property var currentPlayer: MediaState.player
+        && mediaPlayers.some(player => player === MediaState.player)
+        ? MediaState.player
+        : (mediaPlayers.length > 0 ? mediaPlayers[0] : null)
+    readonly property string trackTitle: String(currentPlayer?.trackTitle ?? "").trim()
+    readonly property string artist: currentPlayer ? MediaState.displayArtist(currentPlayer) : ""
+    readonly property string artUrl: String(currentPlayer?.trackArtUrl ?? "").trim()
+    readonly property real lengthSec: Number(currentPlayer?.length ?? 0)
+    readonly property real positionSec: Number(currentPlayer?.position ?? 0)
+    readonly property color playerAccent: {
+        const id = ((currentPlayer?.identity ?? "") + " " + (currentPlayer?.dbusName ?? "")).toLowerCase()
+        if (id.includes("spotify")) return theme.green
+        if (id.includes("firefox")) return theme.orange
+        if (id.includes("chrom")) return theme.blue
+        return theme.pink
+    }
+
+    function playerIcon(player) {
+        const id = ((player?.identity ?? "") + " " + (player?.dbusName ?? "")).toLowerCase()
+        if (id.includes("spotify")) return ""
+        if (id.includes("firefox") || id.includes("zen")) return ""
+        if (id.includes("chrom")) return ""
+        if (id.includes("vlc")) return "󰕼"
+        if (id.includes("mpv")) return "󰐹"
+        return ""
+    }
     readonly property real progressFraction: lengthSec > 0 ? Math.max(0, Math.min(1, positionSec / lengthSec)) : 0
 
     Timer {
         interval: 500
         repeat: true
-        running: root.visible && root.spotifyPlayer !== null && root.spotifyPlayer.isPlaying
-        onTriggered: if (root.spotifyPlayer) root.spotifyPlayer.positionChanged()
+        running: root.visible && root.currentPlayer !== null && root.currentPlayer.isPlaying
+        onTriggered: if (root.currentPlayer) root.currentPlayer.positionChanged()
     }
 
-    visible: spotifyPlayer !== null
+    visible: currentPlayer !== null
     width: implicitWidth
     height: implicitHeight
-    implicitWidth: spotifyPlayer !== null ? contentRow.implicitWidth + theme.spacingTokens.md : 0
+    implicitWidth: currentPlayer !== null ? contentRow.implicitWidth + theme.spacingTokens.md : 0
     implicitHeight: theme.barIslandHeight
 
     Rectangle {
@@ -88,12 +107,12 @@ Item {
                         visible: root.artUrl.length > 0 && status === Image.Ready
                     }
 
-                    // Fallback Spotify logo if artwork not yet loaded
+                    // Use the player identity when artwork is unavailable.
                     Text {
                         anchors.centerIn: parent
                         visible: !coverImage.visible
-                        text: ""
-                        color: root.theme.green
+                        text: root.playerIcon(root.currentPlayer)
+                        color: root.playerAccent
                         font.family: root.theme.nerdFontFamily
                         font.pixelSize: 13
                     }
@@ -114,7 +133,7 @@ Item {
                 width: 10
                 height: 12
                 anchors.verticalCenter: parent.verticalCenter
-                visible: Boolean(root.spotifyPlayer?.isPlaying)
+                visible: Boolean(root.currentPlayer?.isPlaying)
 
                 Row {
                     anchors.bottom: parent.bottom
@@ -127,9 +146,9 @@ Item {
                             anchors.bottom: parent.bottom
                             width: 2
                             radius: 1
-                            color: root.theme.green
+                            color: root.playerAccent
                             SequentialAnimation on height {
-                                running: Boolean(root.spotifyPlayer?.isPlaying)
+                                running: Boolean(root.currentPlayer?.isPlaying)
                                 loops: Animation.Infinite
                                 NumberAnimation { from: 3; to: 11; duration: 400; easing.type: Easing.InOutQuad }
                                 NumberAnimation { from: 11; to: 3; duration: 400; easing.type: Easing.InOutQuad }
@@ -144,9 +163,9 @@ Item {
                             anchors.bottom: parent.bottom
                             width: 2
                             radius: 1
-                            color: root.theme.green
+                            color: root.playerAccent
                             SequentialAnimation on height {
-                                running: Boolean(root.spotifyPlayer?.isPlaying)
+                                running: Boolean(root.currentPlayer?.isPlaying)
                                 loops: Animation.Infinite
                                 NumberAnimation { from: 10; to: 4; duration: 320; easing.type: Easing.InOutQuad }
                                 NumberAnimation { from: 4; to: 10; duration: 320; easing.type: Easing.InOutQuad }
@@ -161,9 +180,9 @@ Item {
                             anchors.bottom: parent.bottom
                             width: 2
                             radius: 1
-                            color: root.theme.green
+                            color: root.playerAccent
                             SequentialAnimation on height {
-                                running: Boolean(root.spotifyPlayer?.isPlaying)
+                                running: Boolean(root.currentPlayer?.isPlaying)
                                 loops: Animation.Infinite
                                 NumberAnimation { from: 4; to: 12; duration: 480; easing.type: Easing.InOutQuad }
                                 NumberAnimation { from: 12; to: 4; duration: 480; easing.type: Easing.InOutQuad }
@@ -237,7 +256,7 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.spotifyPlayer?.previous()
+                            onClicked: root.currentPlayer?.previous()
                         }
                     }
                 }
@@ -254,7 +273,7 @@ Item {
                     TablerIcon {
                         anchors.centerIn: parent
                         width: 14; height: 14
-                        iconName: root.spotifyPlayer?.isPlaying ? "bar-pause" : "bar-play"
+                        iconName: root.currentPlayer?.isPlaying ? "bar-pause" : "bar-play"
                         iconColor: root.theme.foreground
                     }
 
@@ -263,7 +282,7 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: root.spotifyPlayer?.togglePlaying()
+                        onClicked: root.currentPlayer?.togglePlaying()
                     }
                 }
 
@@ -296,7 +315,7 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.spotifyPlayer?.next()
+                            onClicked: root.currentPlayer?.next()
                         }
                     }
                 }
@@ -322,7 +341,7 @@ Item {
                 height: parent.height
                 radius: parent.radius
                 width: parent.width * root.progressFraction
-                color: root.theme.green
+                color: root.playerAccent
                 opacity: 0.75
             }
         }
@@ -333,7 +352,8 @@ Item {
         id: mediaPopup
         theme: root.theme
         target: root
-        player: root.spotifyPlayer
-        players: root.spotifyPlayer ? [root.spotifyPlayer] : []
+        player: root.currentPlayer
+        players: root.mediaPlayers
+        onPlayerSelected: function(selected) { MediaState.selectPlayer(selected) }
     }
 }
