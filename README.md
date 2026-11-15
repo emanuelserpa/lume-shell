@@ -1,59 +1,61 @@
 # Lume Shell
 
-Lume is a Wayland desktop shell built with Quickshell.
+Lume is a desktop shell built with Quickshell. It puts your workspaces, apps,
+notifications and everyday controls in one place.
 
-![Lume's Spotlight launcher on an empty workspace, with the current status bar](assets/screenshots/lume-shell-spotlight.png)
+Development is focused on Arch Linux with Hyprland. Other Wayland compositors
+are supported through shared protocols where available, but some features
+still need compositor-specific integration.
 
-## Features
+![Lume with Spotlight open](assets/screenshots/lume-shell-spotlight.png)
 
-- **Status bar** with workspaces, weather, clock, media, network, Bluetooth,
-  battery, printing, updates, recording, and notifications.
-- **Spotlight** for apps, files, windows, clipboard, system actions, emoji,
-  shell commands, and calculations.
-- **Clipboard history** backed by `wl-clipboard`, SQLite, and local image storage.
-- **Theme Studio** with built-in palettes and wallpaper-based Chameleon themes.
-- **Native notifications**, audio and brightness OSD, night light, power
-  profiles, and multi-city Open-Meteo weather.
+## What’s included
 
-## Requirements
+The bar shows your workspaces, weather, clock and system status. Click its
+controls to adjust audio, connect to a network, check updates or read
+notifications.
 
-Quickshell 0.3.x, a Wayland compositor (Hyprland, Sway, niri, MangoWC, labwc,
-or another compositor with the required protocols), PipeWire,
-Python 3 with `requests` and `Pillow`, Noto Sans, Nerd Fonts, and Kitty.
-Optional integrations use the corresponding system tools, such as `nmcli`,
-`bluetoothctl`, `checkupdates`, `brightnessctl`, `upower`, `grim`, and `slurp`.
+Spotlight opens apps, finds files and windows, and keeps clipboard history
+close at hand. It also handles calculations, emoji and system actions.
 
-## Install
+Theme Studio lets you choose a palette or use Chameleon to pick colors from
+your wallpaper. The shell also includes media controls, night light, power
+profiles, and volume and brightness indicators.
 
-On Arch Linux, build or install the package described in
-[`packaging/arch/README.md`](packaging/arch/README.md). For a development
-checkout, clone this repository and run a separate instance with
-`quickshell --path ~/.config/quickshell`; do not run it alongside
-`lume-shell.service`.
+## Installation
+
+For Arch Linux, follow the [package instructions](packaging/arch/README.md).
+The package installs the shell in `/usr/share/lume-shell` and provides the
+`lume-shell` command and user service.
+
+You’ll need Quickshell, PipeWire, Python, Kitty and the interface fonts.
+Individual features use tools such as NetworkManager, `wl-clipboard`,
+`brightnessctl` and `upower`. The package recipe lists the dependencies.
+
+Compositor setup is covered in the [Hyprland](docs/hyprland-install.md),
+[labwc](docs/labwc-install.md) and [Wayland](docs/wayland-install.md) guides.
+
+## Running from source
 
 ```sh
-git clone https://github.com/emanuelserpa/lume-shell.git ~/.config/quickshell
+git clone https://github.com/emanuelserpa/lume-shell.git
+cd lume-shell
+quickshell --path .
 ```
 
-Compositor integration is capability based. See the setup guides for
-[generic Wayland](docs/wayland-install.md), [Hyprland](docs/hyprland-install.md),
-and [labwc](docs/labwc-install.md). Sway, niri and Mango use shared Wayland
-protocols for workspaces and window actions when their installed versions
-advertise them.
+If the installed shell is already running, stop `lume-shell.service` first
+so you don’t end up with two instances.
 
-## Development
-
-Start with the [documentation index](docs/README.md) for setup, architecture,
-and feature guides.
+To check a change locally:
 
 ```sh
 ./scripts/validate.sh
 ```
 
-See [build and validation](docs/deploy-and-validation.md) for details about
-the checks.
+The [docs](docs/README.md) cover the individual features and how the code is
+organized. See [build and validation](docs/deploy-and-validation.md) for more
+about the checks.
 
 ## License
 
-Lume is licensed under the [MIT License](LICENSE). Third-party assets and
-dependencies retain their own licenses.
+[MIT](LICENSE). Third-party assets and dependencies keep their own licenses.
