@@ -25,6 +25,13 @@ Item {
     readonly property bool hyprlandActive: CompositorState.hyprlandNativeEnabled
     readonly property bool mangoActive:
         CompositorState.mangoCompatibilityEnabled && MangoState.available
+    readonly property int hyprlandWorkspaceCount: 10
+    readonly property var hyprlandWorkspaceSlots: {
+        const slots = []
+        for (let id = 1; id <= root.hyprlandWorkspaceCount; id++)
+            slots.push({ id: id })
+        return slots
+    }
 
     // qmllint disable unresolved-type
     readonly property var protocolWindowsets:
@@ -38,9 +45,11 @@ Item {
     readonly property var mangoVisibleWorkspaces: MangoState.visibleTags(root.screen?.name ?? "")
 
     readonly property var visibleWorkspaces:
-        root.hyprlandActive ? Hyprland.workspaces
+        root.hyprlandActive ? root.hyprlandWorkspaceSlots
         : root.protocolWorkspacesAvailable ? root.protocolWindowsets
         : root.mangoActive ? root.mangoVisibleWorkspaces : []
+
+    Component.onCompleted: workspaceRefresh.start()
 
     function focusWorkspace(selector) {
         Quickshell.execDetached([
@@ -57,6 +66,25 @@ Item {
         onTriggered: {
             root.wheelGestureLocked = false
             root.wheelAccumulator = 0
+        }
+    }
+
+    // Hyprland's workspace objects can lag behind window events. Refresh after
+    // occupancy changes so the bar promptly adds/removes occupied workspaces.
+    Timer {
+        id: workspaceRefresh
+        interval: 50
+        repeat: false
+        onTriggered: Hyprland.refreshWorkspaces()
+    }
+
+    Connections {
+        target: root.hyprlandActive ? Hyprland : null
+
+        function onRawEvent(event) {
+            if (event.name === "openwindow" || event.name === "closewindow"
+                    || event.name === "movewindowv2")
+                workspaceRefresh.restart()
         }
     }
 
@@ -78,27 +106,40 @@ Item {
                 // activeWorkspaceChanged signal invalidates the highlight.
                 readonly property var activeMonitorWorkspace:
                     root.hyprlandActive ? monitor?.activeWorkspace ?? null : null
+                readonly property int workspaceNumber:
+                    root.hyprlandActive ? Number(modelData?.id ?? 0) : 0
                 readonly property bool belongsToScreen: {
                     if (!root.hyprlandActive)
                         return true
 
                     const monitorName = String(monitor?.name ?? root.screen?.name ?? "")
-                    const workspaceMonitor = String(modelData?.monitor?.name ?? "")
+                    const workspaceMonitor = String(ws?.monitor?.name ?? "")
                     return !monitorName || !workspaceMonitor || workspaceMonitor === monitorName
                 }
-                property var ws: modelData
+                property var ws: {
+                    if (!root.hyprlandActive)
+                        return modelData
+
+                    const workspaces = Hyprland.workspaces.values
+                    for (let i = 0; i < workspaces.length; i++) {
+                        if (Number(workspaces[i].id) === workspaceNumber)
+                            return workspaces[i]
+                    }
+                    return null
+                }
                 property int workspaceIndex: index
                 property bool active: root.hyprlandActive
                     ? (activeMonitorWorkspace
-                        ? String(activeMonitorWorkspace.id) === String(ws?.id)
+                        ? Number(activeMonitorWorkspace.id) === workspaceNumber
                         : WorkspaceModel.isHyprlandWorkspaceActiveOnMonitor(ws, monitor))
                     : ws !== null ? ws.active : false
                 property bool urgent: ws !== null ? ws.urgent : false
 
+                // Keep stable numeric IDs for every slot, but display only
+                // workspaces that are active or currently contain windows.
+                // Clicks dispatch the slot ID directly, independent of index.
                 visible: root.hyprlandActive
-                    ? (belongsToScreen
-                        && !String(ws?.name ?? "").startsWith("special:")
-                        && (active || WorkspaceModel.hasHyprlandWindows(ws)))
+                    ? belongsToScreen && (active || WorkspaceModel.hasHyprlandWindows(ws))
                     : true
 
                 width: Math.max(root.theme.barWorkspaceMinWidth,
@@ -164,13 +205,11 @@ Item {
                     hoverEnabled: true
 
                     onClicked: {
-                        // Hyprland display names can differ from workspace
-                        // identity after `renameworkspace`; dispatch by the
-                        // stable numeric ID when available.
-                        if (root.hyprlandActive && parent.ws !== null) {
-                            const id = WorkspaceModel.numericWorkspaceNumber(
-                                parent.ws, { hyprland: true })
-                            root.focusWorkspace(id > 0 ? id : parent.ws.name)
+                        // Hyprland uses fixed numeric slots, including when an
+                        // empty workspace has no current workspace object.
+                        if (root.hyprlandActive) {
+                            root.focusWorkspace(String(parent.workspaceNumber))
+                            return
                         }
                         // ext-workspace-v1 is the shared activation path for
                         // Mango, labwc, Sway, niri, and compatible compositors.

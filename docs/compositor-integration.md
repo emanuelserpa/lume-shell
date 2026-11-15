@@ -31,7 +31,11 @@ provides useful occupancy, PID and workspace details.
   compositor's `j/workspaces` window count. Hyprland's `openwindow` event may
   identify a renamed workspace by its numeric name while Quickshell tracks its
   display name, so the bar refreshes the workspace snapshot after window
-  open/close/move events to keep occupied pills accurate.
+  open/close/move events to keep occupied pills accurate. The refresh is
+  debounced to coalesce bursts of compositor events. Delegates keep stable IDs
+  for slots 1–10, while only active or occupied workspaces are visible. Clicks
+  dispatch the numeric workspace ID rather than the visible position or name.
+  The dispatcher tries Lua first and retains classic syntax as a fallback.
 - `ToplevelManager` uses `zwlr-foreign-toplevel-management-v1` for listing,
   activation, and close requests in Spotlight's `~` mode. Hyprland uses its
   native client metadata first, with protocol window objects as fallback.
