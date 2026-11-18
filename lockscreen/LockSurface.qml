@@ -455,76 +455,23 @@ Item {
                     Keys.onSpacePressed: root.activateFingerprint()
                 }
 
-                Rectangle {
-                    width: parent.width
-                    height: root.auth.passwordPromptVisible ? 0 : 38
-                    radius: height / 2
-                    visible: height > 0
-                    color: passwordModeHover.hovered
-                           ? root.theme.glassHoverSurface : root.theme.glassCardSurface
-                    border.width: 1
-                    border.color: root.theme.glassBorderSubtle
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Usar senha"
-                        color: root.theme.foreground
-                        font.family: root.theme.fontFamily
-                        font.pixelSize: root.theme.typeTokens.subtitle
-                        font.weight: Font.DemiBold
-                    }
-
-                    HoverHandler {
-                        id: passwordModeHover
-                        cursorShape: Qt.PointingHandCursor
-                    }
-
-                    TapHandler {
-                        enabled: !root.auth.passwordPromptVisible
-                        onTapped: root.auth.requestPasswordAuthentication()
-                    }
-
-                    Behavior on height {
-                        enabled: root.theme.qmlAnimationsEnabled
-                        NumberAnimation {
-                            duration: root.theme.motionStandard
-                            easing.type: root.theme.motionEasing
-                        }
-                    }
-                }
-
                 TextField {
                     id: passwordField
                     width: parent.width
-                    height: root.auth.passwordPromptVisible ? 48 : 0
-                    opacity: root.auth.passwordPromptVisible ? 1 : 0
+                    height: 48
+                    opacity: 1
                     clip: true
                     placeholderText: "Senha"
                     echoMode: TextInput.Password
                     inputMethodHints: Qt.ImhHiddenText | Qt.ImhSensitiveData
                                       | Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
                     passwordMaskDelay: 0
-                    enabled: root.auth.passwordPromptVisible
-                             && root.auth.sessionLock.secure
+                    enabled: root.auth.sessionLock.secure
                              && root.auth.sessionLock.locked
                     selectByMouse: false
-                    focus: root.auth.passwordPromptVisible
-                           && root.auth.sessionLock.secure
+                    focus: root.auth.sessionLock.secure && root.auth.sessionLock.locked
                     onTextEdited: root.auth.passwordPromptVisible = true
                     onAccepted: root.auth.submitPassword(text)
-
-                    Behavior on height {
-                        enabled: root.theme.qmlAnimationsEnabled
-                        NumberAnimation {
-                            duration: root.theme.motionStandard
-                            easing.type: root.theme.motionEasing
-                        }
-                    }
-
-                    Behavior on opacity {
-                        enabled: root.theme.qmlAnimationsEnabled
-                        NumberAnimation { duration: root.theme.motionFast }
-                    }
 
                     background: Rectangle {
                         radius: height / 2
@@ -551,6 +498,14 @@ Item {
         function onClearInputRequested() {
             passwordField.clear()
             passwordField.forceActiveFocus()
+        }
+    }
+
+    Connections {
+        target: root.auth.sessionLock
+        function onSecureChanged() {
+            if (root.auth.sessionLock.secure && root.auth.sessionLock.locked)
+                Qt.callLater(() => passwordField.forceActiveFocus())
         }
     }
 

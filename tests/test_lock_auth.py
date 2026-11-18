@@ -25,6 +25,8 @@ for (const secure of [false, true]) {
       const clearInputRequested = () => inputCleared++;
       const fingerprintPam = {abort: () => aborted++};
       const passwordPam = {abort: () => aborted++};
+      const fingerprintRetryTimer = {stop: () => {}};
+      const fingerprintResumeTimer = {stop: () => {}};
       const Qt = {quit: () => quit++, callLater: callback => callback()};
       function unlock(result) { BODY }
       const allowed = result === PamResult.Success && secure && locked;
@@ -37,6 +39,27 @@ for (const secure of [false, true]) {
     }
   }
 }
+""".replace("BODY", match.group(1))
+        subprocess.run([shutil.which("node"), "-e", script], check=True, capture_output=True)
+
+    def test_only_resume_signal_triggers_fingerprint_recovery(self):
+        source = (Path(__file__).resolve().parents[1] / "lockscreen/LockAuth.qml").read_text()
+        match = re.search(
+            r"    function handleSleepMonitorLine\(line\) \{(.*?)\n    \}",
+            source,
+            re.S,
+        )
+        self.assertIsNotNone(match)
+        script = """
+let recoveries = 0;
+function recoverFingerprintAfterResume() { recoveries++; }
+function handleSleepMonitorLine(line) { BODY }
+handleSleepMonitorLine('/org/freedesktop/login1: org.freedesktop.login1.Manager.PrepareForSleep (true,)');
+if (recoveries !== 0) process.exit(1);
+handleSleepMonitorLine('/org/freedesktop/login1: org.freedesktop.login1.Manager.PrepareForSleep (false,)');
+if (recoveries !== 1) process.exit(2);
+handleSleepMonitorLine('/org/freedesktop/login1: org.freedesktop.login1.Manager.SessionRemoved ("x")');
+if (recoveries !== 1) process.exit(3);
 """.replace("BODY", match.group(1))
         subprocess.run([shutil.which("node"), "-e", script], check=True, capture_output=True)
 

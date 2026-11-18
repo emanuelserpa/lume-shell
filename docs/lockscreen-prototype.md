@@ -22,16 +22,19 @@ volume; no lockscreen, uma área de entrada no contêiner da ilha mantém essas
 ações alinhadas ao pill ampliado e ancora o popup nesse mesmo contêiner. A
 bateria abre o popup real de UPower. A capa do cartão de mídia abre o
 popup MPRIS, onde os players ativos podem ser escolhidos pelos indicadores em
-bolinhas. Quando o lock fica seguro, o PAM inicia o leitor de digital e o
+bolinhas. O ícone de energia no fim da ilha abre um menu desenhado dentro da
+própria superfície segura do lockscreen, com a ação Suspender. Ela usa o
+despachante de sessão existente, e o bloqueio permanece ativo durante a
+suspensão. Quando o lock fica seguro, o PAM inicia o leitor de digital e o
 mantém ativo sem prazo ou limite de
 leituras. Assim, basta colocar o dedo no sensor a qualquer momento enquanto a
-tela estiver bloqueada. O botão “Usar senha” abre uma conversa PAM separada
-para validar a senha, enquanto a conversa de digital permanece ativa. É possível
-encostar o dedo durante a digitação ou validação da senha. Enter sem texto
-mantém a leitura ativa; o campo de senha só recebe foco quando aparece. A
-autenticação fica numa superfície de vidro compacta, alinhada ao cartão de
-mídia, com o estado do sensor no cabeçalho e o campo de senha em formato de
-pill. A paleta vem de `Theme.qml`.
+tela estiver bloqueada. O campo de senha já fica focado para digitação e Enter
+abre uma conversa PAM separada para validá-la, enquanto a conversa de digital
+permanece ativa. É possível encostar o dedo durante a digitação ou validação da
+senha. Enter sem texto mantém a leitura ativa. A autenticação fica numa
+superfície de vidro compacta, alinhada ao cartão de mídia, com o estado do
+sensor no cabeçalho e o campo de senha em formato de pill. A paleta vem de
+`Theme.qml`.
 
 Essa composição foi vista em uma prévia fullscreen normal, sem bloquear a
 sessão. O lock real foi testado em um monitor e a autenticação por senha foi
@@ -69,8 +72,9 @@ execute este comando enquanto Hyprlock já estiver bloqueando: apenas um
 
 O protótipo usa os serviços PAM dedicados `lumeshell-lock` e
 `lumeshell-lock-password`, fornecidos pelo pacote em `/etc/pam.d/`. O primeiro
-mantém `pam_fprintd` esperando indefinidamente (`max-tries=-1 timeout=-1`); o
-segundo contém apenas a pilha `login`. A interface executa essas conversas PAM
+mantém `pam_fprintd` esperando indefinidamente (`max-tries=-1 timeout=-1`), sem
+misturar uma conversa de senha; o segundo contém apenas a pilha `login`. A
+interface executa essas conversas PAM
 em paralelo para aceitar digital e senha ao mesmo tempo. Isso contorna a regra de
 `system-auth` que restringe a digital a `sudo` e `polkit-1`, sem alterar
 `system-auth`, `login` ou `hyprlock`. O módulo de digital é opcional
@@ -90,6 +94,15 @@ bloqueio antes da suspensão chamam `lume-shell lock`, com Hyprlock como reserva
 se o Lume não iniciar. A leitura contínua após a mudança de perfil PAM depende
 de teste físico do sensor; o fallback de senha e a retomada após suspensão
 também precisam de uma rodada de teste dedicada.
+
+Após a suspensão, o `fprintd` pode reiniciar e invalidar a conversa PAM que
+estava aberta. O lock acompanha `PrepareForSleep` pelo `gdbus`; na retomada,
+aborta a conversa biométrica antiga, espera um segundo e inicia outra. A
+conversa biométrica fica isolada da pilha de senha; outras falhas continuam
+com novas tentativas em intervalo crescente até 30 segundos, sem liberar a
+sessão. O campo de senha fica visível e recebe foco quando o lock fica seguro,
+então é possível digitar e pressionar Enter sem escolher um modo ou clicar no
+campo.
 
 ## Revisão de segurança — 18/11/2026
 
@@ -123,6 +136,8 @@ não equivale a uma auditoria independente do compositor, Qt ou Quickshell.
   sessão bloqueada, conforme o contrato de
   [WlSessionLock](https://quickshell.org/docs/v0.3.2/types/Quickshell.Wayland/WlSessionLock/).
   Crash, suspensão, remoção de monitor e recuperação por TTY não foram
-  provocados nesta revisão. Cliques em popups durante o lock real continuam
-  pendentes de confirmação; a alteração de área clicável não prova suporte
-  do compositor a uma `PopupWindow` ancorada na superfície de lock.
+  provocados nesta revisão. O menu de energia fica na própria
+  `WlSessionLockSurface`: o protocolo permite garantir as superfícies de lock,
+  mas não garante janelas popup comuns durante a sessão bloqueada. Um caso do
+  Quickshell registra rejeição de `xdg_popup` sem pai válido quando um popup
+  tenta nascer a partir da superfície de lock.

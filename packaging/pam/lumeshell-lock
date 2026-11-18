@@ -4,7 +4,7 @@
 # can explicitly switch to the separate password-only PAM conversation.
 # The leading dash keeps fingerprint support optional when fprintd is absent.
 -auth      sufficient   pam_fprintd.so max-tries=-1 timeout=-1
-# Preserve account/session policy from the host login stack.
-auth       include      login
+# Do not fall through to the login password prompt in this conversation:
+# the lock UI has a separate password-only PamContext.
 account    include      login
 session    include      login
