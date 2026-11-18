@@ -65,7 +65,7 @@ function resolveCatalogAction(actionId, item, isPrimary, isListed, homeDirectory
         const url = String(kind === "clipboard" ? data.clipboardUrl ?? "" : data.url ?? "").trim()
         if (!/^https?:\/\/[^\s]+$/i.test(url))
             return null
-        return {type: "open-url", url: url}
+        return {type: "open-video-player", url: url}
     }
 
     // URL downloads are action-backed even when “download-video” is the

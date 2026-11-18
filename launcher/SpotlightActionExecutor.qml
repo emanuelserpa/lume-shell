@@ -125,9 +125,12 @@ Item {
         case "open-download-panel":
             downloadPanelRequested(String(operation.url ?? ""), String(operation.mode ?? "video"))
             return true
-        case "open-url":
+        case "open-video-player":
             closeRequested()
-            Quickshell.execDetached(["xdg-open", String(operation.url ?? "")])
+            Quickshell.execDetached([
+                "python3", "-B", Quickshell.shellDir + "/scripts/open-video-player.py",
+                String(operation.url ?? "")
+            ])
             return true
         case "cancel-download":
             Quickshell.execDetached([

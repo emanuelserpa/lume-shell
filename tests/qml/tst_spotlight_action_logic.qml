@@ -152,7 +152,7 @@ TestCase {
         compare(actions[2].id, "open-player")
         const openPlayer = ActionLogic.resolveCatalogAction(
             actions[2].id, item, false, true, "/home/test")
-        compare(openPlayer.type, "open-url")
+        compare(openPlayer.type, "open-video-player")
         compare(openPlayer.url, item.clipboardUrl)
         compare(actions[3].id, "download-video")
         compare(actions[4].id, "download-audio")
