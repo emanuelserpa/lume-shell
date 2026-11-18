@@ -179,6 +179,9 @@ Ao pressionar `Enter` (ou clicar duas vezes) sobre um item no Spotlight:
 
 Links de texto contendo somente uma URL HTTP(S) também oferecem “Baixar vídeo”
 e “Baixar áudio” no painel de ações (`Ctrl+K` ou botão “Ações” no rodapé).
+Também oferecem “Abrir no player padrão”, que envia a URL para `xdg-open` e
+respeita o aplicativo associado pelo sistema. Isso permite usar mpv, Aurora
+MPV ou outro player definido como handler; `Enter` continua restaurando o link.
 O painel substitui temporariamente o preview; `Esc` retorna ao preview do item.
 A detecção é local e não consulta
 `yt-dlp` até a ação ser escolhida. `Enter` continua restaurando o link ao

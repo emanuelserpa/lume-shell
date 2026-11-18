@@ -134,7 +134,7 @@ TestCase {
         compare(secondaryOperation.type, "open-clipboard-image")
     }
 
-    function test_linkClipboardKeepsEnterRestoreAndOffersVideoAndAudioDownloads() {
+    function test_linkClipboardKeepsEnterRestoreAndOffersPlayerAndDownloads() {
         const item = {
             kind: "clipboard",
             clipId: "23",
@@ -144,24 +144,29 @@ TestCase {
         }
         const actions = actionCatalog.actionsFor(item)
 
-        compare(actions.length, 4)
+        compare(actions.length, 5)
         compare(actions[0].id, "restore")
         compare(actions[0].primary, true)
         compare(actions[1].id, "copy")
         compare(actions[1].hint, "Ctrl+Enter")
-        compare(actions[2].id, "download-video")
-        compare(actions[3].id, "download-audio")
+        compare(actions[2].id, "open-player")
+        const openPlayer = ActionLogic.resolveCatalogAction(
+            actions[2].id, item, false, true, "/home/test")
+        compare(openPlayer.type, "open-url")
+        compare(openPlayer.url, item.clipboardUrl)
+        compare(actions[3].id, "download-video")
+        compare(actions[4].id, "download-audio")
         compare(ActionLogic.resolveCatalogAction(
             actions[0].id, item, true, true, "/home/test").type, "activate")
         compare(ActionLogic.resolveCatalogAction(
             actions[1].id, item, false, true, "/home/test").type, "restore-clipboard")
         const video = ActionLogic.resolveCatalogAction(
-            actions[2].id, item, false, true, "/home/test")
+            actions[3].id, item, false, true, "/home/test")
         compare(video.type, "open-download-panel")
         compare(video.url, item.clipboardUrl)
         compare(video.mode, "video")
         const audio = ActionLogic.resolveCatalogAction(
-            actions[3].id, item, false, true, "/home/test")
+            actions[4].id, item, false, true, "/home/test")
         compare(audio.type, "open-download-panel")
         compare(audio.mode, "audio")
     }
@@ -171,6 +176,7 @@ TestCase {
         const actions = actionCatalog.actionsFor(item)
         compare(actions.some(action => action.id === "download-video"), false)
         compare(actions.some(action => action.id === "download-audio"), false)
+        compare(actions.some(action => action.id === "open-player"), false)
     }
 
     function test_normalizedPayloadCarriesActionData() {

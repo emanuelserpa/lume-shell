@@ -19,6 +19,7 @@ QtObject {
             return [
                 { id: "restore", title: "Restaurar", icon: "󰔎", hint: "Enter", primary: true, group: "Principal" },
                 { id: "copy", title: "Copiar", icon: "󰅍", hint: "Ctrl+Enter", primary: false, group: "Copiar" },
+                { id: "open-player", title: "Abrir no player padrão…", icon: "󰐹", hint: "", primary: false, group: "Ações" },
                 { id: "download-video", title: "Baixar vídeo…", icon: "󰇚", hint: "", primary: false, group: "Ações" },
                 { id: "download-audio", title: "Baixar áudio…", icon: "󰝚", hint: "", primary: false, group: "Ações" }
             ]
@@ -70,6 +71,7 @@ QtObject {
         case "url":
             return [
                 { id: "download-video", title: "Baixar vídeo…", icon: "󰇚", hint: "Enter", primary: true, group: "Principal" },
+                { id: "open-player", title: "Abrir no player padrão…", icon: "󰐹", hint: "", primary: false, group: "Ações" },
                 { id: "download-audio", title: "Baixar áudio…", icon: "󰝚", hint: "", primary: false, group: "Ações" }
             ]
         case "download":
