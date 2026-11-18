@@ -1,0 +1,10 @@
+#%PAM-1.0
+
+# Keep the fingerprint reader available for the whole lock session. The user
+# can explicitly switch to the separate password-only PAM conversation.
+# The leading dash keeps fingerprint support optional when fprintd is absent.
+-auth      sufficient   pam_fprintd.so max-tries=-1 timeout=-1
+# Preserve account/session policy from the host login stack.
+auth       include      login
+account    include      login
+session    include      login

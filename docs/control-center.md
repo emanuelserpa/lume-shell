@@ -47,9 +47,13 @@ CLI. The AppImage action updates all eligible applications; Gear Lever skips
 applications that are currently running. Update actions run in the background
 through `services/UpdateState.qml`; the popup stays open and shows the active
 backend and the final result. Successful completion uses a green circled check
-to distinguish its status from the plain action checkmarks elsewhere. Arch and
-AUR package elevation uses the graphical Polkit agent, while the remaining
-providers run as the user. Provider output is recorded in the user's Quickshell
+to distinguish its status from the plain action checkmarks elsewhere. The
+combined Arch update now runs `yay -Syu` once for official and AUR packages,
+instead of running a separate full `pacman -Syu` before `yay`. `yay` may still
+request Polkit authorization for its own pacman operations. Updating only one
+Arch backend uses its own transaction. The remaining providers run as the user,
+although system-wide Flatpak installations may request their own authorization.
+Provider output is recorded in the user's Quickshell
 cache log. While an update runs, “Ver
 progresso no terminal” opens Kitty following that log, including the current
 stage and Flatpak item progress.

@@ -6,8 +6,11 @@ use the [feature guides](README.md#feature-reference) for behavior and contracts
 
 ## Bar and popups
 
-The bar has three main islands and conditional Submap, media, and status
-surfaces. Its layout is explicit in `bar/Bar.qml`; geometry comes from `Theme.qml`.
+The bar defaults to three main islands and can optionally merge their surfaces
+into one continuous bar. Conditional Submap, media, and status surfaces remain
+in the same explicit layout in `bar/Bar.qml`; geometry comes from `Theme.qml`.
+The surface preference is edited in Spotlight's appearance studio and stored in
+`$XDG_CONFIG_HOME/quickshell/bar.json` (defaults to islands).
 
 | Area | Mounted content |
 | --- | --- |

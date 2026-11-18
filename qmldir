@@ -1,2 +1,4 @@
 module qs
 Theme 1.0 Theme.qml
+Lockscreen 1.0 lockscreen.qml
+LockscreenPreview 1.0 lockscreen-preview.qml

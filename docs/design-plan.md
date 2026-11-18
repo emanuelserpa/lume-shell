@@ -110,6 +110,10 @@ com consumidores reais. Decisões de movimento atualizam guia e checklist juntos
   e uma escala fracionária disponível. Medir a área útil em pixels lógicos.
 - Conferir cinco ilhas possíveis, ocultação da MediaIsland por falta de espaço,
   crescimento dos indicadores e colisões entre centro e direita.
+- A flexibilidade futura da barra, incluindo a posição opcional do indicador de
+  atualizações no centro, está detalhada em
+  [plano da barra](bar-flexibility-plan.md); não implementar reorder dinâmico
+  como parte desta matriz sem validar antes o contrato de estabilidade.
 - Conferir listas vazias/longas, mensagens longas, maior quantidade de áudio
   por aplicativo e pacote expandido. Priorizar altura por conteúdo com limite
   da tela e rolagem, mantendo ações acessíveis.

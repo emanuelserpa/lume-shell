@@ -47,13 +47,12 @@ Este backlog complementa, e não substitui, o plano ativo em
   `update-log.py status` indicou ausência de resultado e `update-log.py open`
   abriu o caminho configurado sem iniciar atualização; a janela temporária foi
   encerrada. Evidência e limites em `docs/visual-regression-checklist.md`.
-  A revisão do fluxo encontrou que a pill sumia quando a contagem chegava a zero,
-  mesmo com resultado salvo restaurado após reiniciar o shell. `UpdateControl`
-  agora permanece visível para esse resultado, sinaliza sucesso/falha por cor e
-  expõe a mensagem no tooltip. `UpdateAvailability.js` e quatro casos QML cobrem
-  pendências, execução, resultado salvo e estado sem atualizações; a validação
-  offline passou com 17 OK e QML 136/136. Falta conferir o caminho no pacote
-  instalado, além dos testes de clique/retomada já listados.
+  A revisão anterior manteve a pill visível para reabrir o último resultado; em
+  2026-11-12, o usuário observou que isso removia o autohide. O indicador agora
+  depende apenas de pendências e execução; o resultado permanece no histórico.
+  `UpdateAvailability.js` e os casos QML cobrem pendências, execução e o estado
+  ocioso após conclusão. Falta conferir esse comportamento no pacote instalado,
+  além dos testes de clique/retomada já listados.
   Continua aberto: retomada após suspensão, abertura pela barra na instância
   instalada, ativação real dos botões e persistência visual após reabertura.
   Na conferência seguinte, a unidade instalada continuava ativa, sem IPC para

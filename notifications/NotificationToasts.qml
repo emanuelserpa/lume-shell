@@ -19,6 +19,7 @@ PanelWindow {
     anchors {
         top: true
         right: true
+        bottom: true
     }
 
     // QMargins is valid at runtime; the shipped qmllint metadata cannot
@@ -26,10 +27,13 @@ PanelWindow {
     // qmllint disable unqualified unresolved-type
     margins.top: 45
     margins.right: root.theme.barPanelInset + root.theme.spacingTokens.md
+    margins.bottom: 0
     // qmllint enable unqualified unresolved-type
     readonly property real swipeRunway: 160
     implicitWidth: root.theme.popupWidths.large + root.swipeRunway
-    implicitHeight: Math.max(1, toastColumn.implicitHeight)
+    // Keep the native layer surface's geometry stable while its cards arrive
+    // and leave. The mask preserves click-through everywhere outside the stack.
+    mask: Region { item: toastColumn }
 
     exclusionMode: ExclusionMode.Ignore
     focusable: false
@@ -102,7 +106,7 @@ PanelWindow {
             "timeout": timeout,
             "created": Date.now(),
             "restored": restored,
-            "entered": root.activeToasts.length === 0 || !root.theme.qmlAnimationsEnabled
+            "entered": !root.theme.qmlAnimationsEnabled
         }
 
         const key = String(n.id)
@@ -151,7 +155,8 @@ PanelWindow {
 
     Column {
         id: toastColumn
-        width: parent.width
+        x: root.swipeRunway
+        width: root.theme.popupWidths.large
         spacing: root.theme.spacingTokens.md
 
         // Existing cards move to their new slots immediately. Only the new
@@ -177,24 +182,45 @@ PanelWindow {
                     id: toastCard
                     property real swipeOffset: 0
                     property real swipeDistance: 0
-                    anchors.left: parent.left
-                    anchors.leftMargin: root.swipeRunway + toastCard.swipeOffset
+                    // Slide the whole toast out of the visible stack area;
+                    // a small offset reads as a fade because PopupCard also
+                    // fades when `opened` becomes false.
+                    property real exitOffsetX: dying
+                                                   ? root.theme.popupWidths.large + root.theme.spacingTokens.md
+                                                   : 0
+                    property real entranceOffsetY: toastDelegate.toastInfo.entered
+                                                      ? 0 : -root.theme.motionPopupOffset
+
+                    x: swipeOffset + exitOffsetX
+                    y: entranceOffsetY
                     visible: toastDelegate.hasContent && (!root.fullscreenActive || toastDelegate.isCritical)
                     width: root.theme.popupWidths.large
                     scale: 1
                     popupOffset: 0
+                    // Keep the card opaque while it leaves sideways. PopupCard's
+                    // normal opacity behavior still handles the entrance.
+                    opacity: dying ? 1 : (opened ? 1 : 0)
                     implicitHeight: toastDelegate.hasContent ? (toastContent.implicitHeight + root.theme.popupInsets.large * 2) : 0
                     height: implicitHeight
                     theme: root.theme
                     focus: false
                     cornerRadius: root.theme.radiusPopup
-                    // Keep urgency in the existing red icon; the perimeter and
-                    // surface match the bar's translucent glass.
-                    cardColor: root.theme.barIslandSurface
-                    frameColor: root.theme.barIslandBorder
+                    // Preserve the original critical red outline; the stable
+                    // layer geometry prevents it from leaving a compositor trail.
+                    cardColor: root.theme.popupBackground
+                    frameColor: toastDelegate.isCritical ? root.theme.red : root.theme.glassBorder
                     opened: Boolean(toastDelegate.toastInfo.entered) && !dying
 
                     readonly property bool dying: root.closingIds.indexOf(toastDelegate.toastInfo.id) !== -1
+
+                    Behavior on entranceOffsetY {
+                        enabled: root.theme.qmlAnimationsEnabled
+                        NumberAnimation { duration: root.theme.motionPopup; easing.type: Easing.OutCubic }
+                    }
+                    Behavior on exitOffsetX {
+                        enabled: root.theme.qmlAnimationsEnabled
+                        NumberAnimation { duration: root.theme.motionPopupExit; easing.type: Easing.InCubic }
+                    }
 
                     onDyingChanged: {
                         if (dying) removeTimer.start()

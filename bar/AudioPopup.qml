@@ -19,6 +19,7 @@ PopupWindow {
     property var inputs: []
     property var streams: []
     property bool effectsPresetBusy: false
+    property bool settingsAvailable: true
 
     signal settingsRequested()
 
@@ -146,6 +147,7 @@ PopupWindow {
                 titleWeight: Font.Bold
 
                 PopupSettingsButton {
+                    visible: root.settingsAvailable
                     width: 26
                     height: 24
                     theme: root.theme

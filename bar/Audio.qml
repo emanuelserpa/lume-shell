@@ -7,6 +7,8 @@ Item {
     id: root
     required property var theme
     property bool plain: false
+    property bool interactive: true
+    property bool allowExternalSettings: true
 
     // PipeWire can add/remove several nodes in one event-loop turn when an
     // audio route changes. Defer rebuilding QML Repeater models until that
@@ -148,6 +150,7 @@ Item {
         iconSize: root.theme.barIconSize
         fontPixelSize: root.theme.iconTokens.xl
         textColor: root.sink?.audio?.muted ? root.theme.red : root.theme.surfaceForeground
+        mouseArea.enabled: root.interactive
         tooltipText: {
             if (!root.sink?.audio) return "Saída de áudio indisponível"
             const name = root.sink.description || root.sink.nickname || root.sink.name || "Saída de áudio"
@@ -182,7 +185,11 @@ Item {
         outputs: root.outputs
         inputs: root.inputs
         streams: root.streams
+        settingsAvailable: root.allowExternalSettings
 
-        onSettingsRequested: Quickshell.execDetached(["pwvucontrol"])
+        onSettingsRequested: {
+            if (root.allowExternalSettings)
+                Quickshell.execDetached(["pwvucontrol"])
+        }
     }
 }

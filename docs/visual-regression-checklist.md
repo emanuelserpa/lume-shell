@@ -80,6 +80,26 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
   recortada `/tmp/lume-bar-v14.png` confirma a pill visível na barra. Ainda falta
   abrir o popup e testar fechar/reabrir com entrada real.
 
+### P0-01 — autohide do indicador de atualizações (2026-11-12)
+
+- Revisão posterior mostrou que manter a pill para abrir um resultado antigo
+  impedia o autohide. O indicador voltou a depender apenas de atualizações
+  pendentes ou execução; o registro do resultado continua salvo no histórico.
+- `0.1.0-22` foi instalado e carregou sem erros QML; o autohide ainda precisa ser
+  observado numa execução que termine sem pendências.
+
+### P0-01 — restauração das animações de toast (2026-11-12)
+
+- A comparação mostrou que `0.1.0-20` continha animação vertical de entrada,
+  saída lateral, região de clique estável para a pilha e selo de urgência. O
+  código-fonte empacotado em `-21` e `-22` já não tinha esses comportamentos.
+- Restaurados `NotificationToasts.qml` e `NotificationCardContent.qml` do
+  comportamento de `-20`; o contorno do toast permanece em `glassBorder`, e a
+  barra usa `borderPopup`. `0.1.0-23` foi instalado e reiniciado; a configuração
+  carregou sem erros QML e um toast crítico apareceu na captura
+  `/tmp/lume-toast-v23.png`. Validação offline: 17 OK, 0 WARN, 0 FAIL; QML
+  138/138.
+
 ### P0-04 — verificação após reiniciar o shell (2026-11-08)
 
 - A primeira sondagem após `systemctl --user restart lume-shell.service` ocorreu

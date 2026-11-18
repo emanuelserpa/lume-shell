@@ -1,0 +1,5 @@
+module qs.lockscreen
+LockAuth 1.0 LockAuth.qml
+LockscreenIsland 1.0 LockscreenIsland.qml
+LockSessionSurface 1.0 LockSessionSurface.qml
+LockSurface 1.0 LockSurface.qml

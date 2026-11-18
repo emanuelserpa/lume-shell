@@ -34,14 +34,8 @@ PopupWindow {
     visible: false
     grabFocus: !hoverPreview
 
-    property bool showPlayerList: false
-
-    readonly property var otherPlayers: (players ?? []).filter(function(p) { return p !== player })
-
-
     onVisibleChanged: {
         if (visible) {
-            showPlayerList = false
             if (!hoverPreview) card.forceActiveFocus()
         }
     }
@@ -253,150 +247,14 @@ PopupWindow {
                 title: root.playerName(root.player)
                 titlePixelSize: root.theme.typeTokens.body
                 titleWeight: Font.DemiBold
-                titleInteractive: root.players.length > 1
-                onTitleActivated: root.showPlayerList = !root.showPlayerList
-                titleAccessory: Component {
-                    Text {
-                        visible: root.players.length > 1
-                        text: root.showPlayerList ? "▴" : "▾"
-                        color: root.theme.foreground
-                        font.family: root.theme.fontFamily
-                        font.pixelSize: root.theme.typeTokens.meta
-                    }
-                }
-
             }
 
-            // Expandable Player Selector Drawer (when clicked):
-            // active player as a big colored card, the rest as small grey
-            // cards; tapping one promotes it with an animated swap.
-            Column {
-                id: playerListColumn
-                visible: root.showPlayerList && root.players.length > 1
-                width: parent.width
-                spacing: root.theme.spacingTokens.xs
-
-                Rectangle {
-                    id: playerHero
-                    width: parent.width
-                    height: 66
-                    radius: root.theme.radiusMd
-                    color: root.theme.withAlpha(root.accentColor, 0.14)
-                    border.width: 1
-                    border.color: root.accentColor
-
-                    Behavior on color { enabled: root.theme.qmlAnimationsEnabled; ColorAnimation { duration: root.theme.motionFast; easing.type: root.theme.motionEasing } }
-                    Behavior on border.color { enabled: root.theme.qmlAnimationsEnabled; ColorAnimation { duration: root.theme.motionFast; easing.type: root.theme.motionEasing } }
-
-                    Row {
-                        anchors.fill: parent
-                        anchors.leftMargin: root.theme.popupInsets.large
-                        anchors.rightMargin: root.theme.popupInsets.large
-                        spacing: root.theme.spacingTokens.lg
-
-                        Text {
-                            text: root.playerIcon(root.player)
-                            color: root.accentColor
-                            font.family: root.theme.nerdFontFamily
-                            font.pixelSize: root.theme.iconTokens.mediaControl
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        Column {
-                            width: parent.width - 72
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: root.theme.spacingTokens.micro
-
-                            Text {
-                                text: "Tocando agora"
-                                color: root.accentColor
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: root.theme.typeTokens.caption
-                                font.weight: Font.DemiBold
-                            }
-
-                            Text {
-                                width: parent.width
-                                text: root.playerName(root.player)
-                                color: root.theme.foreground
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: root.theme.typeTokens.bodyEmphasis
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
-                            }
-
-                            Text {
-                                width: parent.width
-                                text: String(root.player?.trackTitle ?? "")
-                                visible: text.length > 0
-                                color: root.theme.foreground
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: root.theme.typeTokens.body
-                                elide: Text.ElideRight
-                            }
-                        }
-
-                        TablerIcon {
-                            width: root.theme.iconTokens.lgPlus
-                            height: root.theme.iconTokens.lgPlus
-                            iconName: "dashboard-check"
-                            iconColor: root.accentColor
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-
-                    NumberAnimation on scale {
-                        id: playerSwapAnim
-                        from: 0.96
-                        to: 1
-                        duration: root.theme.motionFast
-                        easing.type: root.theme.motionEasing
-                        running: false
-                    }
-                }
-
-                // Keep the delegate model stable while MPRIS player objects
-                // are destroyed. Rebinding a JS object array here crashes
-                // Qt 6.11 inside Repeater/Instantiator model regeneration.
-                Repeater {
-                    model: 16
-
-                    delegate: PopupListRow {
-                        id: alternatePlayerDelegate
-                        theme: root.theme
-                        required property int index
-                        parent: playerListColumn
-                        readonly property var playerData:
-                            index < root.otherPlayers.length
-                            ? root.otherPlayers[index]
-                            : null
-                        visible: playerData !== null
-                        width: parent.width
-                        rowHeight: 34
-                        idleColor: root.theme.withAlpha(root.theme.pureWhite, 0.04)
-                        hoverColor: root.theme.withAlpha(root.theme.pureWhite, 0.10)
-                        idleBorderColor: root.theme.withAlpha(root.theme.pureWhite, 0.08)
-
-                        Behavior on color { enabled: root.theme.qmlAnimationsEnabled; ColorAnimation { duration: root.theme.motionFast; easing.type: root.theme.motionEasing } }
-                        leadingIcon: root.playerIcon(alternatePlayerDelegate.playerData)
-                        leadingIconColor: root.theme.foreground
-                        title: root.playerName(alternatePlayerDelegate.playerData)
-                        titlePixelSize: root.theme.typeTokens.subtitle
-                        titleColor: root.theme.offWhite
-                        subtitle: String(alternatePlayerDelegate.playerData?.trackTitle ?? "")
-
-                        // Tap handling must live in interactionHandlers:
-                        // default content is hidden under the standard
-                        // layout, so handlers placed there never fire.
-                        interactionHandlers: TapHandler {
-                            acceptedButtons: Qt.LeftButton
-                            onTapped: {
-                                root.playerSelected(alternatePlayerDelegate.playerData)
-                                root.showPlayerList = false
-                            }
-                        }
-                    }
-                }
+            MediaPlayerDots {
+                theme: root.theme
+                players: root.players
+                selectedPlayer: root.player
+                accent: root.accentColor
+                onPlayerSelected: function(selected) { root.playerSelected(selected) }
             }
 
             // Hero Section: Album Artwork + Track Information
@@ -416,6 +274,15 @@ PopupWindow {
                     border.color: root.theme.glassBorder
                     anchors.verticalCenter: parent.verticalCenter
                     clip: true
+
+                    NumberAnimation on scale {
+                        id: playerSwapAnim
+                        from: 0.96
+                        to: 1
+                        duration: root.theme.motionFast
+                        easing.type: root.theme.motionEasing
+                        running: false
+                    }
 
                     Image {
                         id: artwork
@@ -614,7 +481,7 @@ PopupWindow {
             radius: card.radius
             color: "transparent"
             border.width: 1
-            border.color: root.theme.barIslandBorder
+            border.color: root.theme.glassBorder
             z: 100
         }
     }

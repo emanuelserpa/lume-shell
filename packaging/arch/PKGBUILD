@@ -2,13 +2,13 @@
 pkgname=lume-shell
 # Local source-build fallback; release workflow supplies the Git tag version.
 pkgver="${_release_pkgver:-0.1.0}"
-pkgrel=34
+pkgrel=46
 pkgdesc='Wayland desktop shell built with Quickshell'
 arch=('x86_64')
 url='https://github.com/emanuelserpa/lume-shell'
 license=('MIT')
 depends=('quickshell' 'qt6-5compat' 'qt6-declarative' 'python' 'python-requests'
-  'python-pillow' 'systemd' 'fontconfig' 'kitty')
+  'python-pillow' 'systemd' 'util-linux' 'fontconfig' 'kitty')
 optdepends=(
   'noto-fonts: default interface font family'
   'ttf-nerd-fonts-symbols-mono: additional interface icons'
@@ -30,8 +30,10 @@ optdepends=(
   'labwc: labwc compositor integration'
   'mangowm: Mango focused-output and workspace compatibility state'
   'pacman-contrib: repository update indicator'
+  'fprintd: fingerprint authentication in the native lockscreen prototype'
 )
 makedepends=('git' 'tar')
+backup=('etc/pam.d/lumeshell-lock' 'etc/pam.d/lumeshell-lock-password')
 install=lume-shell.install
 options=('!strip')
 
@@ -71,15 +73,21 @@ package() {
     "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 
   for entry in shell.qml Theme.qml qmldir assets bar components controlcenter \
-    data launcher notifications osd references scripts services; do
+    data launcher lockscreen notifications osd references scripts services; do
     cp -R --no-preserve=ownership "$root/$entry" "$share/"
   done
+  install -Dm644 "$root/lockscreen.qml" "$share/lockscreen.qml"
+  install -Dm644 "$root/lockscreen-preview.qml" "$share/lockscreen-preview.qml"
   install -Dm755 "$startdir/lume-shell" "$pkgdir/usr/bin/lume-shell"
   install -Dm644 "$startdir/lume-shell.service" \
     "$pkgdir/usr/lib/systemd/user/lume-shell.service"
+  install -Dm644 "$root/packaging/pam/lumeshell-lock" \
+    "$pkgdir/etc/pam.d/lumeshell-lock"
+  install -Dm644 "$root/packaging/pam/lumeshell-lock-password" \
+    "$pkgdir/etc/pam.d/lumeshell-lock-password"
   install -Dm644 "$root/README.md" "$pkgdir/usr/share/doc/lume-shell/README.md"
   for doc in arch-packaging-plan dependency-inventory compositor-integration \
-    wayland-install wayland-compositor-research; do
+    lockscreen-prototype wayland-install wayland-compositor-research; do
     if [[ -f "$root/docs/$doc.md" ]]; then
       install -Dm644 "$root/docs/$doc.md" \
         "$pkgdir/usr/share/doc/lume-shell/$doc.md"

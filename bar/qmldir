@@ -14,6 +14,7 @@ Weather 1.0 Weather.qml
 Tray 1.0 Tray.qml
 TrayMenu 1.0 TrayMenu.qml
 MediaPopup 1.0 MediaPopup.qml
+MediaPlayerDots 1.0 MediaPlayerDots.qml
 SinkSelector 1.0 SinkSelector.qml
 BatteryPopup 1.0 BatteryPopup.qml
 AudioPopup 1.0 AudioPopup.qml

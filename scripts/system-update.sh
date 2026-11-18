@@ -75,6 +75,20 @@ run_aur() {
     --sudo "$SCRIPT_DIR/yay-pkexec.sh"
 }
 
+run_arch_all() {
+  if ! command -v yay >/dev/null 2>&1; then
+    run_repo
+    FAILED+=("AUR (yay ausente)")
+    emit_stage "AUR ignorado; yay não está instalado"
+    return
+  fi
+  # A single yay transaction covers official repositories and AUR packages.
+  # Running pacman -Syu first and yay -Syu afterward duplicated elevation.
+  run_stage "Repositórios e AUR" yay -Syu --noconfirm \
+    --answerdiff None --answeredit None --answerclean None \
+    --sudo "$SCRIPT_DIR/yay-pkexec.sh"
+}
+
 run_flatpak() {
   if ! command -v flatpak >/dev/null 2>&1; then
     emit_stage "Flatpak não instalado; etapa ignorada"
@@ -128,7 +142,7 @@ run_appimage() {
 
 case "$MODE" in
   repo|aur|flatpak|brew|appimage) TOTAL=1 ;;
-  all) TOTAL=5 ;;
+  all) TOTAL=4 ;;
   *) printf '{"type":"done","ok":false,"text":"Modo de atualização inválido."}\n'; exit 2 ;;
 esac
 
@@ -139,8 +153,8 @@ case "$MODE" in
   brew) run_brew ;;
   appimage) run_appimage ;;
   all)
-    run_repo
-    run_aur
+    if ! command -v yay >/dev/null 2>&1; then TOTAL=5; fi
+    run_arch_all
     run_flatpak
     run_brew
     run_appimage

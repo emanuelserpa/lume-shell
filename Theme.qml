@@ -212,7 +212,7 @@ QtObject {
         : Qt.rgba(surface.r, surface.g, surface.b, 0.50)
 
     readonly property color barIslandSurface: background
-    readonly property color barIslandBorder: glassBorder
+    readonly property color barIslandBorder: borderPopup
     readonly property color barIslandShadow:
         withAlpha(Qt.darker(backgroundOpaque, 1.35), isLight ? 0.32 : 0.24)
 

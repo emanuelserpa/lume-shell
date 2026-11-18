@@ -51,12 +51,21 @@ PanelWindow {
         color: "transparent"
         border.width: 0
 
-        BarIslandSurface { theme: barTheme; target: leftIsland }
-        BarIslandSurface { theme: barTheme; target: submapIslandSlot; visible: submapWidget.visible }
-        BarIslandSurface { theme: barTheme; target: centerCluster }
-        BarIslandSurface { theme: barTheme; target: mediaIslandSlot; visible: mediaIsland.visible }
-        BarIslandSurface { theme: barTheme; target: statusIslandSlot; visible: statusIslandSlot.islandVisible }
-        BarIslandSurface { theme: barTheme; target: rightIsland }
+        Rectangle {
+            anchors.fill: parent
+            visible: BarPreferenceState.surface === "continuous"
+            radius: barTheme.barIslandRadius
+            color: barTheme.barIslandSurface
+            border.width: 1
+            border.color: barTheme.barIslandBorder
+        }
+
+        BarIslandSurface { theme: barTheme; target: leftIsland; visible: BarPreferenceState.surface === "islands" }
+        BarIslandSurface { theme: barTheme; target: submapIslandSlot; visible: BarPreferenceState.surface === "islands" && submapWidget.visible }
+        BarIslandSurface { theme: barTheme; target: centerCluster; visible: BarPreferenceState.surface === "islands" }
+        BarIslandSurface { theme: barTheme; target: mediaIslandSlot; visible: BarPreferenceState.surface === "islands" && mediaIsland.visible }
+        BarIslandSurface { theme: barTheme; target: statusIslandSlot; visible: BarPreferenceState.surface === "islands" && statusIslandSlot.islandVisible }
+        BarIslandSurface { theme: barTheme; target: rightIsland; visible: BarPreferenceState.surface === "islands" }
 
         Row {
             id: leftIsland

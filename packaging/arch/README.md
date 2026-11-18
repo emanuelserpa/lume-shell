@@ -4,6 +4,13 @@ O pacote `lume-shell` instala o código em `/usr/share/lume-shell`, o comando
 `lume-shell` e a unidade de usuário `lume-shell.service`. Quickshell é instalado
 separadamente pelo pacote do runtime.
 
+Também fornece os perfis PAM `/etc/pam.d/lumeshell-lock` e
+`/etc/pam.d/lumeshell-lock-password`, além do protótipo de lockscreen.
+`lume-shell lock` inicia o bloqueio nativo do Lume; o Hyprland pode usá-lo no
+atalho e no `hypridle`. Com `fprintd` instalado, a digital segue ativa enquanto
+a pessoa também pode escolher “Usar senha”. O pacote trata os dois arquivos
+PAM como configuração pelo pacman.
+
 ## Build local
 
 Na raiz do checkout:
@@ -26,6 +33,7 @@ execução:
 lume-shell spotlight toggle
 lume-shell spotlight clipboard
 lume-shell spotlight actions
+lume-shell lock
 ```
 
 Para uma instância de desenvolvimento, defina

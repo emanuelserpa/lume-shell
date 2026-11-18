@@ -5,6 +5,7 @@ usage() {
   cat <<'EOF'
 Uso:
   lume-shell [run] [argumentos do Quickshell]  Inicia a shell
+  lume-shell lock                             Bloqueia a sessão com o lockscreen do Lume
   lume-shell spotlight <comando>              Controla o Spotlight em execução
 
 Comandos do Spotlight:
@@ -33,6 +34,40 @@ case "$1" in
   run)
     shift
     exec /usr/bin/quickshell --path "$config_path" "$@"
+    ;;
+  lock)
+    shift
+    if [ "$#" -ne 0 ]; then
+      printf 'lume-shell lock não aceita argumentos.\n' >&2
+      exit 2
+    fi
+
+    lockscreen_path=${LUME_SHELL_LOCKSCREEN_PATH:-}
+    if [ -z "$lockscreen_path" ]; then
+      if [ -r "$config_path/lockscreen.qml" ]; then
+        lockscreen_path="$config_path/lockscreen.qml"
+      else
+        lockscreen_path=/usr/share/lume-shell/lockscreen.qml
+      fi
+    fi
+    if [ ! -r "$lockscreen_path" ]; then
+      printf 'lume-shell: lockscreen não encontrado: %s\n' "$lockscreen_path" >&2
+      exit 1
+    fi
+    if [ -z "${XDG_RUNTIME_DIR:-}" ] || [ ! -d "$XDG_RUNTIME_DIR" ]; then
+      printf 'lume-shell: XDG_RUNTIME_DIR não está disponível.\n' >&2
+      exit 1
+    fi
+
+    if /usr/bin/flock -n -E 75 "$XDG_RUNTIME_DIR/lumeshell-lock.lock" \
+      /usr/bin/quickshell --path "$lockscreen_path"; then
+      exit 0
+    else
+      status=$?
+      # A second request while this lockscreen is active is an intentional no-op.
+      [ "$status" -eq 75 ] && exit 0
+      exit "$status"
+    fi
     ;;
   spotlight)
     shift

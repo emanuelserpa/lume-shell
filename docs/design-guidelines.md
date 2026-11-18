@@ -59,8 +59,9 @@ como cor discreta de decoração. A meta de contraste para texto normal é 4,5:1
 ela precisa ser medida sobre o fundo composto, inclusive com wallpaper claro.
 Isso é um critério de aceitação, não uma certificação do estado atual.
 
-- Moldura de popup: `PopupCard`, normalmente com `popupBackground` e
-  `borderPopup`. Barra: `barIslandSurface` e `barIslandBorder`.
+- Moldura de popup e menus do tray: `PopupCard`, com `popupBackground` e
+  `borderPopup`. As ilhas da barra usam `barIslandBorder`, alinhada à moldura
+  dos popups. As superfícies e o raio continuam próprios de cada componente.
 - Seção interna: `glassPanelSurface`; linhas: `glassCardSurface`; hover:
   `glassHoverSurface`. Controles tonais usam `adaptiveCardSurface` e variantes.
 - `glassPanelSurface`, `glassCardSurface`, `glassHoverSurface` and
@@ -269,11 +270,11 @@ Casos concretos:
 - Impressora com trabalhos no CUPS permanece acessível mesmo com falha na
   sondagem de rede. Não esconder a fila que permite diagnóstico/cancelamento.
 - Calendário usa data atual reativa para destaque, progresso anual e feriados.
-- UpdateControl aparece com pendências, execução ou resultado salvo da última
-  atualização. Sem pendências, cor e tooltip identificam sucesso/falha e mantêm
-  o caminho para reabrir o resultado/log. O popup mostra etapas e, durante a
-  execução, oferece o terminal de progresso. Mensagens essenciais de falha
-  precisam continuar acessíveis; verificar isso no plano.
+- UpdateControl aparece apenas com pendências ou durante a execução e se oculta
+  quando não há trabalho. O resultado permanece no histórico persistido; o
+  popup mostra etapas e, durante a execução, oferece o terminal de progresso.
+  Mensagens essenciais de falha precisam continuar acessíveis; verificar isso
+  no plano.
 - Dashboard central contém clima e calendário/feriados. Telemetria fica no
   SystemMonitor; atualizações ficam no seu próprio popup.
 - Toasts: atualmente 5,5 s normais, 3,5 s de baixa urgência e sem expiração

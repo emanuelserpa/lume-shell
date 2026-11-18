@@ -1193,6 +1193,70 @@ Item {
 
             Rectangle {
                 width: parent.width
+                height: 64
+                radius: root.themeColors.radiusMd
+                color: root.themeColors.glassPanelSurface
+                border.width: 1
+                border.color: root.cBorder
+
+                Row {
+                    anchors.fill: parent
+                    anchors.leftMargin: root.themeColors.popupInsets.standard
+                    anchors.rightMargin: root.themeColors.popupInsets.standard
+                    spacing: root.themeColors.spacingTokens.md
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Estilo da barra"
+                        color: root.cForeground
+                        font.family: root.themeColors.fontFamily
+                        font.pixelSize: root.themeColors.typeTokens.bodyEmphasis
+                        font.weight: Font.DemiBold
+                    }
+
+                    Item { width: Math.max(0, parent.width - 430); height: 1 }
+
+                    Repeater {
+                        model: [
+                            { id: "islands", label: "Ilhas" },
+                            { id: "continuous", label: "Contínua" }
+                        ]
+
+                        delegate: Rectangle {
+                            id: barSurfaceOption
+                            required property var modelData
+                            anchors.verticalCenter: parent.verticalCenter
+                            enabled: BarPreferenceState.loaded
+                            width: 104
+                            height: 34
+                            radius: root.themeColors.radiusSm
+                            color: BarPreferenceState.surface === modelData.id
+                                   ? root.themeColors.glassActiveSurface
+                                   : (barSurfaceHover.hovered ? root.cCardHover : "transparent")
+                            border.width: BarPreferenceState.surface === modelData.id ? 1 : 0
+                            border.color: root.themeColors.glassBorder
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: barSurfaceOption.modelData.label
+                                color: root.cForeground
+                                font.family: root.themeColors.fontFamily
+                                font.pixelSize: root.themeColors.typeTokens.meta
+                                font.weight: BarPreferenceState.surface === barSurfaceOption.modelData.id
+                                             ? Font.DemiBold : Font.Medium
+                            }
+
+                            HoverHandler { id: barSurfaceHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler {
+                                onTapped: BarPreferenceState.setSurface(barSurfaceOption.modelData.id)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                width: parent.width
                 height: 58
                 radius: root.themeColors.radiusMd
                 color: root.themeColors.glassPanelSurface

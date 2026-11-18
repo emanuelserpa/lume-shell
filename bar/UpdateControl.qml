@@ -12,9 +12,7 @@ Item {
     readonly property int updateCount: UpdateState.totalUpdates
     readonly property bool updating: UpdateState.updateRunning
     readonly property bool available: UpdateAvailability.shouldShowIndicator(
-        updateCount, updating, UpdateState.updateResult)
-    readonly property bool showingSavedResult: updateCount === 0
-        && !updating && UpdateState.updateResult.length > 0
+        updateCount, updating)
 
     function togglePopup() {
         updatePopup.visible = !updatePopup.visible
@@ -34,10 +32,7 @@ Item {
         iconSize: root.theme.barIconSize
         fontPixelSize: root.theme.iconTokens.lg
         spinning: root.updating && root.theme.qmlAnimationsEnabled
-        textColor: root.updating ? root.theme.primary
-            : root.showingSavedResult
-                ? (UpdateState.updateSucceeded ? root.theme.green : root.theme.red)
-                : root.theme.yellow
+        textColor: root.updating ? root.theme.primary : root.theme.yellow
         highlighted: updatePopup.visible || root.updating
         tooltipText: root.updating
             ? UpdateState.updateMessage
@@ -45,11 +40,7 @@ Item {
                 ? root.updateCount + (root.updateCount === 1
                 ? " atualização disponível"
                 : " atualizações disponíveis")
-                : root.showingSavedResult
-                    ? (UpdateState.updateSucceeded
-                        ? "Última atualização concluída: "
-                        : "Última atualização falhou: ") + UpdateState.updateResult
-                    : "Sem atualizações disponíveis"
+                : "Atualizações"
 
         mouseArea.onClicked: function(mouse) {
             if (mouse.button === Qt.LeftButton)

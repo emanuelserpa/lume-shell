@@ -5,6 +5,7 @@ singleton NotificationState 1.0 NotificationState.qml
 singleton BatteryAlertState 1.0 BatteryAlertState.qml
 singleton ThemeState 1.0 ThemeState.qml
 singleton GlassState 1.0 GlassState.qml
+singleton BarPreferenceState 1.0 BarPreferenceState.qml
 singleton WallpaperState 1.0 WallpaperState.qml
 singleton NightLightState 1.0 NightLightState.qml
 singleton PowerProfileState 1.0 PowerProfileState.qml

@@ -5,10 +5,11 @@ consulte o backlog e o plano indicados abaixo.
 
 - **Próxima prioridade:** concluir a verificação visual de P0-01 no
   [plano visual](design-plan.md); a lógica de calendário/log tem cobertura
-  automatizada. A pill agora permanece disponível para reabrir resultado salvo
-  mesmo com zero pendências, coberta por quatro novos casos QML e instalada em
-  `0.1.0-14`; o shell carregou e a barra passou na verificação visual. Falta
-  validar abertura/interação e testar retomada na instância instalada.
+  automatizada. Após observar que o resultado salvo mantinha o ícone de updates
+  na barra indefinidamente, o comportamento foi ajustado para ocultá-lo quando
+  não houver pendências nem atualização em execução; o resultado continua no
+  histórico. `0.1.0-23` está instalado; falta observar o autohide após uma
+  atualização que deixe zero pendências e validar a interação do popup.
 - **Progresso técnico:** P0-02 a P0-04 e P1-01 passaram validação offline.
   P1-02 foi reproduzido em simulação controlada e corrigido com watchdog,
   backoff, fila limitada e aviso no histórico; a suíte offline está em 136/136.
@@ -31,7 +32,10 @@ consulte o backlog e o plano indicados abaixo.
   marcadas como concluídas sem reprodução ou decisão necessária.
 - **Planos de domínio:** [Spotlight](spotlight-raycast-plan.md),
   [Theme Studio](wallpaper-color-plan.md) e [backend Wayland](wayland-backend-plan.md)
-  só se aplicam a mudanças nesses recursos.
+  só se aplicam a mudanças nesses recursos. A flexibilidade da barra está
+  documentada em [bar-flexibility-plan.md](bar-flexibility-plan.md); o seletor
+  Ilhas/Contínua foi implementado preservando o layout de módulos, e os perfis
+  responsivos restantes continuam planejados.
 
 Atualize este resumo quando a prioridade recomendada mudar. Registre progresso,
 decisões e evidências no documento da tarefa; não transforme este arquivo em
