@@ -55,6 +55,12 @@ jobs:
     environment:
       name: release
     steps:
+      - name: Check out release tag for GitHub CLI
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
       - name: Download the package built from this tag
         uses: actions/download-artifact@v4
         with:
