@@ -46,3 +46,12 @@ GitHub Release. A validação em uma instalação Arch limpa deve preceder a
 primeira distribuição do pacote. O pacote registra a licença MIT e instala o
 arquivo `LICENSE` em `/usr/share/licenses/lume-shell/LICENSE`. Ativos e
 dependências de terceiros mantêm suas licenças próprias.
+
+### ReGreet opcional
+
+O pacote inclui modelos para o ReGreet sem substituir a configuração de login
+automaticamente. Instale `greetd-regreet` e `cage` e execute
+`lume-shell greeter install`. O assistente preserva a configuração existente,
+prepara os assets legíveis pelo greeter e mantém o wallpaper e as cores em
+sintonia com o Lume. Use `--restart` somente quando puder encerrar a sessão
+gráfica atual.

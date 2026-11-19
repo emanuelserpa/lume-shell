@@ -48,8 +48,6 @@ case "$ACTION" in
             exec labwc --exit
         elif is_mango && has_cmd mmsg; then
             exec mmsg dispatch quit
-        elif is_hyprland && has_cmd hyprshutdown; then
-            exec hyprshutdown
         elif is_hyprland && has_cmd hyprctl; then
             exec hyprctl dispatch exit
         else
@@ -59,19 +57,11 @@ case "$ACTION" in
         ;;
 
     reboot)
-        if is_hyprland && has_cmd hyprshutdown; then
-            exec hyprshutdown --top-label "Reiniciando..." --post-cmd "systemctl reboot"
-        else
-            exec systemctl reboot
-        fi
+        exec systemctl reboot
         ;;
 
     poweroff|shutdown)
-        if is_hyprland && has_cmd hyprshutdown; then
-            exec hyprshutdown --top-label "Desligando..." --post-cmd "systemctl poweroff"
-        else
-            exec systemctl poweroff
-        fi
+        exec systemctl poweroff
         ;;
 
     *)

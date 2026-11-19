@@ -860,7 +860,8 @@ FloatingWindow {
                                     { name: "BTOP", key: "btop", icon: "󰄬" },
                                     { name: "Qt / Kvantum", key: "qt", icon: "󰟀" },
                                     { name: "GTK", key: "gtk", icon: "󰕰" },
-                                    { name: "Mango", key: "mango", icon: "󰖯" }
+                                    { name: "Mango", key: "mango", icon: "󰖯" },
+                                    { name: "ReGreet", key: "regreet", icon: "󰌾" }
                                 ]
 
                                 delegate: Rectangle {

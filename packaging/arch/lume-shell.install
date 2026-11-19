@@ -4,5 +4,9 @@ Lume is installed but not enabled automatically. To start it in your graphical
 session, first disable any existing quickshell.service instance, then run:
   systemctl --user daemon-reload
   systemctl --user enable --now lume-shell.service
+
+Optional ReGreet login screen integration:
+  sudo pacman -S --needed greetd-regreet cage
+  lume-shell greeter install
 EOF
 }

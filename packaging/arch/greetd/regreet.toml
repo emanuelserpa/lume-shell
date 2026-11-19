@@ -1,0 +1,30 @@
+skip_selection = false
+
+[background]
+path = "/var/lib/lume-greeter/background.jpg"
+fit = "Cover"
+
+[GTK]
+application_prefer_dark_theme = true
+cursor_theme_name = "Adwaita"
+cursor_blink = false
+font_name = "Noto Sans 12"
+icon_theme_name = "Adwaita"
+theme_name = "Adwaita"
+
+[commands]
+reboot = ["systemctl", "reboot"]
+poweroff = ["systemctl", "poweroff"]
+
+[appearance]
+greeting_msg = "Lume Shell"
+
+[widget.clock]
+format = "%A, %d de %B%n%H:%M"
+resolution = "500ms"
+timezone = "America/Fortaleza"
+locale = "pt_BR"
+label_width = 340
+justification = "center"
+valign = "top"
+halign = "center"

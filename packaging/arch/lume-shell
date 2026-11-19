@@ -6,6 +6,7 @@ usage() {
 Uso:
   lume-shell [run] [argumentos do Quickshell]  Inicia a shell
   lume-shell lock                             Bloqueia a sessão com o lockscreen do Lume
+  lume-shell greeter install [--restart]      Instala a integração opcional do ReGreet
   lume-shell spotlight <comando>              Controla o Spotlight em execução
 
 Comandos do Spotlight:
@@ -68,6 +69,14 @@ case "$1" in
       [ "$status" -eq 75 ] && exit 0
       exit "$status"
     fi
+    ;;
+  greeter)
+    shift
+    if [ "${1:-}" != "install" ]; then
+      printf 'Uso: lume-shell greeter install [--restart]\n' >&2
+      exit 2
+    fi
+    exec /usr/lib/lume-shell/setup-regreet.sh "$@"
     ;;
   spotlight)
     shift

@@ -72,6 +72,7 @@ KITTY_RUNTIME_DIR = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getui
 FASTFETCH_CONFIG_PATH = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "fastfetch" / "config.jsonc"
 MANGO_CONFIG_PATH = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "mango" / "config.conf"
 GTK_THEMES_DIR = Path.home() / ".themes"
+REGREET_SHARE_DIR = Path("/var/lib/lume-greeter")
 
 
 
@@ -755,6 +756,10 @@ def verify_adapter(name: str, theme_id: str, theme_dict: dict | None = None) -> 
                 return True
             css = _read_text_safe(home / ".themes" / theme_name / "gtk-3.0" / "gtk.css")
             return accent in css.lower()
+        if name == "regreet":
+            css = _read_text_safe(REGREET_SHARE_DIR / "regreet.css").lower()
+            return ((REGREET_SHARE_DIR / "background.jpg").is_file()
+                    and bool(accent) and accent in css)
         if name == "btop":
             conf = _read_text_safe(cfg_home / "btop" / "btop.conf")
             if 'color_theme = "chameleon"' not in conf:
@@ -833,6 +838,7 @@ def cmd_get(theme_id=None):
             "labwc": adapter_in_sync("labwc", target_id, theme_info),
             "mango": adapter_in_sync("mango", target_id, theme_info),
             "fastfetch": adapter_in_sync("fastfetch", target_id, theme_info),
+            "regreet": adapter_in_sync("regreet", target_id, theme_info),
         },
     }
 
@@ -851,6 +857,23 @@ def cmd_sync_hyprlock():
         "error": None if ok else "Falha ao gerar as cores do Hyprlock",
         "current": current,
         "adapter": "hyprlock",
+    }
+
+
+def cmd_sync_regreet():
+    """Refresh the shared ReGreet assets without touching the other adapters."""
+    current = read_current_theme_id()
+    if current.startswith("chameleon"):
+        THEMES[current] = get_chameleon_palette(current)
+    theme_info = THEMES.get(current, THEMES.get(DEFAULT_THEME))
+    if not theme_info:
+        return {"ok": False, "error": "Não foi possível carregar o tema atual"}
+    ok = sync_regreet_theme(current, theme_info, detect_current_wallpaper())
+    return {
+        "ok": ok,
+        "error": None if ok else "Falha ao atualizar os arquivos compartilhados do ReGreet",
+        "current": current,
+        "adapter": "regreet",
     }
 
 
@@ -1889,6 +1912,92 @@ def _write_libadwaita_css(theme_dict: dict | None,
         return False
 
 
+def sync_regreet_theme(theme_id: str, theme_dict: dict | None = None,
+                       wallpaper_path: str | Path | None = None,
+                       shared_dir: Path | None = None) -> bool:
+    """Refresh the pre-login ReGreet wallpaper and colors when configured.
+
+    The shared directory is provisioned by the host setup as user-owned and
+    group-readable by `greeter`; it deliberately does not expose the home dir.
+    """
+    info = theme_dict or THEMES.get(str(theme_id or ""), {})
+    colors = info.get("colors", {})
+    target = shared_dir if shared_dir is not None else REGREET_SHARE_DIR
+    if not target.is_dir() or not os.access(target, os.W_OK | os.X_OK):
+        record_adapter("regreet", False, theme_id, info)
+        return False
+
+    def safe_color(name: str, fallback: str) -> str:
+        value = str(colors.get(name, fallback)).lower()
+        return value if re.fullmatch(r"#[0-9a-f]{6}", value) else fallback
+
+    def rgb_csv(value: str) -> str:
+        return ", ".join(str(channel) for channel in hex_to_rgb(value))
+
+    background = safe_color("backgroundOpaque", "#191114")
+    accent = safe_color("accent", "#feb0d3")
+    template = SCRIPT_DIR / "templates" / "regreet-chameleon.css"
+    css = template.read_text(encoding="utf-8")
+    replacements = {
+        "FG": safe_color("foreground", "#eedfe3"),
+        "BG": background,
+        "BG_RGB": rgb_csv(background),
+        "ACC": accent,
+        "ACC_RGB": rgb_csv(accent),
+        "ON_ACC": safe_color("onPrimary", _readable_on(accent)),
+        "HOVER": safe_color("surfaceHover", "#30282b"),
+        "SURFACE": safe_color("surface", background),
+        "BORDER": safe_color("borderSubtle", "#504348"),
+        "RED": safe_color("red", "#f16364"),
+    }
+    for name, value in replacements.items():
+        css = css.replace(f"__QS_{name}__", value)
+
+    css_path = target / "regreet.css"
+    try:
+        if not css_path.is_file() or css_path.read_text(encoding="utf-8") != css:
+            temp = target / ".regreet.css.tmp"
+            temp.write_text(css, encoding="utf-8")
+            os.chmod(temp, 0o640)
+            temp.replace(css_path)
+            os.chmod(css_path, 0o640)
+
+        source = Path(wallpaper_path or info.get("wallpaper") or detect_current_wallpaper() or "")
+        image_path = target / "background.jpg"
+        metadata_path = target / "background-source.json"
+        if source.is_file():
+            source_stat = source.stat()
+            signature = {"path": str(source.resolve()), "size": source_stat.st_size,
+                         "mtime_ns": source_stat.st_mtime_ns}
+            try:
+                previous = json.loads(metadata_path.read_text(encoding="utf-8"))
+            except Exception:
+                previous = None
+            if previous != signature or not image_path.is_file():
+                from PIL import Image, ImageOps
+
+                with Image.open(source) as opened:
+                    image = ImageOps.exif_transpose(opened).convert("RGB")
+                    image.thumbnail((2560, 1600), Image.Resampling.LANCZOS)
+                    temp_image = target / ".background.jpg.tmp"
+                    image.save(temp_image, format="JPEG", quality=88, optimize=True)
+                os.chmod(temp_image, 0o640)
+                temp_image.replace(image_path)
+                os.chmod(image_path, 0o640)
+                temp_meta = target / ".background-source.json.tmp"
+                temp_meta.write_text(json.dumps(signature, sort_keys=True) + "\n",
+                                     encoding="utf-8")
+                os.chmod(temp_meta, 0o640)
+                temp_meta.replace(metadata_path)
+                os.chmod(metadata_path, 0o640)
+
+        ok = css_path.is_file() and image_path.is_file()
+    except Exception:
+        ok = False
+    record_adapter("regreet", ok, theme_id, info if ok else None)
+    return ok
+
+
 def generate_btop_chameleon_theme(palette: dict | None = None,
                                   config_home: Path | None = None) -> Path | None:
     """Generate a btop .theme from the active palette (flat key=value)."""
@@ -2366,6 +2475,7 @@ def apply_all_adapters(
             palette=theme_dict, config_home=labwc_config_home),
         "mango": lambda: sync_mango_theme(palette=theme_dict, config_path=mango_config_path),
         "fastfetch": lambda: sync_fastfetch_theme(theme_id, theme_dict),
+        "regreet": lambda: sync_regreet_theme(theme_id, theme_dict),
     }
     results = {name: _run_adapter(sync) for name, sync in adapters.items()}
     return {"quickshell": True, **results}
@@ -2430,6 +2540,7 @@ def cmd_update_wallpaper(wallpaper_path=None):
                 for cid in ["chameleon", "chameleon-light", "chameleon-oled"]:
                     THEMES[cid] = get_chameleon_palette(cid)
                 theme_info = THEMES.get(current, THEMES.get(DEFAULT_THEME))
+                regreet_synced = sync_regreet_theme(current, theme_info, active_wp)
                 return {
                     "ok": True,
                     "error": None,
@@ -2456,6 +2567,7 @@ def cmd_update_wallpaper(wallpaper_path=None):
                             adapter_in_sync("fastfetch", current, theme_info)
                             or sync_fastfetch_theme(current, theme_info)
                         ),
+                        "regreet": regreet_synced,
                     },
                 }
         except Exception:
@@ -2484,6 +2596,7 @@ def cmd_update_wallpaper(wallpaper_path=None):
             "labwc": adapter_in_sync("labwc", current, active_theme),
             "mango": adapter_in_sync("mango", current, active_theme),
             "fastfetch": adapter_in_sync("fastfetch", current, active_theme),
+            "regreet": sync_regreet_theme(current, active_theme, active_wp),
         }
 
     return {
@@ -2543,7 +2656,7 @@ def cmd_set_wallpaper_color(wallpaper_path, color, variant):
 
 def main():
     parser = argparse.ArgumentParser(description="Gerenciador de Temas do Quickshell")
-    parser.add_argument("action", nargs="?", default="get", choices=["get", "list", "set", "next", "update-wallpaper", "wallpaper-colors", "preview-wallpaper-color", "set-wallpaper-color", "sync-hyprlock"], help="Ação a executar")
+    parser.add_argument("action", nargs="?", default="get", choices=["get", "list", "set", "next", "update-wallpaper", "wallpaper-colors", "preview-wallpaper-color", "set-wallpaper-color", "sync-hyprlock", "sync-regreet"], help="Ação a executar")
     parser.add_argument("theme", nargs="?", default=None, help="ID do tema ou caminho do wallpaper")
     parser.add_argument("color", nargs="?", default=None)
     parser.add_argument("variant", nargs="?", default=None)
@@ -2573,6 +2686,8 @@ def main():
                 res = cmd_set_wallpaper_color(args.theme, args.color, args.variant)
             elif args.action == "sync-hyprlock":
                 res = cmd_sync_hyprlock()
+            elif args.action == "sync-regreet":
+                res = cmd_sync_regreet()
             else:
                 res = cmd_get(args.theme)
     except Exception as e:

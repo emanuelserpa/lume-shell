@@ -51,15 +51,16 @@ for (const secure of [false, true]) {
         )
         self.assertIsNotNone(match)
         script = """
-let recoveries = 0;
+let recoveries = 0, clockResyncs = 0;
+const root = {systemResumed: () => clockResyncs++};
 function recoverFingerprintAfterResume() { recoveries++; }
 function handleSleepMonitorLine(line) { BODY }
 handleSleepMonitorLine('/org/freedesktop/login1: org.freedesktop.login1.Manager.PrepareForSleep (true,)');
-if (recoveries !== 0) process.exit(1);
+if (recoveries !== 0 || clockResyncs !== 0) process.exit(1);
 handleSleepMonitorLine('/org/freedesktop/login1: org.freedesktop.login1.Manager.PrepareForSleep (false,)');
-if (recoveries !== 1) process.exit(2);
+if (recoveries !== 1 || clockResyncs !== 1) process.exit(2);
 handleSleepMonitorLine('/org/freedesktop/login1: org.freedesktop.login1.Manager.SessionRemoved ("x")');
-if (recoveries !== 1) process.exit(3);
+if (recoveries !== 1 || clockResyncs !== 1) process.exit(3);
 """.replace("BODY", match.group(1))
         subprocess.run([shutil.which("node"), "-e", script], check=True, capture_output=True)
 

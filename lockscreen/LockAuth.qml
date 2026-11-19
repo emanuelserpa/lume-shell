@@ -21,6 +21,7 @@ Scope {
     readonly property bool passwordActive: passwordPam.active
     readonly property bool busy: fingerprintPam.active || passwordPam.active
     signal clearInputRequested()
+    signal systemResumed()
 
     function startAuthentication() {
         if (!sessionLock.secure || !sessionLock.locked || fingerprintPam.active)
@@ -58,8 +59,10 @@ Scope {
     }
 
     function handleSleepMonitorLine(line) {
-        if (/PrepareForSleep\s*\(false\s*,?\s*\)/.test(line))
+        if (/PrepareForSleep\s*\(false\s*,?\s*\)/.test(line)) {
+            root.systemResumed()
             recoverFingerprintAfterResume()
+        }
     }
 
     function recoverFingerprintAfterResume() {

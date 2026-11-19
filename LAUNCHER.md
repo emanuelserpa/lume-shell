@@ -83,9 +83,9 @@ Normal:
 - session/system actions:
   - lock
   - suspend
-  - logout seguro com `hyprshutdown`
+  - logout via dispatch nativo do Hyprland
   - reboot
-  - desligamento seguro com `hyprshutdown`, seguido de `systemctl poweroff`
+  - reinício e desligamento via `systemctl`
 
 `> command`
 - opens a visible terminal and runs the command

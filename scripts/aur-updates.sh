@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Consulta atualizações do AUR sem depender do cliente HTTP do yay,
-# que trava em redes com IPv6 anunciado mas não roteável. Usa o RPC
-# do AUR diretamente sobre IPv4 e compara versões com vercmp.
+# que pode travar em redes com IPv6 anunciado mas não roteável.
+# Usa o RPC oficial sobre IPv4 e compara versões com vercmp.
 set -u
 
 emit_json() {
@@ -10,45 +10,21 @@ emit_json() {
 
 for bin in curl pacman vercmp python3; do
   if ! command -v "$bin" >/dev/null 2>&1; then
-    emit_json error "" "AUR\n\n'$bin' não encontrado" 0
+    emit_json error "" $'AUR\n\n'"'$bin' não encontrado" 0
     exit 0
   fi
 done
 
 foreign="$(pacman -Qm 2>/dev/null || true)"
 if [[ -z "${foreign//[[:space:]]/}" ]]; then
-  emit_json ok "" "AUR\n\nNenhum pacote estrangeiro." 0
+  emit_json ok "" $'AUR\n\nNenhum pacote estrangeiro.' 0
   exit 0
 fi
 
-# Monta arg[]=nome&arg[]=nome... (lote único; ~dozens de pacotes típicos).
-query=""
-while read -r name ver; do
-  [[ -z "$name" ]] && continue
-  if [[ -z "$query" ]]; then
-    query="arg[]=$name"
-  else
-    query="$query&arg[]=$name"
-  fi
-done <<< "$foreign"
-
-rpc="$(curl -4 -s --connect-timeout 8 --max-time 25 \
-  --get --data-urlencode "v=5" \
-  "https://aur.archlinux.org/rpc/v5/info?$query" 2>/dev/null || true)"
-
-if [[ -z "$rpc" ]]; then
-  emit_json timeout "" "AUR\n\nConsulta expirou; tente novamente." 0
-  exit 0
-fi
-
-updates="$(FOREIGN="$foreign" RPC="$rpc" python3 - <<'PY'
+updates="$(FOREIGN="$foreign" python3 - <<'PY'
 import json, os, subprocess
-
-try:
-    data = json.loads(os.environ["RPC"])
-except Exception:
-    print("")
-    raise SystemExit
+import sys
+import urllib.parse
 
 local = {}
 for line in os.environ["FOREIGN"].splitlines():
@@ -56,27 +32,48 @@ for line in os.environ["FOREIGN"].splitlines():
     if len(parts) >= 2:
         local[parts[0]] = " ".join(parts[1:])
 
+names = list(local)
 out = []
-for item in data.get("results") or []:
-    name = item.get("Name") or item.get("name")
-    remote = item.get("Version")
-    if not name or not remote or name not in local:
-        continue
+for offset in range(0, len(names), 100):
+    batch = names[offset:offset + 100]
+    query = urllib.parse.urlencode([("v", "5"), *[("arg[]", n) for n in batch]])
     try:
+        response = subprocess.run(
+            ["curl", "-4", "--fail", "--silent", "--show-error",
+             "--connect-timeout", "8", "--max-time", "25",
+             "--user-agent", "LumeShell AUR update checker",
+             f"https://aur.archlinux.org/rpc/v5/info?{query}"],
+            check=True, capture_output=True, text=True, timeout=30,
+        )
+        data = json.loads(response.stdout)
+        if data.get("type") != "multiinfo" or not isinstance(data.get("results"), list):
+            raise ValueError("unexpected AUR RPC response")
+    except Exception as exc:
+        print(f"AUR RPC error: {exc}", file=sys.stderr)
+        raise SystemExit(2)
+    for item in data["results"]:
+        name = item.get("Name")
+        remote = item.get("Version")
+        if not name or not remote or name not in local:
+            continue
         cmp = subprocess.run(
             ["vercmp", local[name], remote],
             capture_output=True, text=True, timeout=5,
         )
-        if cmp.stdout.strip().startswith("-"):
+        if cmp.returncode == 0 and cmp.stdout.strip().startswith("-"):
             out.append(f"{name} {local[name]} -> {remote}")
-    except Exception:
-        continue
 print("\n".join(out))
 PY
 )"
 
+rpc_status=$?
+if (( rpc_status != 0 )); then
+  emit_json timeout "" $'AUR\n\nFalha ao consultar o AUR; tente novamente.' 0
+  exit 0
+fi
+
 if [[ -z "${updates//[[:space:]]/}" ]]; then
-  emit_json ok "" "AUR\n\nTudo atualizado!" 0
+  emit_json ok "" $'AUR\n\nTudo atualizado!' 0
   exit 0
 fi
 

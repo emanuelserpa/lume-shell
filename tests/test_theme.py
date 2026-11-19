@@ -69,6 +69,7 @@ class TestThemeManager(unittest.TestCase):
             "KITTY_RUNTIME_DIR": t / "run",
             "FASTFETCH_CONFIG_PATH": t / "home" / ".config" / "fastfetch" / "config.jsonc",
             "MANGO_CONFIG_PATH": t / "home" / ".config" / "mango" / "config.conf",
+            "REGREET_SHARE_DIR": t / "var" / "lib" / "lume-greeter",
         }
         self._orig_paths = {}
         for key, val in self._path_overrides.items():
@@ -184,6 +185,31 @@ class TestThemeManager(unittest.TestCase):
         other = dict(sample)
         other["colors"] = dict(sample["colors"], accent="#000000")
         self.assertFalse(tm.adapter_in_sync("hyprland", "catppuccin-mocha", other))
+
+    def test_regreet_assets_follow_wallpaper_and_active_palette(self):
+        from PIL import Image
+
+        first = Path(self._tmpdir.name) / "wallpaper-one.png"
+        second = Path(self._tmpdir.name) / "wallpaper-two.png"
+        Image.new("RGB", (64, 32), color=(30, 80, 180)).save(first)
+        Image.new("RGB", (96, 48), color=(180, 80, 30)).save(second)
+        tm.REGREET_SHARE_DIR.mkdir(parents=True)
+        palette = tm.THEMES["catppuccin-mocha"]
+
+        self.assertTrue(tm.sync_regreet_theme(
+            "catppuccin-mocha", palette, first))
+        image_path = tm.REGREET_SHARE_DIR / "background.jpg"
+        css_path = tm.REGREET_SHARE_DIR / "regreet.css"
+        first_meta = (tm.REGREET_SHARE_DIR / "background-source.json").read_text()
+        self.assertTrue(image_path.is_file())
+        self.assertIn(palette["colors"]["accent"], css_path.read_text().lower())
+        self.assertTrue(tm.verify_adapter("regreet", "catppuccin-mocha", palette))
+
+        self.assertTrue(tm.sync_regreet_theme(
+            "catppuccin-mocha", palette, second))
+        second_meta = (tm.REGREET_SHARE_DIR / "background-source.json").read_text()
+        self.assertNotEqual(first_meta, second_meta)
+        self.assertIn(str(second.resolve()), second_meta)
 
     def test_themes_catalog_contains_popular_themes(self):
         self.assertIn("catppuccin-mocha", tm.THEMES)
@@ -414,7 +440,8 @@ class TestThemeManager(unittest.TestCase):
             self.assertEqual(
                 set(res["adapters"]),
                 {"quickshell", "kitty", "ghostty", "hyprland", "hyprlock",
-                "gtk", "btop", "qt", "labwc", "mango", "fastfetch"})
+                "gtk", "btop", "qt", "labwc", "mango", "fastfetch",
+                "regreet"})
 
         with patch.object(tm, "read_current_theme_id", return_value="chameleon"), \
              patch.object(tm, "write_current_theme_id", return_value="chameleon"), \

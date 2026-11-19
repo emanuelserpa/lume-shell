@@ -8,7 +8,10 @@ Item {
 
     anchors.horizontalCenter: root.target.horizontalCenter
     anchors.verticalCenter: root.target.verticalCenter
-    width: root.target.implicitWidth + root.theme.barIslandPadding * 2
+    // Do not leave a padding-only capsule when a conditional island has no content.
+    width: root.target.implicitWidth > 0
+           ? root.target.implicitWidth + root.theme.barIslandPadding * 2
+           : 0
     height: root.theme.barIslandHeight
 
     Rectangle {

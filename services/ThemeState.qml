@@ -520,7 +520,7 @@ Item {
 
     property var dynamicVariants: ({})
     property var dynamicChameleon: null
-    property var syncedAdapters: ({ "quickshell": true, "kitty": false, "ghostty": false, "hyprland": false, "hyprlock": false, "gtk": false, "btop": false, "qt": false, "labwc": false, "mango": false })
+    property var syncedAdapters: ({ "quickshell": true, "kitty": false, "ghostty": false, "hyprland": false, "hyprlock": false, "gtk": false, "btop": false, "qt": false, "labwc": false, "mango": false, "regreet": false })
 
     readonly property var currentPalette: palettes[currentTheme] ?? palettes["catppuccin-mocha"]
 
@@ -571,8 +571,8 @@ Item {
         onTriggered: root.refresh()
     }
 
-    // Wallpaper trocado com chameleon ativo: sync completo de adapters
-    // (update-wallpaper é no-op quando o cache já corresponde).
+    // O wallpaper do greeter acompanha qualquer troca; Chameleon também
+    // recalcula a paleta. O gerenciador evita reescrever assets sem mudanças.
     Timer {
         id: updateDebounce
         interval: 600
@@ -596,9 +596,7 @@ Item {
 
         onFileChanged: {
             this.reload()
-            if (root.currentTheme.startsWith("chameleon")) {
-                updateDebounce.restart()
-            }
+            updateDebounce.restart()
         }
     }
 

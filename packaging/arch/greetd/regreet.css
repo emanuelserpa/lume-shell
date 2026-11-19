@@ -1,0 +1,82 @@
+/* Lume Chameleon palette active on the host when this greeter theme was made. */
+* {
+  font-family: "Noto Sans";
+}
+
+window,
+overlay {
+  background-color: transparent;
+  color: #eedfe3;
+}
+
+frame.background {
+  color: #eedfe3;
+  background-color: rgba(25, 17, 20, 0.90);
+  border: 1px solid rgba(254, 176, 211, 0.36);
+  border-radius: 22px;
+  padding: 8px;
+}
+
+frame.widget-clock {
+  background-color: rgba(25, 17, 20, 0.72);
+  border: 1px solid rgba(254, 176, 211, 0.24);
+  border-radius: 18px;
+  padding: 10px 22px;
+  margin-top: 28px;
+}
+
+label {
+  color: #eedfe3;
+}
+
+entry,
+combobox,
+combobox button {
+  color: #eedfe3;
+  background-color: rgba(48, 40, 43, 0.94);
+  border: 1px solid rgba(157, 141, 146, 0.55);
+  border-radius: 12px;
+  padding: 8px 12px;
+  min-height: 22px;
+}
+
+entry:focus,
+combobox:focus,
+combobox button:focus {
+  border-color: #feb0d3;
+}
+
+button {
+  color: #eedfe3;
+  background-color: rgba(48, 40, 43, 0.96);
+  border: 1px solid rgba(157, 141, 146, 0.42);
+  border-radius: 12px;
+  padding: 8px 14px;
+  min-height: 22px;
+}
+
+button:hover {
+  background-color: #3b3236;
+  border-color: rgba(254, 176, 211, 0.58);
+}
+
+button.suggested-action {
+  color: #521d3a;
+  background-color: #feb0d3;
+  border-color: #feb0d3;
+  font-weight: 700;
+}
+
+button.suggested-action:hover {
+  background-color: #ffd8e7;
+}
+
+button.destructive-action {
+  color: #191114;
+  background-color: #f16364;
+  border-color: #f16364;
+}
+
+infobar {
+  border-radius: 12px;
+}

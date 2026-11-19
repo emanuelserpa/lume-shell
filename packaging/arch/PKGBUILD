@@ -1,7 +1,7 @@
 # Maintainer: Emanuel Serpa
 pkgname=lume-shell
 # Local source-build fallback; release workflow supplies the Git tag version.
-pkgver="${_release_pkgver:-0.1.1}"
+pkgver="${_release_pkgver:-0.1.2}"
 pkgrel=1
 pkgdesc='Wayland desktop shell built with Quickshell'
 arch=('x86_64')
@@ -31,6 +31,8 @@ optdepends=(
   'mangowm: Mango focused-output and workspace compatibility state'
   'pacman-contrib: repository update indicator'
   'fprintd: fingerprint authentication in the native lockscreen prototype'
+  'greetd-regreet: optional ReGreet login screen integration'
+  'cage: Wayland compositor for the ReGreet login screen'
 )
 makedepends=('git' 'tar')
 backup=('etc/pam.d/lumeshell-lock' 'etc/pam.d/lumeshell-lock-password')
@@ -79,6 +81,14 @@ package() {
   install -Dm644 "$root/lockscreen.qml" "$share/lockscreen.qml"
   install -Dm644 "$root/lockscreen-preview.qml" "$share/lockscreen-preview.qml"
   install -Dm755 "$startdir/lume-shell" "$pkgdir/usr/bin/lume-shell"
+  install -Dm755 "$startdir/setup-regreet.sh" \
+    "$pkgdir/usr/lib/lume-shell/setup-regreet.sh"
+  install -Dm644 "$root/packaging/arch/greetd/config.toml" \
+    "$share/greetd/config.toml"
+  install -Dm644 "$root/packaging/arch/greetd/regreet.toml" \
+    "$share/greetd/regreet.toml"
+  install -Dm644 "$root/packaging/arch/greetd/regreet.css" \
+    "$share/greetd/regreet.css"
   install -Dm644 "$startdir/lume-shell.service" \
     "$pkgdir/usr/lib/systemd/user/lume-shell.service"
   install -Dm644 "$root/packaging/pam/lumeshell-lock" \
@@ -87,7 +97,7 @@ package() {
     "$pkgdir/etc/pam.d/lumeshell-lock-password"
   install -Dm644 "$root/README.md" "$pkgdir/usr/share/doc/lume-shell/README.md"
   for doc in arch-packaging-plan dependency-inventory compositor-integration \
-    lockscreen-prototype wayland-install wayland-compositor-research; do
+    lockscreen-prototype wayland-install wayland-compositor-research greetd-regreet; do
     if [[ -f "$root/docs/$doc.md" ]]; then
       install -Dm644 "$root/docs/$doc.md" \
         "$pkgdir/usr/share/doc/lume-shell/$doc.md"

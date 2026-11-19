@@ -65,6 +65,14 @@ Item {
         }
     }
 
+    Connections {
+        target: root.auth
+        function onSystemResumed() {
+            clock.enabled = false
+            clock.enabled = true
+        }
+    }
+
     Timer {
         interval: 1000
         repeat: true
