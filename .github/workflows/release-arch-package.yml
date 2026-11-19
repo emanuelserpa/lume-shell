@@ -34,10 +34,9 @@ jobs:
             echo "Release tags must look like v1.2.3; got $GITHUB_REF_NAME" >&2
             exit 1
           }
-          commit="$(runuser -u builder -- git -C "$GITHUB_WORKSPACE" rev-parse HEAD)"
+          commit="$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)"
           test "$commit" = "$GITHUB_SHA"
-          tag_commit="$(runuser -u builder -- git -C "$GITHUB_WORKSPACE" \
-            rev-parse "${GITHUB_REF}^{commit}")"
+          tag_commit="$(git -C "$GITHUB_WORKSPACE" rev-parse "${GITHUB_REF}^{commit}")"
           test "$tag_commit" = "$commit"
           cd "$GITHUB_WORKSPACE/packaging/arch"
           runuser -u builder -- env \
