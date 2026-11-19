@@ -68,7 +68,10 @@ Item {
             z: 0
             acceptedButtons: Qt.LeftButton
             cursorShape: Qt.PointingHandCursor
-            onClicked: mediaPopup.visible = !mediaPopup.visible
+            onClicked: {
+                if (!playerSelector.pointerInside)
+                    mediaPopup.visible = !mediaPopup.visible
+            }
         }
 
         Row {
@@ -319,6 +322,18 @@ Item {
                         }
                     }
                 }
+            }
+
+            MediaPlayerDots {
+                id: playerSelector
+                theme: root.theme
+                players: root.mediaPlayers
+                selectedPlayer: root.currentPlayer
+                accent: root.playerAccent
+                compact: true
+                visible: root.mediaPlayers.length > 1
+                anchors.verticalCenter: parent.verticalCenter
+                onPlayerSelected: function(selected) { MediaState.selectPlayer(selected) }
             }
 
             Item { width: 2; height: 1 }

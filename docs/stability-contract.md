@@ -8,13 +8,14 @@ These areas have been iterated heavily and should not be casually changed.
 Considered stable after multiple layout fixes.
 The mounted `MediaIsland.qml` shows the selected active MPRIS player, opens by
 click and is conditional on available bar space. When multiple players have
-active playback or track metadata, the MediaPopup header shows page dots for
-player selection; choosing one changes the shared `MediaState` selection. The
-dot indicator uses a fixed delegate pool. Keep that model stable: rebinding a
-JavaScript array of MPRIS QObject instances during player teardown crashed both
-`QQuickRepeater` and `QQmlInstantiator` in Qt 6.11. The lockscreen reuses this
-popup from its media artwork; its battery and audio pills open the existing
-BatteryPopup and AudioPopup.
+active playback or track metadata, the island shows a compact page indicator
+for direct selection and the MediaPopup retains its player list. Choosing a
+player changes the shared `MediaState` selection. The dot indicator uses a
+fixed delegate pool. Keep that model stable: rebinding a JavaScript array of
+MPRIS QObject instances during player teardown crashed both `QQuickRepeater`
+and `QQmlInstantiator` in Qt 6.11. The lockscreen reuses this popup from its
+media artwork; its battery and audio pills open the existing BatteryPopup and
+AudioPopup.
 
 ### Audio popup
 Considered stable and liked.

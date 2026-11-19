@@ -10,7 +10,10 @@ Item {
     property var players: []
     property var selectedPlayer: null
     property color accent: theme.primary
+    property bool compact: false
     signal playerSelected(var player)
+
+    readonly property bool pointerInside: pointerHover.hovered
 
     readonly property int selectedIndex: {
         const list = players ?? []
@@ -27,8 +30,12 @@ Item {
     }
 
     visible: (players?.length ?? 0) > 1
-    width: parent ? parent.width : 0
-    height: visible ? 24 : 0
+    width: compact ? Math.min(players?.length ?? 0, 16) * 14 : (parent ? parent.width : 0)
+    height: visible ? (compact ? 20 : 24) : 0
+
+    HoverHandler {
+        id: pointerHover
+    }
 
     Row {
         anchors.centerIn: parent
@@ -46,8 +53,8 @@ Item {
                     ? root.players[index]
                     : null
                 readonly property bool selected: index === root.selectedIndex
-                width: playerData !== null ? 28 : 0
-                height: 24
+                width: playerData !== null ? (root.compact ? 14 : 28) : 0
+                height: root.compact ? 20 : 24
                 activeFocusOnTab: playerData !== null
                 Accessible.role: Accessible.Button
                 Accessible.name: playerData
@@ -69,8 +76,10 @@ Item {
 
                 Rectangle {
                     anchors.centerIn: parent
-                    width: dotDelegate.selected ? 17 : 6
-                    height: 6
+                    width: dotDelegate.selected
+                        ? (root.compact ? 10 : 17)
+                        : (root.compact ? 4 : 6)
+                    height: root.compact ? 5 : 6
                     radius: height / 2
                     color: dotDelegate.selected
                         ? root.accent
