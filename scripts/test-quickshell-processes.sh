@@ -14,6 +14,7 @@ trap 'rm -rf "$test_dir"' EXIT
 ln -s "$REPO_ROOT/qmldir" "$test_dir/qmldir"
 ln -s "$REPO_ROOT/components" "$test_dir/components"
 ln -s "$REPO_ROOT/services" "$test_dir/services"
+ln -s "$REPO_ROOT/scripts" "$test_dir/scripts"
 cp "$REPO_ROOT/tests/quickshell-processes/shell.qml" "$test_dir/shell.qml"
 ln -s "$REPO_ROOT/tests/quickshell-processes/fixtures" "$test_dir/fixtures"
 
@@ -23,7 +24,7 @@ if ! timeout 12s "$QS_BIN" --path "$test_dir" >"$log_file" 2>&1; then
     exit 1
 fi
 
-if [[ ! -f "$test_dir/pending-started" ]]; then
+if [[ ! -f "$test_dir/pending-started" || ! -f "$test_dir/timeout-started" ]]; then
     cat "$log_file" >&2
     echo "pending helper did not start" >&2
     exit 1
@@ -35,4 +36,4 @@ if ! rg -q 'QUICKSHELL_PROCESS_INTEGRATION_PASS' "$log_file"; then
     exit 1
 fi
 
-echo "Quickshell Process integration passed (success, nonzero exit, empty output, pending restart)."
+echo "Quickshell Process integration passed (success, nonzero exit, empty output, timeout, pending restart)."

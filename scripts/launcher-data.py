@@ -168,15 +168,14 @@ CLIPBOARD_INDEX_FILE = CACHE_DIR / "clipboard-index.json"
 
 def _save_clipboard_index(payload):
     try:
-        CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        tmp = CLIPBOARD_INDEX_FILE.with_suffix(".tmp")
-        tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-        tmp.replace(CLIPBOARD_INDEX_FILE)
+        clipboard_store.write_private_cache_file(
+            CLIPBOARD_INDEX_FILE, json.dumps(payload, ensure_ascii=False))
     except Exception:
         pass
 
 def clipboard_cache():
     try:
+        clipboard_store.ensure_cache_dirs()
         payload = json.loads(CLIPBOARD_INDEX_FILE.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             raise ValueError("invalid cache")

@@ -13,6 +13,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import tempfile
 sys.dont_write_bytecode = True
 import time
 from pathlib import Path
@@ -53,6 +54,40 @@ def ensure_dirs():
     except OSError:
         pass
 
+def ensure_cache_dirs():
+    """Keep clipboard-derived caches private, even under a shared XDG cache."""
+    if CACHE_DIR.is_symlink() or THUMBS_DIR.is_symlink():
+        raise OSError("clipboard cache directories must not be symlinks")
+    CACHE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
+    CACHE_DIR.chmod(0o700)
+    THUMBS_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
+    THUMBS_DIR.chmod(0o700)
+    for private_file in (CACHE_INDEX_FILE, CHANGE_FILE):
+        if private_file.is_symlink():
+            private_file.unlink()
+        elif private_file.is_file():
+            private_file.chmod(0o600)
+
+def write_private_cache_file(path, contents):
+    """Atomically replace one private cache file without following symlinks."""
+    ensure_cache_dirs()
+    if path.parent != CACHE_DIR:
+        raise ValueError("cache file must be directly inside the private cache directory")
+    fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=CACHE_DIR)
+    try:
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            fd = -1
+            stream.write(contents)
+        os.replace(temporary, path)
+    finally:
+        if fd >= 0:
+            os.close(fd)
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+
 def get_db():
     ensure_dirs()
     conn = sqlite3.connect(str(DB_PATH), timeout=5.0)
@@ -85,16 +120,15 @@ def init_db():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_clipboard_hash ON clipboard_items(content_hash);")
     conn.close()
     try:
-        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        ensure_cache_dirs()
         if not CHANGE_FILE.exists():
-            CHANGE_FILE.write_text("0", encoding="ascii")
+            write_private_cache_file(CHANGE_FILE, "0")
     except OSError:
         pass
 
 def notify_change():
     try:
-        CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        CHANGE_FILE.write_text(str(time.time_ns()), encoding="ascii")
+        write_private_cache_file(CHANGE_FILE, str(time.time_ns()))
     except OSError:
         pass
 
@@ -471,6 +505,10 @@ def remove_item(item_id, signature=None):
 
 def _remove_item_from_cache(item_id):
     """Keep the legacy cached snapshot consistent with a successful removal."""
+    try:
+        ensure_cache_dirs()
+    except OSError:
+        return
     if not CACHE_INDEX_FILE.exists():
         return
     try:
@@ -481,9 +519,8 @@ def _remove_item_from_cache(item_id):
             item for item in cached["items"]
             if not isinstance(item, dict) or str(item.get("id")) != str(item_id)
         ]
-        tmp_file = CACHE_INDEX_FILE.with_suffix(CACHE_INDEX_FILE.suffix + ".tmp")
-        tmp_file.write_text(json.dumps(cached, ensure_ascii=False), encoding="utf-8")
-        tmp_file.replace(CACHE_INDEX_FILE)
+        write_private_cache_file(
+            CACHE_INDEX_FILE, json.dumps(cached, ensure_ascii=False))
     except (OSError, ValueError, TypeError):
         # The cache is disposable; the SQLite database remains authoritative.
         try:
@@ -502,10 +539,15 @@ def thumb_for_blob(content_hash, blob_path):
     if not blob_path or not src.is_file():
         return None
     try:
-        THUMBS_DIR.mkdir(parents=True, exist_ok=True)
+        ensure_cache_dirs()
     except OSError:
         return src.as_uri()
     thumb = THUMBS_DIR / f"{content_hash}.jpg"
+    if thumb.is_symlink():
+        try:
+            thumb.unlink()
+        except OSError:
+            return src.as_uri()
     if not thumb.is_file() or thumb.stat().st_mtime < src.stat().st_mtime:
         try:
             from PIL import Image
@@ -513,6 +555,7 @@ def thumb_for_blob(content_hash, blob_path):
                 im = im.convert("RGB")
                 im.thumbnail((THUMB_MAX_SIDE, THUMB_MAX_SIDE), Image.LANCZOS)
                 im.save(thumb, "JPEG", quality=72)
+            thumb.chmod(0o600)
         except Exception:
             try:
                 thumb.unlink(missing_ok=True)

@@ -23,6 +23,13 @@ EOF
 
 config_path=${LUME_SHELL_CONFIG:-${QS_CONFIG_PATH:-/usr/share/lume-shell}}
 
+# Package upgrades replace QML files in place. Avoid a live reload from a
+# partially replaced tree; source checkouts keep Quickshell's dev watcher.
+if [ "$config_path" = /usr/share/lume-shell ]; then
+  QS_DISABLE_FILE_WATCHER=1
+  export QS_DISABLE_FILE_WATCHER
+fi
+
 if [ "$#" -eq 0 ]; then
   exec /usr/bin/quickshell --path "$config_path"
 fi

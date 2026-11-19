@@ -18,6 +18,13 @@ MAX_HISTORY = 2000
 LOAD_LIMIT = 500
 MAX_TEXT_LENGTH = 32768
 EXCLUDED_HISTORY_APPS = ("battery", "bateria", "upower")
+MAX_IMAGE_CACHE_BYTES = 256 * 1024 * 1024
+MAX_CACHED_NOTIFICATION_IMAGES = 2000
+ORPHAN_IMAGE_MAX_AGE = 15 * 60
+IMAGE_CLEANUP_INTERVAL = 10 * 60
+IMAGE_CLEANUP_BATCH = 100
+_last_image_cleanup = 0.0
+_image_cleanup_calls = 0
 
 
 def is_excluded_from_history(app_name):
@@ -133,19 +140,95 @@ def _row_to_item(row):
     }
 
 
-def cleanup_image_cache(conn):
-    referenced = {
-        str(Path(row["image"]).resolve())
-        for row in conn.execute("SELECT image FROM notifications")
-        if row["image"].startswith(str(IMAGE_DIR) + "/")
-    }
-    for path in IMAGE_DIR.glob("notification-*.png"):
-        if str(path.resolve()) not in referenced:
+def cleanup_image_cache(conn, force=False):
+    """Bound archived notification images and amortize filesystem scans."""
+    global _last_image_cleanup, _image_cleanup_calls
+    _image_cleanup_calls += 1
+    now = time.monotonic()
+    if (not force and _last_image_cleanup
+            and _image_cleanup_calls < IMAGE_CLEANUP_BATCH
+            and now - _last_image_cleanup < IMAGE_CLEANUP_INTERVAL):
+        return
+
+    _last_image_cleanup = now
+    _image_cleanup_calls = 0
+    image_root = IMAGE_DIR.resolve()
+    prefix = str(image_root) + "/"
+    rows = conn.execute("""
+        SELECT id, received_at, app_name, summary, body, image
+        FROM notifications
+        WHERE substr(image, 1, ?) = ?
+        ORDER BY received_at DESC, id DESC
+    """, (len(prefix), prefix)).fetchall()
+
+    referenced = set()
+    removed_paths = []
+    retained_bytes = 0
+    retained_count = 0
+    for row in rows:
+        try:
+            resolved = Path(row["image"]).resolve(strict=True)
+            resolved.relative_to(image_root)
+            if not resolved.name.startswith("notification-") or resolved.suffix != ".png":
+                raise ValueError("unexpected notification image path")
+            size = resolved.stat().st_size
+        except (OSError, ValueError):
+            fingerprint = _fingerprint({
+                "appName": row["app_name"],
+                "summary": row["summary"],
+                "body": row["body"],
+                "image": "",
+            })
+            conn.execute("UPDATE notifications SET image = '', fingerprint = ? WHERE id = ?",
+                         (fingerprint, row["id"]))
+            raw_path = Path(row["image"])
             try:
-                if time.time() - path.stat().st_mtime > 30 * 24 * 60 * 60:
-                    path.unlink()
+                if (raw_path.parent.resolve() == image_root
+                        and raw_path.name.startswith("notification-")
+                        and raw_path.suffix == ".png"
+                        and raw_path.is_symlink()):
+                    raw_path.unlink()
             except OSError:
                 pass
+            continue
+
+        within_budget = (
+            retained_count < MAX_CACHED_NOTIFICATION_IMAGES
+            and retained_bytes + size <= MAX_IMAGE_CACHE_BYTES
+        )
+        if within_budget:
+            referenced.add(resolved)
+            retained_count += 1
+            retained_bytes += size
+            continue
+
+        # Keep the notification text and discard only its old cached image.
+        fingerprint = _fingerprint({
+            "appName": row["app_name"],
+            "summary": row["summary"],
+            "body": row["body"],
+            "image": "",
+        })
+        conn.execute("UPDATE notifications SET image = '', fingerprint = ? WHERE id = ?",
+                     (fingerprint, row["id"]))
+        removed_paths.append(resolved)
+    conn.commit()
+
+    for path in removed_paths:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+
+    cutoff = time.time() - ORPHAN_IMAGE_MAX_AGE
+    for path in IMAGE_DIR.glob("notification-*.png"):
+        try:
+            resolved = path.resolve(strict=True)
+            resolved.relative_to(image_root)
+            if resolved not in referenced and path.stat().st_mtime < cutoff:
+                path.unlink()
+        except (OSError, ValueError):
+            pass
 
 
 def record_notification(payload, conn=None):
@@ -243,7 +326,7 @@ def clear_history(conn=None):
     try:
         with conn:
             conn.execute("DELETE FROM notifications")
-        cleanup_image_cache(conn)
+        cleanup_image_cache(conn, force=True)
     finally:
         if owns_connection:
             conn.close()
@@ -263,7 +346,7 @@ def delete_notification(request, conn=None):
                 return {"type": "deleted", "id": item_id, "deleted": False}
             cur = conn.execute("DELETE FROM notifications WHERE id = ?", (row_id,))
             conn.commit()
-            cleanup_image_cache(conn)
+            cleanup_image_cache(conn, force=True)
             return {"type": "deleted", "id": item_id, "deleted": cur.rowcount > 0}
 
         payload = request.get("notification") or {}
@@ -279,7 +362,7 @@ def delete_notification(request, conn=None):
         archive_id = "archive-" + str(row["id"])
         conn.execute("DELETE FROM notifications WHERE id = ?", (row["id"],))
         conn.commit()
-        cleanup_image_cache(conn)
+        cleanup_image_cache(conn, force=True)
         return {"type": "deleted", "id": archive_id, "deleted": True}
     finally:
         if owns_connection:
@@ -303,7 +386,7 @@ def delete_notification_group(request, conn=None):
             cur = conn.execute(
                 f"DELETE FROM notifications WHERE {where}", (value,)
             )
-        cleanup_image_cache(conn)
+        cleanup_image_cache(conn, force=True)
         return {"type": "group-deleted", "groupKey": group_key,
                 "deleted": cur.rowcount}
     finally:
@@ -384,6 +467,7 @@ def handle_request(request, conn=None):
 def serve():
     init_db()
     conn = get_db()
+    cleanup_image_cache(conn, force=True)
     for line in sys.stdin:
         try:
             request = json.loads(line)

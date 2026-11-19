@@ -3,6 +3,13 @@
 Resumo de orientação, não histórico de atividade. Para detalhes e critérios,
 consulte o backlog e o plano indicados abaixo.
 
+- **Revisão solicitada em 19/11/2026:** [segurança, memória e desempenho](security-performance-audit.md).
+  As correções foram validadas, empacotadas e instaladas localmente como
+  `0.1.3-1`; o serviço está ativo. A verificação de inicialização removeu os
+  PNGs órfãos do cache de notificações (os 2.000 registros do banco não tinham
+  imagens vinculadas). A release GitHub ainda depende do commit e push. As
+  referências a versões antigas abaixo são evidências de etapas anteriores.
+
 - **Próxima prioridade:** concluir a verificação visual de P0-01 no
   [plano visual](design-plan.md); a lógica de calendário/log tem cobertura
   automatizada. Após observar que o resultado salvo mantinha o ícone de updates

@@ -5,6 +5,14 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+## 0.1.3
+
+- Bound notification image storage and in-memory image references, keeping
+  notification text when old images are evicted.
+- Make clipboard-derived cache files private and atomically replaced, and keep
+  the installed shell from watching package files during upgrades.
+- Give JSON query helpers a process-group timeout and a 64 KiB output cap.
+
 ## 0.1.2
 
 - Add an optional ReGreet integration that follows the active wallpaper and

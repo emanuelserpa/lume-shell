@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import "CommandActionResult.js" as CommandActionResult
 import "../services/CommandProcessLifecycle.js" as CommandProcessLifecycle
@@ -7,6 +8,7 @@ Item {
     id: root
     property list<string> command: []
     property int interval: 600000
+    property int timeoutMs: 60000
     property bool autoStart: true
     property string text: ""
     property string tooltip: ""
@@ -101,7 +103,10 @@ Item {
 
     Process {
         id: proc
-        command: root.command
+        command: root.command.length > 0
+            ? ["python3", "-B", Quickshell.shellDir + "/scripts/bounded-command.py",
+               String(root.timeoutMs), ...root.command]
+            : []
         onStarted: {
             CommandProcessLifecycle.observeStart(root.processLifecycle)
             startFailureTimer.stop()

@@ -36,6 +36,15 @@ ShellRoot {
     }
 
     CommandJson {
+        id: timedOut
+        autoStart: true
+        interval: 0
+        timeoutMs: 700
+        command: ["python3", "-B", Quickshell.shellDir + "/fixtures/pending.py",
+                 Quickshell.shellDir + "/timeout-started"]
+    }
+
+    CommandJson {
         id: pending
         autoStart: false
         interval: 0
@@ -87,13 +96,17 @@ ShellRoot {
             const emptyDone = empty.generation === 1
                 && !empty.result.ok
                 && empty.result.error.length > 0
+            const timeoutDone = timedOut.generation === 1
+                && !timedOut.result.ok
+                && timedOut.result.error.includes("time limit")
             const restartDone = root.restartRequested
                 && pending.generation === 1
                 && pending.result.ok
                 && pending.result.data.text === "fresh"
             const actionsDone = root.actionSuccessSeen && root.actionFailureSeen
 
-            if (successDone && failureDone && emptyDone && restartDone && actionsDone) {
+            if (successDone && failureDone && emptyDone && timeoutDone
+                    && restartDone && actionsDone) {
                 console.log("QUICKSHELL_PROCESS_INTEGRATION_PASS")
                 Qt.quit()
             } else if (Date.now() - root.startedAt > 9000) {
@@ -102,6 +115,7 @@ ShellRoot {
                                   success: success.result,
                                   failure: failure.result,
                                   empty: empty.result,
+                                  timedOut: timedOut.result,
                                   pending: pending.result,
                                   restartRequested: root.restartRequested,
                                   actionSuccessSeen: root.actionSuccessSeen,

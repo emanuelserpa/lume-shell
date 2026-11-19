@@ -16,16 +16,31 @@ class NotificationStoreTests(unittest.TestCase):
         self.temp_dir = Path(tempfile.mkdtemp(prefix="qs_notification_test_"))
         self.orig_base = notification_store.BASE_DIR
         self.orig_db = notification_store.DB_PATH
+        self.orig_image_dir = notification_store.IMAGE_DIR
         self.orig_max_history = notification_store.MAX_HISTORY
+        self.orig_image_budget = notification_store.MAX_IMAGE_CACHE_BYTES
+        self.orig_image_count = notification_store.MAX_CACHED_NOTIFICATION_IMAGES
+        self.orig_cleanup_time = notification_store._last_image_cleanup
+        self.orig_cleanup_calls = notification_store._image_cleanup_calls
         notification_store.BASE_DIR = self.temp_dir / "notifications"
         notification_store.DB_PATH = notification_store.BASE_DIR / "notifications.db"
+        notification_store.IMAGE_DIR = notification_store.BASE_DIR / "images"
         notification_store.MAX_HISTORY = 2000
+        notification_store.MAX_IMAGE_CACHE_BYTES = 256 * 1024 * 1024
+        notification_store.MAX_CACHED_NOTIFICATION_IMAGES = 2000
+        notification_store._last_image_cleanup = 0
+        notification_store._image_cleanup_calls = 0
         notification_store.init_db()
 
     def tearDown(self):
         notification_store.BASE_DIR = self.orig_base
         notification_store.DB_PATH = self.orig_db
+        notification_store.IMAGE_DIR = self.orig_image_dir
         notification_store.MAX_HISTORY = self.orig_max_history
+        notification_store.MAX_IMAGE_CACHE_BYTES = self.orig_image_budget
+        notification_store.MAX_CACHED_NOTIFICATION_IMAGES = self.orig_image_count
+        notification_store._last_image_cleanup = self.orig_cleanup_time
+        notification_store._image_cleanup_calls = self.orig_cleanup_calls
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     @staticmethod
@@ -124,6 +139,49 @@ class NotificationStoreTests(unittest.TestCase):
         self.assertFalse(inserted)
         self.assertIsNone(item)
         self.assertEqual(notification_store.get_history(), [])
+
+    def test_image_cache_keeps_newest_images_within_byte_budget(self):
+        notification_store.MAX_IMAGE_CACHE_BYTES = 10
+        images = []
+        for index in range(3):
+            path = notification_store.IMAGE_DIR / f"notification-{index}.png"
+            path.write_bytes(b"123456")
+            payload = self.notification(80000 + index * 3000, f"Image {index}")
+            payload["image"] = str(path)
+            notification_store.record_notification(payload)
+            images.append(path)
+
+        conn = notification_store.get_db()
+        try:
+            notification_store.cleanup_image_cache(conn, force=True)
+        finally:
+            conn.close()
+
+        history = notification_store.get_history(10)
+        self.assertEqual(history[0]["image"], str(images[2]))
+        self.assertTrue(images[2].is_file())
+        self.assertEqual([item["image"] for item in history[1:]], ["", ""])
+        self.assertFalse(images[0].exists())
+        self.assertFalse(images[1].exists())
+
+    def test_cleanup_never_unlinks_image_symlink_target_outside_cache(self):
+        external = self.temp_dir / "private-image.png"
+        external.write_bytes(b"private")
+        link = notification_store.IMAGE_DIR / "notification-symlink.png"
+        link.symlink_to(external)
+        payload = self.notification(90000, "Linked image")
+        payload["image"] = str(link)
+        notification_store.record_notification(payload)
+
+        conn = notification_store.get_db()
+        try:
+            notification_store.cleanup_image_cache(conn, force=True)
+        finally:
+            conn.close()
+
+        self.assertTrue(external.exists())
+        self.assertFalse(link.exists())
+        self.assertEqual(notification_store.get_history(1)[0]["image"], "")
 
 
 

@@ -30,15 +30,17 @@ class ClipboardBackendTestCase(unittest.TestCase):
         self.orig_cache = clipboard_store.CACHE_INDEX_FILE
         self.orig_change = clipboard_store.CHANGE_FILE
         self.orig_thumbs = clipboard_store.THUMBS_DIR
+        self.orig_cache_dir = clipboard_store.CACHE_DIR
         self.orig_capture_settings = clipboard_store.CAPTURE_SETTINGS_FILE
         self.orig_state_dir = clipboard_store.STATE_DIR
 
         clipboard_store.BASE_DIR = self.test_dir / "clipboard"
         clipboard_store.DB_PATH = clipboard_store.BASE_DIR / "clipboard.db"
         clipboard_store.BLOBS_DIR = clipboard_store.BASE_DIR / "blobs"
-        clipboard_store.CACHE_INDEX_FILE = self.test_dir / "clipboard-index.json"
-        clipboard_store.CHANGE_FILE = self.test_dir / "clipboard-change"
-        clipboard_store.THUMBS_DIR = self.test_dir / "thumbs"
+        clipboard_store.CACHE_DIR = self.test_dir / "cache" / "quickshell"
+        clipboard_store.CACHE_INDEX_FILE = clipboard_store.CACHE_DIR / "clipboard-index.json"
+        clipboard_store.CHANGE_FILE = clipboard_store.CACHE_DIR / "clipboard-change"
+        clipboard_store.THUMBS_DIR = clipboard_store.CACHE_DIR / "clipboard-thumbs"
         clipboard_store.CAPTURE_SETTINGS_FILE = self.test_dir / "state" / "clipboard-capture.json"
         clipboard_store.STATE_DIR = self.test_dir / "state"
         clipboard_store.init_db()
@@ -50,6 +52,7 @@ class ClipboardBackendTestCase(unittest.TestCase):
         clipboard_store.CACHE_INDEX_FILE = self.orig_cache
         clipboard_store.CHANGE_FILE = self.orig_change
         clipboard_store.THUMBS_DIR = self.orig_thumbs
+        clipboard_store.CACHE_DIR = self.orig_cache_dir
         clipboard_store.CAPTURE_SETTINGS_FILE = self.orig_capture_settings
         clipboard_store.STATE_DIR = self.orig_state_dir
         shutil.rmtree(self.test_dir, ignore_errors=True)
@@ -384,6 +387,34 @@ class ClipboardBackendTestCase(unittest.TestCase):
         self.assertFalse(clipboard_store.clipboard_capture_paused())
         clipboard_store.CAPTURE_SETTINGS_FILE.write_text("invalid", encoding="utf-8")
         self.assertTrue(clipboard_store.clipboard_capture_paused())
+
+    def test_clipboard_cache_files_are_private_under_shared_xdg_cache(self):
+        clipboard_store.CACHE_DIR.chmod(0o755)
+        clipboard_store.THUMBS_DIR.chmod(0o755)
+        clipboard_store.CACHE_INDEX_FILE.write_text("{}", encoding="utf-8")
+        clipboard_store.CACHE_INDEX_FILE.chmod(0o644)
+
+        clipboard_store.ensure_cache_dirs()
+        clipboard_store.write_private_cache_file(
+            clipboard_store.CACHE_INDEX_FILE, '{"clipboard":"private"}')
+        clipboard_store.notify_change()
+
+        self.assertEqual(clipboard_store.CACHE_DIR.stat().st_mode & 0o777, 0o700)
+        self.assertEqual(clipboard_store.THUMBS_DIR.stat().st_mode & 0o777, 0o700)
+        self.assertEqual(clipboard_store.CACHE_INDEX_FILE.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(clipboard_store.CHANGE_FILE.stat().st_mode & 0o777, 0o600)
+
+    def test_private_cache_writer_replaces_symlinks_without_touching_target(self):
+        external = self.test_dir / "external-cache.json"
+        external.write_text("outside", encoding="utf-8")
+        clipboard_store.CACHE_INDEX_FILE.symlink_to(external)
+
+        clipboard_store.write_private_cache_file(
+            clipboard_store.CACHE_INDEX_FILE, '{"safe":true}')
+
+        self.assertEqual(external.read_text(encoding="utf-8"), "outside")
+        self.assertFalse(clipboard_store.CACHE_INDEX_FILE.is_symlink())
+        self.assertEqual(clipboard_store.CACHE_INDEX_FILE.stat().st_mode & 0o777, 0o600)
 
     def test_capture_pause_cli_persists_pause_and_resume(self):
         import subprocess

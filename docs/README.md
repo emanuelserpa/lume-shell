@@ -42,6 +42,7 @@ o comportamento atual. Consulte o documento específico da tarefa, sem ler todos
 os planos em sequência.
 
 - [Plano visual ativo e ordem das fases](design-plan.md)
+- [Revisão e plano de segurança, memória e desempenho](security-performance-audit.md)
 - [Plano de flexibilidade da barra](bar-flexibility-plan.md)
 - [Backlog técnico único](technical-todo.md)
 - [Status e próxima prioridade](status.md)

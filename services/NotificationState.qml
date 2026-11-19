@@ -24,6 +24,7 @@ QtObject {
     property var cachedNotificationImages: ({})
     property var capturingNotificationImages: ({})
     property int notificationImageSerial: 0
+    readonly property int maximumCachedNotificationImages: 500
     property var pendingStoreRequests: []
     property bool notificationStoreStarted: false
     property bool notificationStoreAvailable: false
@@ -143,6 +144,8 @@ QtObject {
         restoreHistory = []
         restoreIndex = -1
         persistentHistory = []
+        cachedNotificationImages = ({})
+        retainedImageNotifications = []
         root.sendStoreRequest({"op": "clear"})
         // qmllint disable missing-property
         const native = notificationServer.trackedNotifications.values ?? []
@@ -653,6 +656,15 @@ QtObject {
             function(item) { return item.notification !== notification })
     }
 
+    function cacheNotificationImage(source, path) {
+        const cached = Object.assign({}, root.cachedNotificationImages)
+        cached[source] = path
+        const keys = Object.keys(cached)
+        while (keys.length > root.maximumCachedNotificationImages)
+            delete cached[keys.shift()]
+        root.cachedNotificationImages = cached
+    }
+
     function archiveNotificationImage(notification, imageItem) {
         const source = String(notification?.image ?? "")
         if (!source.startsWith("image://qsimage/")
@@ -682,9 +694,7 @@ QtObject {
                 return
             }
 
-            const updatedImages = Object.assign({}, root.cachedNotificationImages)
-            updatedImages[source] = imagePath
-            root.cachedNotificationImages = updatedImages
+            root.cacheNotificationImage(source, imagePath)
             root.releaseNotificationImage(notification)
 
             const snapshot = NotificationContent.storageSnapshot(notification, receivedAt)
