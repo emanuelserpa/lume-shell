@@ -521,6 +521,7 @@ Item {
         id: mediaPopup
         theme: root.theme
         target: mediaPopupTarget
+        usePlayerDots: true
         player: root.player
         players: root.mediaPlayers
         onPlayerSelected: function(selected) { MediaState.selectPlayer(selected) }

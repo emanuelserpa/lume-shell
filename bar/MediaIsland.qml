@@ -19,6 +19,7 @@ Item {
     readonly property string artUrl: String(currentPlayer?.trackArtUrl ?? "").trim()
     readonly property real lengthSec: Number(currentPlayer?.length ?? 0)
     readonly property real positionSec: Number(currentPlayer?.position ?? 0)
+    property real playerWheelAccumulator: 0
     readonly property color playerAccent: {
         const id = ((currentPlayer?.identity ?? "") + " " + (currentPlayer?.dbusName ?? "")).toLowerCase()
         if (id.includes("spotify")) return theme.green
@@ -36,6 +37,41 @@ Item {
         if (id.includes("mpv")) return "󰐹"
         return ""
     }
+
+    function handlePlayerWheel(wheel) {
+        if (mediaPlayers.length < 2)
+            return false
+
+        if (wheel.phase === Qt.ScrollBegin)
+            playerWheelAccumulator = 0
+
+        const pixelDelta = wheel.pixelDelta.y !== 0
+            ? wheel.pixelDelta.y
+            : wheel.pixelDelta.x
+        const angleDelta = wheel.angleDelta.y !== 0
+            ? wheel.angleDelta.y
+            : wheel.angleDelta.x
+        const delta = pixelDelta !== 0 ? pixelDelta : angleDelta
+        const threshold = pixelDelta !== 0 ? 42 : 120
+
+        if (delta !== 0) {
+            playerWheelAccumulator += delta
+            while (Math.abs(playerWheelAccumulator) >= threshold) {
+                const currentIndex = mediaPlayers.indexOf(currentPlayer)
+                const direction = playerWheelAccumulator > 0 ? -1 : 1
+                const nextIndex = (Math.max(0, currentIndex) + direction + mediaPlayers.length)
+                    % mediaPlayers.length
+                MediaState.selectPlayer(mediaPlayers[nextIndex])
+                playerWheelAccumulator += playerWheelAccumulator > 0 ? -threshold : threshold
+            }
+        }
+
+        if (wheel.phase === Qt.ScrollEnd)
+            playerWheelAccumulator = 0
+
+        return true
+    }
+
     readonly property real progressFraction: lengthSec > 0 ? Math.max(0, Math.min(1, positionSec / lengthSec)) : 0
 
     Timer {
@@ -68,6 +104,9 @@ Item {
             z: 0
             acceptedButtons: Qt.LeftButton
             cursorShape: Qt.PointingHandCursor
+            onWheel: function(wheel) {
+                wheel.accepted = root.handlePlayerWheel(wheel)
+            }
             onClicked: {
                 if (!playerSelector.pointerInside)
                     mediaPopup.visible = !mediaPopup.visible
@@ -331,6 +370,7 @@ Item {
                 selectedPlayer: root.currentPlayer
                 accent: root.playerAccent
                 compact: true
+                indicatePlaying: true
                 visible: root.mediaPlayers.length > 1
                 anchors.verticalCenter: parent.verticalCenter
                 onPlayerSelected: function(selected) { MediaState.selectPlayer(selected) }

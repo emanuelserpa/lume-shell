@@ -11,6 +11,7 @@ Item {
     property var selectedPlayer: null
     property color accent: theme.primary
     property bool compact: false
+    property bool indicatePlaying: false
     signal playerSelected(var player)
 
     readonly property bool pointerInside: pointerHover.hovered
@@ -53,6 +54,10 @@ Item {
                     ? root.players[index]
                     : null
                 readonly property bool selected: index === root.selectedIndex
+                readonly property bool playingInactive:
+                    root.indicatePlaying && !selected && Boolean(playerData?.isPlaying)
+                property real playingPulse: 0.32
+                property real playingScale: 0.94
                 width: playerData !== null ? (root.compact ? 14 : 28) : 0
                 height: root.compact ? 20 : 24
                 activeFocusOnTab: playerData !== null
@@ -74,6 +79,43 @@ Item {
                 Keys.onReturnPressed: root.playerSelected(playerData)
                 Keys.onSpacePressed: root.playerSelected(playerData)
 
+                SequentialAnimation {
+                    running: dotDelegate.playingInactive && root.theme.qmlAnimationsEnabled
+                    loops: Animation.Infinite
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: dotDelegate
+                            property: "playingPulse"
+                            to: 0.58
+                            duration: 900
+                            easing.type: Easing.InOutSine
+                        }
+                        NumberAnimation {
+                            target: dotDelegate
+                            property: "playingScale"
+                            to: 1.08
+                            duration: 900
+                            easing.type: Easing.InOutSine
+                        }
+                    }
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: dotDelegate
+                            property: "playingPulse"
+                            to: 0.32
+                            duration: 900
+                            easing.type: Easing.InOutSine
+                        }
+                        NumberAnimation {
+                            target: dotDelegate
+                            property: "playingScale"
+                            to: 0.94
+                            duration: 900
+                            easing.type: Easing.InOutSine
+                        }
+                    }
+                }
+
                 Rectangle {
                     anchors.centerIn: parent
                     width: dotDelegate.selected
@@ -84,6 +126,8 @@ Item {
                     color: dotDelegate.selected
                         ? root.accent
                         : root.theme.withAlpha(root.theme.surfaceVariantForeground, 0.65)
+                    opacity: dotDelegate.playingInactive ? dotDelegate.playingPulse : 1
+                    scale: dotDelegate.playingInactive ? dotDelegate.playingScale : 1
 
                     Behavior on width {
                         enabled: root.theme.qmlAnimationsEnabled

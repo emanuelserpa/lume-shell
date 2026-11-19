@@ -13,8 +13,11 @@ PopupWindow {
     property var player: null
     property var players: []
     property bool hoverPreview: false
+    property bool usePlayerDots: false
+    property bool showPlayerList: false
     signal playerSelected(var player)
     readonly property bool containsPointer: cardHover.hovered
+    readonly property var otherPlayers: (players ?? []).filter(function(p) { return p !== player })
 
     // PopupAnchor metadata is incomplete in this qmllint version.
     // qmllint disable missing-property unqualified unresolved-type
@@ -36,6 +39,7 @@ PopupWindow {
 
     onVisibleChanged: {
         if (visible) {
+            showPlayerList = false
             if (!hoverPreview) card.forceActiveFocus()
         }
     }
@@ -117,6 +121,42 @@ PopupWindow {
         return id
     }
 
+    property real playerWheelAccumulator: 0
+
+    function handlePlayerWheel(wheel) {
+        if (!root.visible || root.players.length < 2)
+            return false
+
+        if (wheel.phase === Qt.ScrollBegin)
+            playerWheelAccumulator = 0
+
+        const pixelDelta = wheel.pixelDelta.y !== 0
+            ? wheel.pixelDelta.y
+            : wheel.pixelDelta.x
+        const angleDelta = wheel.angleDelta.y !== 0
+            ? wheel.angleDelta.y
+            : wheel.angleDelta.x
+        const delta = pixelDelta !== 0 ? pixelDelta : angleDelta
+        const threshold = pixelDelta !== 0 ? 42 : 120
+
+        if (delta !== 0) {
+            playerWheelAccumulator += delta
+            while (Math.abs(playerWheelAccumulator) >= threshold) {
+                const currentIndex = root.players.indexOf(root.player)
+                const direction = playerWheelAccumulator > 0 ? -1 : 1
+                const nextIndex = (Math.max(0, currentIndex) + direction + root.players.length)
+                    % root.players.length
+                root.playerSelected(root.players[nextIndex])
+                playerWheelAccumulator += playerWheelAccumulator > 0 ? -threshold : threshold
+            }
+        }
+
+        if (wheel.phase === Qt.ScrollEnd)
+            playerWheelAccumulator = 0
+
+        return true
+    }
+
     function playerIcon(p) {
         if (!p) return ""
         const id = ((p.identity ?? "") + " " + (p.dbusName ?? "")).toLowerCase()
@@ -151,6 +191,13 @@ PopupWindow {
         Keys.onEscapePressed: root.visible = false
 
         HoverHandler { id: cardHover }
+
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: function(event) {
+                event.accepted = root.handlePlayerWheel(event)
+            }
+        }
 
         // Alpha mask for the rounded ambient blur effect
         Rectangle {
@@ -233,6 +280,7 @@ PopupWindow {
             spacing: root.theme.spacingTokens.xl
 
             PopupHeader {
+                visible: root.usePlayerDots
                 theme: root.theme
                 parentAnchored: false
                 headerHeight: 24
@@ -249,12 +297,209 @@ PopupWindow {
                 titleWeight: Font.DemiBold
             }
 
+            Item {
+                id: barPlayerSelector
+                visible: !root.usePlayerDots
+                width: parent.width
+                height: root.players.length > 1 ? 48 : 24
+
+                Rectangle {
+                    width: 22
+                    height: 22
+                    anchors.left: parent.left
+                    anchors.leftMargin: root.theme.spacingTokens.xs
+                    anchors.verticalCenter: barPlayerName.verticalCenter
+                    radius: root.theme.radiusSm
+                    color: root.theme.withAlpha(root.theme.pureWhite, 0.08)
+                    border.width: 1
+                    border.color: root.theme.withAlpha(root.theme.pureWhite, 0.10)
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: root.playerIcon(root.player)
+                        color: root.accentColor
+                        font.family: root.theme.nerdFontFamily
+                        font.pixelSize: root.theme.iconTokens.smPlus
+                    }
+                }
+
+                Text {
+                    id: barPlayerName
+                    anchors.top: parent.top
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: Math.max(0, parent.width - 56)
+                    height: 20
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: root.playerName(root.player)
+                    color: root.theme.foreground
+                    font.family: root.theme.fontFamily
+                    font.pixelSize: root.theme.typeTokens.body
+                    font.weight: Font.DemiBold
+                    elide: Text.ElideRight
+                    Accessible.role: root.players.length > 1 ? Accessible.Button : Accessible.StaticText
+                    Accessible.name: root.players.length > 1
+                        ? qsTr("Player atual: %1. Abrir seleção de players").arg(text)
+                        : text
+
+                    TapHandler {
+                        enabled: root.players.length > 1
+                        acceptedButtons: Qt.LeftButton
+                        onTapped: root.showPlayerList = !root.showPlayerList
+                    }
+                }
+
+                MediaPlayerDots {
+                    anchors.top: barPlayerName.bottom
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    theme: root.theme
+                    players: root.players
+                    selectedPlayer: root.player
+                    accent: root.accentColor
+                    indicatePlaying: true
+                    onPlayerSelected: function(selected) { root.playerSelected(selected) }
+                }
+            }
+
             MediaPlayerDots {
+                visible: root.usePlayerDots
                 theme: root.theme
                 players: root.players
                 selectedPlayer: root.player
                 accent: root.accentColor
                 onPlayerSelected: function(selected) { root.playerSelected(selected) }
+            }
+
+            // The lockscreen uses the compact page indicator; the desktop bar
+            // keeps its expandable player menu and active-player summary.
+            Column {
+                id: playerListColumn
+                visible: !root.usePlayerDots && root.showPlayerList && root.players.length > 1
+                width: parent.width
+                spacing: root.theme.spacingTokens.xs
+
+                Rectangle {
+                    width: parent.width
+                    height: 66
+                    radius: root.theme.radiusMd
+                    color: root.theme.withAlpha(root.accentColor, 0.14)
+                    border.width: 1
+                    border.color: root.accentColor
+
+                    Behavior on color {
+                        enabled: root.theme.qmlAnimationsEnabled
+                        ColorAnimation { duration: root.theme.motionFast; easing.type: root.theme.motionEasing }
+                    }
+                    Behavior on border.color {
+                        enabled: root.theme.qmlAnimationsEnabled
+                        ColorAnimation { duration: root.theme.motionFast; easing.type: root.theme.motionEasing }
+                    }
+
+                    Row {
+                        anchors.fill: parent
+                        anchors.leftMargin: root.theme.popupInsets.large
+                        anchors.rightMargin: root.theme.popupInsets.large
+                        spacing: root.theme.spacingTokens.lg
+
+                        Text {
+                            text: root.playerIcon(root.player)
+                            color: root.accentColor
+                            font.family: root.theme.nerdFontFamily
+                            font.pixelSize: root.theme.iconTokens.mediaControl
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Column {
+                            width: parent.width - 72
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: root.theme.spacingTokens.micro
+
+                            Text {
+                                text: "Tocando agora"
+                                color: root.accentColor
+                                font.family: root.theme.fontFamily
+                                font.pixelSize: root.theme.typeTokens.caption
+                                font.weight: Font.DemiBold
+                            }
+
+                            Text {
+                                width: parent.width
+                                text: root.playerName(root.player)
+                                color: root.theme.foreground
+                                font.family: root.theme.fontFamily
+                                font.pixelSize: root.theme.typeTokens.bodyEmphasis
+                                font.weight: Font.DemiBold
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                width: parent.width
+                                text: String(root.player?.trackTitle ?? "")
+                                visible: text.length > 0
+                                color: root.theme.foreground
+                                font.family: root.theme.fontFamily
+                                font.pixelSize: root.theme.typeTokens.body
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        TablerIcon {
+                            width: root.theme.iconTokens.lgPlus
+                            height: root.theme.iconTokens.lgPlus
+                            iconName: "dashboard-check"
+                            iconColor: root.accentColor
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    NumberAnimation on scale {
+                        from: 0.96
+                        to: 1
+                        duration: root.theme.motionFast
+                        easing.type: root.theme.motionEasing
+                        running: false
+                    }
+                }
+
+                // Keep a fixed pool: MPRIS proxies may be destroyed while
+                // the player list changes, which can crash Qt model rebuilds.
+                Repeater {
+                    model: 16
+
+                    delegate: PopupListRow {
+                        id: alternatePlayerDelegate
+                        theme: root.theme
+                        required property int index
+                        parent: playerListColumn
+                        readonly property var playerData:
+                            index < root.otherPlayers.length ? root.otherPlayers[index] : null
+                        visible: playerData !== null
+                        width: parent.width
+                        rowHeight: 34
+                        idleColor: root.theme.withAlpha(root.theme.pureWhite, 0.04)
+                        hoverColor: root.theme.withAlpha(root.theme.pureWhite, 0.10)
+                        idleBorderColor: root.theme.withAlpha(root.theme.pureWhite, 0.08)
+                        leadingIcon: root.playerIcon(alternatePlayerDelegate.playerData)
+                        leadingIconColor: root.theme.foreground
+                        title: root.playerName(alternatePlayerDelegate.playerData)
+                        titlePixelSize: root.theme.typeTokens.subtitle
+                        titleColor: root.theme.offWhite
+                        subtitle: String(alternatePlayerDelegate.playerData?.trackTitle ?? "")
+
+                        Behavior on color {
+                            enabled: root.theme.qmlAnimationsEnabled
+                            ColorAnimation { duration: root.theme.motionFast; easing.type: root.theme.motionEasing }
+                        }
+
+                        interactionHandlers: TapHandler {
+                            acceptedButtons: Qt.LeftButton
+                            onTapped: {
+                                root.playerSelected(alternatePlayerDelegate.playerData)
+                                root.showPlayerList = false
+                            }
+                        }
+                    }
+                }
             }
 
             // Hero Section: Album Artwork + Track Information
