@@ -5,6 +5,11 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+- Add player selection by dots and wheel to the media island and popup, with a
+  subtle playback pulse for non-selected players that are playing.
+- Resolve themed tray and context-menu icons to file paths before rendering,
+  avoiding the Quickshell icon-pixmap provider path involved in the crash.
+
 ## 0.1.3
 
 - Bound notification image storage and in-memory image references, keeping

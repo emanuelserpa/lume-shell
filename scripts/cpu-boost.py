@@ -10,7 +10,7 @@ from pathlib import Path
 from command_utils import run_command
 
 VERSION = 1
-PRIVILEGED_HELPER = Path("/usr/local/libexec/quickshell-cpu-boost")
+PRIVILEGED_HELPER = Path("/usr/lib/lumeshell/lumeshell-cpu-boost")
 BACKENDS = (
     ("cpufreq", Path("devices/system/cpu/cpufreq/boost"), False),
     ("intel-pstate", Path("devices/system/cpu/intel_pstate/no_turbo"), True),
@@ -19,7 +19,7 @@ BACKENDS = (
 
 def preference_path():
     config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return config_home / "quickshell" / "power" / "cpu-boost.json"
+    return config_home / "lumeshell" / "power" / "cpu-boost.json"
 
 
 def emit(result):
@@ -92,7 +92,13 @@ def read_preference(path=None):
     try:
         result = json.loads(target.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        return None
+        if path is not None:
+            return None
+        legacy = target.parent.parent.parent / "quickshell" / "power" / "cpu-boost.json"
+        try:
+            result = json.loads(legacy.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
     except (OSError, json.JSONDecodeError):
         return None
     if not isinstance(result, dict):

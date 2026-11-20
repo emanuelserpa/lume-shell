@@ -82,7 +82,7 @@ class CpuBoostTests(unittest.TestCase):
         root, sysfs = self.make_sysfs("devices/system/cpu/cpufreq/boost", "0\n")
         with tempfile.TemporaryDirectory() as temp:
             preference = Path(temp) / "cpu-boost.json"
-            helper = Path(temp) / "quickshell-cpu-boost"
+            helper = Path(temp) / "lumeshell-cpu-boost"
             helper.touch()
             cpu_boost.write_preference(True, preference)
             calls = []

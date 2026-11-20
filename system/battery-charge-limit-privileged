@@ -102,7 +102,7 @@ def watch_power_source():
 
 def main(argv):
     if len(argv) != 2 or argv[1] not in ("80", "100", "restore", "watch"):
-        print("usage: quickshell-battery-charge-limit 80|100|restore|watch", file=sys.stderr)
+        print("usage: lumeshell-battery-charge-limit 80|100|restore|watch", file=sys.stderr)
         return 2
 
     if argv[1] == "watch":

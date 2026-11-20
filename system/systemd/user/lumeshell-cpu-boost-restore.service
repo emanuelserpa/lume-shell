@@ -1,0 +1,11 @@
+[Unit]
+Description=Restore saved Lume CPU boost preference
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -B /usr/share/lume-shell/scripts/cpu-boost.py restore
+TimeoutStartSec=65
+ProtectHome=read-only
+
+[Install]
+WantedBy=default.target

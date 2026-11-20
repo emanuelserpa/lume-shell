@@ -19,9 +19,10 @@ Item {
 
     readonly property var weather: WeatherState.weatherData ?? ({})
     readonly property var player: MediaState.player
-    readonly property var mediaPlayers: MediaState.players.filter(player =>
-        player && (player.isPlaying || String(player.trackTitle ?? "").trim().length > 0)
-    )
+    // Keep paused and not-yet-populated MPRIS sessions selectable on the lock
+    // popup too. Filtering by playback state or title can hide the other
+    // player and make the lockscreen selector disappear entirely.
+    readonly property var mediaPlayers: MediaState.players.filter(player => Boolean(player))
     readonly property string trackTitle: String(player?.trackTitle ?? "").trim()
     readonly property string trackArtist: player ? MediaState.displayArtist(player) : ""
     readonly property string artworkUrl: String(player?.trackArtUrl ?? "").trim()
@@ -287,6 +288,20 @@ Item {
                         font.pixelSize: root.theme.typeTokens.title
                         elide: Text.ElideRight
                         maximumLineCount: 1
+                    }
+
+                    MediaPlayerDots {
+                        id: lockPlayerSelector
+                        visible: root.mediaPlayers.length > 1
+                        width: parent.width
+                        theme: root.theme
+                        players: root.mediaPlayers
+                        selectedPlayer: root.player
+                        accent: root.theme.primary
+                        indicatePlaying: true
+                        onPlayerSelected: function(selected) {
+                            MediaState.selectPlayer(selected)
+                        }
                     }
 
                     Rectangle {

@@ -16,9 +16,20 @@ players that are playing pulse subtly; the selected player stays steady.
 Choosing a player changes the shared `MediaState` selection. The dot indicator
 uses a fixed delegate pool. Keep that model stable: rebinding a JavaScript array of
 MPRIS QObject instances during player teardown crashed both `QQuickRepeater`
-and `QQmlInstantiator` in Qt 6.11. The lockscreen reuses this popup from its
-media artwork; its battery and audio pills open the existing BatteryPopup and
-AudioPopup.
+and `QQmlInstantiator` in Qt 6.11. The regular bar uses its media popup and
+player menu. The lockscreen renders its player dots directly inside the media
+card; it must not depend on a regular `PopupWindow` opening over a
+`WlSessionLockSurface`.
+
+### Wayland session-lock surfaces
+`WlSessionLock` creates dedicated `WlSessionLockSurface` windows. They are the
+surfaces guaranteed to cover the session; a normal `PopupWindow` is a separate
+Wayland surface and may lack a valid popup parent when opened from the lock.
+Keep lockscreen controls that must always work inside the lock surface itself.
+The media selector is inline in the media card, and the suspend menu is drawn
+inside the island. A popup anchored to a lock item is not proof that the popup
+will be mapped on every compositor. See `docs/lockscreen-prototype.md` for the
+behavior and Quickshell references.
 
 ### Audio popup
 Considered stable and liked.
@@ -67,6 +78,13 @@ Current behavior includes:
   pill toggle, Escape). This is not a rule for every shell window; see the
   surface-specific exceptions in `docs/design-guidelines.md`.
 Keep the native notification flow and unified theme tokens.
+
+### System tray icons
+System tray items and context menus can expose themed icons as
+`image://icon/...` URLs. Resolve those URLs with `services/IconSource.js` before
+passing them to `QtQuick.Image`; keep filesystem and other image URLs intact.
+This bypasses the Quickshell icon pixmap provider path implicated by the
+November 2026 crash report on the current Qt/KDE icon stack.
 
 ### OSD
 Volume, microphone, brightness behavior should remain intact.

@@ -24,7 +24,7 @@ VERSION = 1
 ECO_START = 75
 ECO_STOP = 80
 FULL = 100
-PRIVILEGED_HELPER = Path("/usr/local/libexec/quickshell-battery-charge-limit")
+PRIVILEGED_HELPER = Path("/usr/lib/lumeshell/lumeshell-battery-charge-limit")
 
 
 def detect_battery():

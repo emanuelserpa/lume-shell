@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs.components
+import "../services/IconSource.js" as IconSource
 
 PopupWindow {
     id: root
@@ -44,6 +45,10 @@ PopupWindow {
     function closeMenu() {
         root.visible = false
         root.currentMenu = root.rootMenu
+    }
+
+    function iconSource(source) {
+        return IconSource.resolve(source, Quickshell.iconPath)
     }
 
     QsMenuOpener {
@@ -116,7 +121,7 @@ PopupWindow {
                         opacity: modelData.isSeparator || modelData.enabled ? 1.0 : 0.45
                         title: menuItem.modelData.isSeparator ? "" : (menuItem.modelData.text ?? "")
                         titlePixelSize: root.theme.typeTokens.bodyEmphasis
-                        leadingImage: menuItem.modelData.isSeparator ? "" : (menuItem.modelData.icon ?? "")
+                        leadingImage: menuItem.modelData.isSeparator ? "" : root.iconSource(menuItem.modelData.icon)
                         leadingIcon: (!menuItem.modelData.isSeparator
                                       && (menuItem.modelData.icon ?? "").toString().length === 0
                                       && menuItem.modelData.buttonType !== 0

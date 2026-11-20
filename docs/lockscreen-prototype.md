@@ -17,12 +17,16 @@ seguindo a hierarquia da tela bloqueada do macOS; o clima vem abaixo do relógio
 o cartão de música fica centralizado sob esse conjunto. A área de autenticação
 fica no rodapé. A ilha compacta no canto superior direito reutiliza os
 componentes `Battery` e `Audio` da barra, ampliados levemente; clicar no pill
-de som abre o popup PipeWire, o botão direito alterna mute e a rolagem ajusta o
+de som tenta abrir o popup PipeWire, o botão direito alterna mute e a rolagem ajusta o
 volume; no lockscreen, uma área de entrada no contêiner da ilha mantém essas
 ações alinhadas ao pill ampliado e ancora o popup nesse mesmo contêiner. A
-bateria abre o popup real de UPower. A capa do cartão de mídia abre o
-popup MPRIS, onde os players ativos podem ser escolhidos pelos indicadores em
-bolinhas. O ícone de energia no fim da ilha abre um menu desenhado dentro da
+bateria também tenta abrir o popup real de UPower. A capa pode tentar abrir o
+popup MPRIS para controles extras. Esses popups são `PopupWindow` comuns e não
+têm abertura garantida a partir da superfície de lock; controles essenciais
+precisam ficar inline no lock ou usar uma superfície comprovadamente
+compatível. Os players MPRIS podem ser escolhidos pelos indicadores em bolinhas
+exibidos diretamente no cartão de mídia. O ícone
+de energia no fim da ilha abre um menu desenhado dentro da
 própria superfície segura do lockscreen, com a ação Suspender. Ela usa o
 despachante de sessão existente, e o bloqueio permanece ativo durante a
 suspensão. Quando o lock fica seguro, o PAM inicia o leitor de digital e o
@@ -141,3 +145,24 @@ não equivale a uma auditoria independente do compositor, Qt ou Quickshell.
   mas não garante janelas popup comuns durante a sessão bloqueada. Um caso do
   Quickshell registra rejeição de `xdg_popup` sem pai válido quando um popup
   tenta nascer a partir da superfície de lock.
+
+## Superfícies e popups no lockscreen
+
+`WlSessionLock` cria uma `WlSessionLockSurface` própria por monitor. Essa
+superfície é a camada garantida pelo protocolo enquanto a sessão está bloqueada;
+uma janela `PopupWindow` comum é outra superfície e pode não ter um pai Wayland
+válido para ser aberta a partir dela. O sintoma pode variar por compositor: o
+popup pode não aparecer ou o pedido de `xdg_popup` pode ser rejeitado. Portanto,
+não use a visibilidade de um popup comum como única forma de acessar um controle
+no lockscreen.
+
+Controles essenciais e seletores do lock ficam dentro da própria
+`WlSessionLockSurface`: os pontos MPRIS ficam no cartão de mídia e o menu de
+suspensão é desenhado na ilha. Popups comuns podem continuar sendo usados na
+barra desbloqueada. Se for necessário um popup no lock, ele precisa ser
+implementado e testado com um mecanismo explicitamente compatível com a
+superfície de sessão bloqueada; apenas ancorar um `PopupWindow` a um item do
+lock não fornece essa garantia. Veja o contrato do
+[WlSessionLock](https://quickshell.org/docs/v0.3.2/types/Quickshell.Wayland/WlSessionLock/)
+e o comportamento documentado para
+[WlSessionLockSurface](https://quickshell.org/docs/v0.2.1/types/Quickshell.Wayland/WlSessionLockSurface/).

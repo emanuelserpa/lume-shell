@@ -342,20 +342,15 @@ elif [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
     warn "wayland-info ausente; anúncio de protocolos não consultado (pacote wayland-utils)"
 fi
 
-# Verify CPU boost persistence integration added by scripts/install-cpu-boost-system.sh.
-if [[ -x /usr/local/libexec/quickshell-cpu-boost \
-    && -s "$CONFIG_HOME/systemd/user/cpu-boost-restore.service" ]]; then
-    if [[ -r /etc/polkit-1/rules.d/50-quickshell-cpu-boost.rules ]]; then
-        if grep -Fq "subject.user === \"${USER:-}\"" \
-            /etc/polkit-1/rules.d/50-quickshell-cpu-boost.rules \
-            && grep -Fq '"/usr/local/libexec/quickshell-cpu-boost"' \
-                /etc/polkit-1/rules.d/50-quickshell-cpu-boost.rules; then
-            ok "Helper, regra polkit desta conta e unidade de restauração instalados"
-        else
-            fail "Regra polkit não está restrita a esta conta e ao helper esperado"
-        fi
+# Verify the package-owned CPU boost integration.
+if [[ -x /usr/lib/lumeshell/lumeshell-cpu-boost \
+    && -s /usr/lib/systemd/user/lumeshell-cpu-boost-restore.service ]]; then
+    if [[ -r /usr/share/polkit-1/rules.d/50-lumeshell-cpu-boost.rules ]] \
+        && grep -Fq '"/usr/lib/lumeshell/lumeshell-cpu-boost"' \
+            /usr/share/polkit-1/rules.d/50-lumeshell-cpu-boost.rules; then
+        ok "Helper, regra polkit e serviço de restauração do pacote instalados"
     else
-        warn "Helper e unidade de boost existem, mas este contexto não pode ler a regra polkit"
+        warn "Helper e serviço de boost existem, mas a regra polkit está ausente"
     fi
     if [[ -e /sys/devices/system/cpu/cpufreq/boost \
         || -e /sys/devices/system/cpu/intel_pstate/no_turbo ]]; then
@@ -363,8 +358,10 @@ if [[ -x /usr/local/libexec/quickshell-cpu-boost \
     else
         warn "Kernel não expõe uma interface compatível de boost de CPU"
     fi
-    if [[ -f "$CONFIG_HOME/quickshell/power/cpu-boost.json" ]]; then
-        if python3 - "$CONFIG_HOME/quickshell/power/cpu-boost.json" <<'PY'
+    boost_preference="$CONFIG_HOME/lumeshell/power/cpu-boost.json"
+    [[ -f "$boost_preference" ]] || boost_preference="$CONFIG_HOME/quickshell/power/cpu-boost.json"
+    if [[ -f "$boost_preference" ]]; then
+        if python3 - "$boost_preference" <<'PY'
 import json
 import sys
 with open(sys.argv[1], encoding="utf-8") as stream:
@@ -405,16 +402,14 @@ if [[ -S "$bus" ]] && command -v systemctl >/dev/null 2>&1; then
         warn "$SHELL_UNIT não está habilitado ($enabled_state)"
     fi
 
-    if [[ -s "$CONFIG_HOME/systemd/user/cpu-boost-restore.service" ]]; then
-        boost_unit_state="$(systemctl --user is-enabled cpu-boost-restore.service 2>&1)"
-        if [[ "$boost_unit_state" == enabled || "$boost_unit_state" == enabled-runtime ]]; then
-            ok "cpu-boost-restore.service habilitado no login"
-        elif [[ "$boost_unit_state" == *"Operation not permitted"* \
-            || "$boost_unit_state" == *"Failed to connect to user scope bus"* ]]; then
-            warn "Não foi possível consultar se cpu-boost-restore.service está habilitado"
-        else
-            warn "cpu-boost-restore.service não está habilitado ($boost_unit_state)"
-        fi
+    boost_unit_state="$(systemctl --user is-enabled lumeshell-cpu-boost-restore.service 2>&1)"
+    if [[ "$boost_unit_state" == enabled || "$boost_unit_state" == enabled-runtime ]]; then
+        ok "lumeshell-cpu-boost-restore.service habilitado no login"
+    elif [[ "$boost_unit_state" == *"Operation not permitted"* \
+        || "$boost_unit_state" == *"Failed to connect to user scope bus"* ]]; then
+        warn "Não foi possível consultar se lumeshell-cpu-boost-restore.service está habilitado"
+    else
+        warn "lumeshell-cpu-boost-restore.service não está habilitado ($boost_unit_state)"
     fi
 else
     warn "Barramento systemd do usuário indisponível; estado do serviço ignorado"

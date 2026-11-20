@@ -130,7 +130,7 @@ Battery alerts no longer use the separate `battery-notify.service` or
 shell, independent of monitor count. Connecting power dismisses stale low
 battery alerts while preserving the short-lived “Carregador conectado” notice.
 Power source changes and charge-limit restoration are handled by the system
-unit `quickshell-power-source-policy.service`.
+unit `lumeshell-power-source-policy.service`.
 
 ---
 

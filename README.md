@@ -26,7 +26,7 @@ profiles, and volume and brightness indicators.
 
 For Arch Linux, follow the [package instructions](packaging/arch/README.md).
 The package installs the shell in `/usr/share/lume-shell` and provides the
-`lume-shell` command and user service.
+`lume-shell` command, user service, and Lume-owned system power integrations.
 
 You’ll need Quickshell, PipeWire, Python, Kitty and the interface fonts.
 Individual features use tools such as NetworkManager, `wl-clipboard`,

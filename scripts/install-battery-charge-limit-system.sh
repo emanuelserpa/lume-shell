@@ -21,16 +21,16 @@ fi
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 install -D -o root -g root -m 0755 \
     "$repo_root/system/battery-charge-limit-privileged" \
-    /usr/local/libexec/quickshell-battery-charge-limit
+    /usr/lib/lumeshell/lumeshell-battery-charge-limit
 install -D -o root -g root -m 0644 \
-    "$repo_root/system/polkit/50-quickshell-battery-charge-limit.rules.in" \
-    /etc/polkit-1/rules.d/50-quickshell-battery-charge-limit.rules
-sed -i "s/@QUICKSHELL_USER@/$target_user/g" \
-    /etc/polkit-1/rules.d/50-quickshell-battery-charge-limit.rules
+    "$repo_root/system/polkit/50-lumeshell-battery-charge-limit.rules" \
+    /etc/polkit-1/rules.d/50-lumeshell-battery-charge-limit.rules
 install -D -o root -g root -m 0644 \
-    "$repo_root/system/systemd/quickshell-power-source-policy.service" \
-    /etc/systemd/system/quickshell-power-source-policy.service
+    "$repo_root/system/systemd/lumeshell-power-source-policy.service" \
+    /etc/systemd/system/lumeshell-power-source-policy.service
 
 systemctl daemon-reload
-systemctl enable --now quickshell-power-source-policy.service
+systemctl disable --now quickshell-power-source-policy.service 2>/dev/null || true
+systemctl enable lumeshell-power-source-policy.service
+systemctl restart lumeshell-power-source-policy.service || systemctl start lumeshell-power-source-policy.service
 echo "Installed the charge helper and power-source policy service for $target_user."

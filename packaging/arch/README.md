@@ -4,6 +4,11 @@ O pacote `lume-shell` instala o código em `/usr/share/lume-shell`, o comando
 `lume-shell` e a unidade de usuário `lume-shell.service`. Quickshell é instalado
 separadamente pelo pacote do runtime.
 
+As integrações de energia também pertencem ao pacote: os helpers `lumeshell-*`,
+as regras Polkit e as unidades `lumeshell-power-source-policy.service` e
+`lumeshell-cpu-boost-restore.service`. A política acompanha AC/bateria e a
+restauração de boost roda no login do usuário. O pacote habilita essas unidades.
+
 Também fornece os perfis PAM `/etc/pam.d/lumeshell-lock` e
 `/etc/pam.d/lumeshell-lock-password`, além do protótipo de lockscreen.
 `lume-shell lock` inicia o bloqueio nativo do Lume; o Hyprland pode usá-lo no
@@ -21,8 +26,9 @@ makepkg --cleanbuild
 ```
 
 O build local usa a árvore atual, exclui `.git`, caches, arquivos de preferência
-do usuário e resultados de builds anteriores. Não instala o pacote nem reinicia
-o shell.
+do usuário e resultados de builds anteriores. O build não instala o pacote nem
+reinicia o shell; o script de instalação do pacote ativa apenas as unidades de
+energia do Lume.
 
 ## Comandos do Spotlight
 

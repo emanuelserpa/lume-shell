@@ -2,7 +2,9 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Effects
+import Quickshell
 import Quickshell.Services.SystemTray
+import "../services/IconSource.js" as IconSource
 
 Rectangle {
     id: root
@@ -17,6 +19,10 @@ Rectangle {
     clip: true
 
     color: root.plain ? "transparent" : root.theme.pillBackground
+
+    function iconSource(source) {
+        return IconSource.resolve(source, Quickshell.iconPath)
+    }
 
     border.width: root.plain ? 0 : 1
     border.color: trayHover.hovered
@@ -84,7 +90,7 @@ Rectangle {
                     anchors.centerIn: parent
                     width: root.theme.barTrayIconSize
                     height: root.theme.barTrayIconSize
-                    source: trayDelegate.shown ? trayDelegate.modelData.icon : ""
+                    source: trayDelegate.shown ? root.iconSource(trayDelegate.modelData.icon) : ""
                     sourceSize.width: root.theme.barTrayIconSize
                     sourceSize.height: root.theme.barTrayIconSize
                     visible: !root.theme.isLight

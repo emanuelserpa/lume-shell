@@ -38,8 +38,10 @@ Intel `intel_pstate/no_turbo` when that driver-specific interface is present;
 the helper normalizes both to an `enabled` boolean. The UI hides the switch
 when neither interface is exposed. Kernel state is refreshed while the popup is
 open and after a toggle. Successful user changes are saved atomically in
-`~/.config/quickshell/power/cpu-boost.json`. The preference file is private to
-the user and contains only the requested on/off value.
+`~/.config/lumeshell/power/cpu-boost.json`. Existing settings under
+`~/.config/quickshell/power/cpu-boost.json` are read as a migration fallback.
+The preference file is private to the user and contains only the requested
+on/off value.
 
 ## Bar indicator
 
@@ -71,36 +73,38 @@ scales still require visual verification; the screenshot does not cover them.
 
 ## Persist across login
 
-Run `sudo scripts/install-cpu-boost-system.sh` once (or launch the installer
-through `pkexec` when no terminal is available). It installs a root-owned
-writer at `/usr/local/libexec/quickshell-cpu-boost`, a user-scoped polkit rule,
-and `cpu-boost-restore.service`. The rule only authorizes the configured user
-in an active local session to run that fixed helper; the helper accepts only
-`on` or `off` and writes only the kernel's boost attribute. It does not grant
-general shell or sysfs access. The installer enables the user service in the
-current session when its systemd user bus is available. On first install, the
-saved preference defaults to boost off; an existing preference is preserved.
-At each later login, the service reads the saved preference and reapplies it.
-If the hardware exposes no supported interface, it leaves the kernel setting
+The Arch package installs a root-owned writer at
+`/usr/lib/lumeshell/lumeshell-cpu-boost`, its Polkit rule, and the globally
+available `lumeshell-cpu-boost-restore.service`. The helper accepts only `on`
+or `off` and writes only the kernel's boost attribute. Its Polkit rule permits
+active local sessions to run only that fixed helper; it grants no general
+shell or sysfs access. The package enables the restore unit for user logins. On first
+install, the saved preference defaults to boost off; an existing preference
+is preserved. At each later login, the service reapplies that preference. If
+the hardware exposes no supported interface, it leaves the kernel setting
 alone.
 
-To remove the system integration, disable the user unit and remove the exact
-installed files:
+To remove the integration, uninstall the package. For a source checkout,
+remove the package-owned system unit and helpers explicitly:
 
 ```sh
-systemctl --user disable --now cpu-boost-restore.service
-sudo rm /usr/local/libexec/quickshell-cpu-boost \
-  /etc/polkit-1/rules.d/50-quickshell-cpu-boost.rules
-rm ~/.config/systemd/user/cpu-boost-restore.service
-systemctl --user daemon-reload
+sudo systemctl --global disable lumeshell-cpu-boost-restore.service
+sudo systemctl disable --now lumeshell-power-source-policy.service
+sudo rm -f /usr/lib/lumeshell/lumeshell-cpu-boost \
+  /usr/lib/lumeshell/lumeshell-battery-charge-limit \
+  /usr/lib/systemd/system/lumeshell-power-source-policy.service \
+  /usr/lib/systemd/user/lumeshell-cpu-boost-restore.service \
+  /usr/share/polkit-1/rules.d/50-lumeshell-cpu-boost.rules \
+  /usr/share/polkit-1/rules.d/50-lumeshell-battery-charge-limit.rules
+sudo systemctl daemon-reload
 ```
 
-Polkit authorizes `pkexec` requests by executable path, and the rule checks the
-requesting user plus active local session. See the [polkit rule reference](https://polkit.pages.freedesktop.org/polkit/polkit.8.html)
+Polkit authorizes `pkexec` requests by executable path and active local session.
+See the [polkit rule reference](https://polkit.pages.freedesktop.org/polkit/polkit.8.html)
 and [`pkexec` security notes](https://polkit.pages.freedesktop.org/polkit/pkexec.1.html).
 
 A write that requires elevated privileges uses `pkexec`; cancellation and
-write errors are displayed in the popup. Once the scoped system integration is
+write errors are displayed in the popup. Once the system integration is
 installed, changing or restoring this one setting does not ask for a password.
 
 The switch controls whether the kernel may use frequency boost. An enabled
@@ -118,14 +122,14 @@ host's real sysfs.
 Power profiles use `power-profiles-daemon` when available. The shell reports
 firmware `platform_profile` values on supported systems without that service.
 
-PPD does not manage battery charge thresholds. On supported ThinkPads, install
-`sudo scripts/install-battery-charge-limit-system.sh` once to add a fixed
-root-owned helper and a user-scoped Polkit rule. The helper accepts 80
-(75/80 eco limit) or 100 (temporary full-charge mode); 100 requires external
-power. It writes only the battery's kernel-exposed start/end threshold files. The
-Hardware without those sysfs controls has no charge-limit action.
+PPD does not manage battery charge thresholds. The Arch package installs the
+root-owned `/usr/lib/lumeshell/lumeshell-battery-charge-limit` helper and its
+Polkit rule. The helper accepts 80 (75/80 eco limit) or 100 (temporary
+full-charge mode); 100 requires external power. It writes only the battery's
+kernel-exposed start/end threshold files. Hardware without those sysfs controls
+has no charge-limit action.
 
-The system unit `quickshell-power-source-policy.service` watches udev power
+The system unit `lumeshell-power-source-policy.service` watches udev power
 supply events. On AC it selects `balanced` and `s2idle`; on battery it selects
 `power-saver` and `deep`. If the charge limit is at 100% when AC is unplugged,
 it restores 75/80 automatically. It performs the same source selection at

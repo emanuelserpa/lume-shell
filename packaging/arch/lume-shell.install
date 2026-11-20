@@ -1,7 +1,31 @@
+_enable_lumeshell_system_integrations() {
+  # Remove the former manually installed unit and helper names.
+  systemctl disable --now quickshell-power-source-policy.service >/dev/null 2>&1 || true
+  rm -f /etc/systemd/system/quickshell-power-source-policy.service \
+    /usr/local/libexec/quickshell-battery-charge-limit \
+    /usr/local/libexec/quickshell-cpu-boost \
+    /etc/polkit-1/rules.d/50-quickshell-battery-charge-limit.rules \
+    /etc/polkit-1/rules.d/50-quickshell-cpu-boost.rules
+  systemctl daemon-reload
+  systemctl enable lumeshell-power-source-policy.service >/dev/null 2>&1 || true
+  if ! systemctl restart lumeshell-power-source-policy.service; then
+    systemctl start lumeshell-power-source-policy.service || \
+      echo 'Lume power policy is installed; start it with: sudo systemctl enable --now lumeshell-power-source-policy.service'
+  fi
+  systemctl --global enable lumeshell-cpu-boost-restore.service >/dev/null 2>&1 || true
+}
+
+_remove_lumeshell_system_integrations() {
+  systemctl disable --now lumeshell-power-source-policy.service >/dev/null 2>&1 || true
+  systemctl --global disable lumeshell-cpu-boost-restore.service >/dev/null 2>&1 || true
+  systemctl daemon-reload
+}
+
 post_install() {
+  _enable_lumeshell_system_integrations
   cat <<'EOF'
-Lume is installed but not enabled automatically. To start it in your graphical
-session, first disable any existing quickshell.service instance, then run:
+Lume system power controls are installed. To start the desktop shell in your
+graphical session, first disable any existing quickshell.service instance, then run:
   systemctl --user daemon-reload
   systemctl --user enable --now lume-shell.service
 
@@ -9,4 +33,12 @@ Optional ReGreet login screen integration:
   sudo pacman -S --needed greetd-regreet cage
   lume-shell greeter install
 EOF
+}
+
+post_upgrade() {
+  _enable_lumeshell_system_integrations
+}
+
+pre_remove() {
+  _remove_lumeshell_system_integrations
 }
