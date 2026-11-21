@@ -35,6 +35,7 @@ Item {
     property string captureControlError: ""
     property bool deleteRunning: false
     property bool pendingChange: false
+    property bool copiedFeedback: false
     readonly property bool restoreRunning: restoreProc.running
     readonly property bool imageOpenRunning: imageOpenProc.running
     readonly property bool snapshotRunning: snapshotProc.running
@@ -48,9 +49,23 @@ Item {
         if (!active) {
             changeDelay.stop()
             pendingChange = false
+            copiedFeedback = false
+            copiedFeedbackTimer.stop()
         } else {
             root.refreshCaptureState()
         }
+    }
+
+    function showCopiedFeedback() {
+        copiedFeedback = true
+        copiedFeedbackTimer.restart()
+    }
+
+    Timer {
+        id: copiedFeedbackTimer
+        interval: 1400
+        repeat: false
+        onTriggered: root.copiedFeedback = false
     }
 
     function refreshCaptureState() {

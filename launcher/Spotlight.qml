@@ -153,7 +153,11 @@ PanelWindow {
         if (root.themeMode)
             return ""
         const a = actionRegistry.secondaryAction(root.selectedResult)
-        return a ? String(a.title ?? "") : ""
+        if (!a)
+            return ""
+        if (root.clipboardMode && clipboard.copiedFeedback && String(a.id ?? "") === "copy")
+            return "Copiado ✓"
+        return String(a.title ?? "")
     }
     property int selectedIndex: {
         if (results.length === 0)
@@ -319,6 +323,7 @@ PanelWindow {
         function onRestoreSucceeded() {
             if (clipboard.stayOpenOnce) {
                 clipboard.stayOpenOnce = false
+                clipboard.showCopiedFeedback()
                 return
             }
             if (root.visible && root.clipboardMode)
@@ -615,6 +620,316 @@ PanelWindow {
         })
     }
 
+    function isLauncherShortcutOverride(event, fromSearchInput) {
+        const ctrl = Boolean(event.modifiers & Qt.ControlModifier)
+        const shift = Boolean(event.modifiers & Qt.ShiftModifier)
+        if (ctrl && (event.key === Qt.Key_K
+                     || event.key === Qt.Key_Slash
+                     || event.key === Qt.Key_Return
+                     || event.key === Qt.Key_Enter))
+            return true
+        if (event.key === Qt.Key_Escape)
+            return true
+        if (root.clipboardMode && shift && (event.key === Qt.Key_Delete || event.key === Qt.Key_Back))
+            return true
+        if (root.clipboardMode && event.key === Qt.Key_Delete
+                && (!fromSearchInput
+                    || (searchInput.cursorPosition >= searchInput.text.length
+                        && searchInput.selectedText.length === 0)))
+            return true
+        return false
+    }
+
+    function handleLauncherKey(event, fromSearchInput) {
+        const hasMainModifier = Boolean(
+            event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.ShiftModifier | Qt.MetaModifier)
+        )
+        if (event.key === Qt.Key_Slash
+                && (event.modifiers & Qt.ControlModifier)) {
+            root.modeMenuOpen = !root.modeMenuOpen
+            if (root.modeMenuOpen) {
+                root.modeMenuIndex = 0
+                root.categoryMenuOpen = false
+                root.actionPanelOpen = false
+            }
+            event.accepted = true
+        } else if (root.modeMenuOpen
+                   && (event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
+            const direction = event.key === Qt.Key_Down ? 1 : -1
+            const count = root.modeOptions.length
+            root.modeMenuIndex = (root.modeMenuIndex + direction + count) % count
+            event.accepted = true
+        } else if (root.modeMenuOpen
+                   && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) {
+            const selectedMode = root.modeOptions[root.modeMenuIndex]
+            if (selectedMode)
+                root.openWithPrefix(selectedMode.prefix)
+            event.accepted = true
+        } else if (root.modeMenuOpen && event.key === Qt.Key_Escape) {
+            root.modeMenuOpen = false
+            event.accepted = true
+        } else if (root.categoryMenuOpen
+                && event.key === Qt.Key_K
+                && (event.modifiers & Qt.ControlModifier)
+                && root.selectedResult !== null) {
+            root.categoryMenuOpen = false
+            root.modeMenuOpen = false
+            root.actionPanelOpen = true
+            root.actionIndex = 0
+            root.panelBaseQuery = searchInput.text
+            event.accepted = true
+        } else if (root.categoryMenuOpen
+                && (event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
+            categorySidebar.moveSelection(event.key === Qt.Key_Down ? 1 : -1)
+            event.accepted = true
+        } else if (root.categoryMenuOpen
+                   && (event.key === Qt.Key_Right
+                       || event.key === Qt.Key_Return
+                       || event.key === Qt.Key_Enter)) {
+            root.categoryMenuOpen = false
+            event.accepted = true
+        } else if (root.categoryMenuOpen && event.key === Qt.Key_Escape) {
+            root.categoryMenuOpen = false
+            event.accepted = true
+        } else if (event.key === Qt.Key_Left
+                   && !hasMainModifier
+                   && !root.actionPanelOpen && !root.categoryMenuOpen
+                   && !root.commandMode && !root.calcMode && !root.fileMode
+                   && !root.clipboardMode && !root.actionMode && !root.emojiMode
+                   && !root.killMode && !root.windowMode
+                   && (!fromSearchInput
+                       || (searchInput.cursorPosition === 0
+                           && searchInput.selectedText.length === 0))) {
+            root.openAppsBrowser()
+            event.accepted = true
+        } else if ((event.key === Qt.Key_F6 || event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) && root.themeMode) {
+            themePane.toggleKbZone(event.key === Qt.Key_Backtab || !!(event.modifiers & Qt.ShiftModifier))
+            event.accepted = true
+        } else if (event.key === Qt.Key_K
+                   && (event.modifiers & Qt.ControlModifier)
+                   && root.selectedResult !== null
+                   && !root.themeMode) {
+            root.modeMenuOpen = false
+            root.actionPanelOpen = !root.actionPanelOpen
+            root.actionIndex = 0
+            if (root.actionPanelOpen)
+                root.panelBaseQuery = searchInput.text
+            event.accepted = true
+        } else if (event.key === Qt.Key_Right
+                   && !hasMainModifier
+                   && !root.actionPanelOpen
+                   && root.selectedResult !== null
+                   && !root.themeMode && !root.emojiMode
+                   && (!fromSearchInput
+                       || (searchInput.cursorPosition === searchInput.text.length
+                           && searchInput.selectedText.length === 0))) {
+            root.modeMenuOpen = false
+            root.actionPanelOpen = true
+            root.actionIndex = 0
+            root.panelBaseQuery = searchInput.text
+            event.accepted = true
+        } else if (root.actionPanelOpen
+                   && event.key === Qt.Key_Left
+                   && !hasMainModifier) {
+            root.actionPanelOpen = false
+            event.accepted = true
+        } else if (root.actionPanelOpen && event.key === Qt.Key_Escape) {
+            root.actionPanelOpen = false
+            event.accepted = true
+        } else if (event.key === Qt.Key_Escape && root.appBrowserMode) {
+            root.returnToUniversalSearch()
+            event.accepted = true
+        } else if (root.actionPanelOpen
+                   && (event.key === Qt.Key_Down || event.key === Qt.Key_Up)) {
+            const direction = event.key === Qt.Key_Down ? 1 : -1
+            root.actionIndex = actionPanel.panelMove(direction)
+            event.accepted = true
+        } else if (root.actionPanelOpen
+                   && (event.modifiers & Qt.ControlModifier)
+                   && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) {
+            if (actionExecutor.runSecondary(root.selectedResult)) {
+                root.actionPanelOpen = false
+                event.accepted = true
+            }
+        } else if (root.actionPanelOpen
+                   && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) {
+            const spec = actionPanel.actionAt(root.actionIndex)
+            if (spec && actionExecutor.runActionById(spec.id, root.selectedResult, root.selectedIndex)) {
+                root.actionPanelOpen = false
+                event.accepted = true
+            }
+        } else if (root.emojiMode
+                   && (event.key === Qt.Key_Left || event.key === Qt.Key_Right
+                       || event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
+            if (root.results.length > 0) {
+                const len = root.results.length
+                const cur = Math.min(Math.max(0, root.emojiIndex), len - 1)
+                const column = cur % root.emojiColumns
+                let next = cur
+
+                if (event.key === Qt.Key_Left && column > 0)
+                    next = cur - 1
+                else if (event.key === Qt.Key_Right
+                         && column < root.emojiColumns - 1 && cur + 1 < len)
+                    next = cur + 1
+                else if (event.key === Qt.Key_Up && cur >= root.emojiColumns)
+                    next = cur - root.emojiColumns
+                else if (event.key === Qt.Key_Down && cur + root.emojiColumns < len)
+                    next = cur + root.emojiColumns
+
+                root.emojiIndex = next
+            }
+            event.accepted = true
+        } else if (root.themeMode && (event.key === Qt.Key_Right || event.key === Qt.Key_Left)) {
+            if (themePane.kbZone === "glass")
+                themePane.glassMove(event.key === Qt.Key_Right ? 1 : -1)
+            else if (themePane.kbZone === "colors")
+                themePane.colorMove(event.key === Qt.Key_Right ? 1 : -1)
+            else if (themePane.kbZone === "variant")
+                themePane.variantMove(event.key === Qt.Key_Right ? 1 : -1)
+            else if (themePane.kbZone === "actions")
+                themePane.colorActionMove(event.key === Qt.Key_Right ? 1 : -1)
+            else if (themePane.kbZone === "catalog")
+                themePane.catMove(event.key === Qt.Key_Right ? 1 : -1, 0)
+            else
+                themePane.wpMove(event.key === Qt.Key_Right ? 1 : -1)
+            event.accepted = true
+        } else if (event.key === Qt.Key_Down) {
+            if (root.themeMode) {
+                if (themePane.kbZone === "glass")
+                    themePane.glassMove(1)
+                else if (themePane.kbZone === "colors")
+                    themePane.colorMove(1)
+                else if (themePane.kbZone === "variant")
+                    themePane.variantMove(1)
+                else if (themePane.kbZone === "actions")
+                    themePane.colorActionMove(1)
+                else if (themePane.kbZone === "catalog")
+                    themePane.catMove(0, 1)
+                else
+                    themePane.wpMove(1)
+            } else if (root.results.length > 0) {
+                const current = root.selectedIndex >= 0
+                    ? root.selectedIndex : resultList.currentIndex
+                root.selectResultAt(
+                    (current + 1) % root.results.length)
+                root.settleSelection()
+            }
+            event.accepted = true
+        } else if (event.key === Qt.Key_Up) {
+            if (root.themeMode) {
+                if (themePane.kbZone === "glass")
+                    themePane.glassMove(-1)
+                else if (themePane.kbZone === "colors")
+                    themePane.colorMove(-1)
+                else if (themePane.kbZone === "variant")
+                    themePane.variantMove(-1)
+                else if (themePane.kbZone === "actions")
+                    themePane.colorActionMove(-1)
+                else if (themePane.kbZone === "catalog")
+                    themePane.catMove(0, -1)
+                else
+                    themePane.wpMove(-1)
+            } else if (root.results.length > 0) {
+                const current = root.selectedIndex >= 0
+                    ? root.selectedIndex : resultList.currentIndex
+                root.selectResultAt(
+                    (current - 1 + root.results.length)
+                    % root.results.length)
+                root.settleSelection()
+            }
+            event.accepted = true
+        } else if (event.key === Qt.Key_PageDown) {
+            if (root.results.length > 0) {
+                const current = root.selectedIndex >= 0
+                    ? root.selectedIndex : resultList.currentIndex
+                root.selectResultAt(
+                    Math.min(root.results.length - 1, current + 6))
+                root.settleSelection()
+            }
+            event.accepted = true
+        } else if (event.key === Qt.Key_PageUp) {
+            if (root.results.length > 0) {
+                const current = root.selectedIndex >= 0
+                    ? root.selectedIndex : resultList.currentIndex
+                root.selectResultAt(
+                    Math.max(0, current - 6))
+                root.settleSelection()
+            }
+            event.accepted = true
+        } else if ((event.key === Qt.Key_Delete || event.key === Qt.Key_Back)
+                   && (event.modifiers & Qt.ShiftModifier)) {
+            if (root.clipboardMode) {
+                root.deleteCurrentClipboardItem()
+                event.accepted = true
+            }
+        } else if (event.key === Qt.Key_Delete
+                   && root.clipboardMode
+                   && (!fromSearchInput
+                       || (searchInput.cursorPosition >= searchInput.text.length
+                           && searchInput.selectedText.length === 0))) {
+            root.deleteCurrentClipboardItem()
+            event.accepted = true
+        } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                   && (event.modifiers & Qt.ControlModifier)) {
+            if (actionExecutor.runSecondary(root.selectedResult)) {
+                event.accepted = true
+            }
+        } else if (event.key === Qt.Key_Return
+                   || event.key === Qt.Key_Enter) {
+            if (root.emojiMode && root.results.length > 0) {
+                root.emojiIndex = Math.min(Math.max(0, root.emojiIndex), root.results.length - 1)
+                root.activate(root.emojiIndex)
+                event.accepted = true
+            } else if (root.themeMode) {
+                let done = true
+                if (["colors", "variant", "actions", "glass"].includes(themePane.kbZone))
+                    themePane.activatePaletteControl()
+                else if (themePane.kbZone === "catalog")
+                    done = themePane.catActivateSelected()
+                else
+                    done = themePane.wpActivateSelected()
+                if (!done)
+                    root.activate(root.selectedIndex)
+                event.accepted = true
+            } else {
+                root.activate(root.selectedIndex)
+                event.accepted = true
+            }
+        } else if (
+            event.key === Qt.Key_C
+            && (event.modifiers & Qt.ControlModifier)
+            && root.calcMode
+        ) {
+            const value = searchInput.selectedText.length > 0
+                          ? searchInput.selectedText
+                          : searchInput.text.replace(/^=/, "").trim()
+
+            if (value.length > 0)
+                Quickshell.execDetached(["wl-copy", value])
+
+            event.accepted = true
+        } else if (fromSearchInput
+                   && event.key === Qt.Key_Backspace
+                   && (searchInput.text === ":tema "
+                       || searchInput.text === ":tela "
+                       || searchInput.text === ":captura "
+                       || searchInput.text === ":luz "
+                       || searchInput.text === ":energia "
+                       || searchInput.text === ":conexoes "
+                       || searchInput.text === ":sistema "
+                       || searchInput.text === ":sessao ")) {
+            searchInput.text = ": "
+            event.accepted = true
+        } else if (event.key === Qt.Key_Escape) {
+            if (root.themeMode && themePane.colorMode)
+                themePane.cancelColorPreview()
+            else
+                root.closeLauncher()
+            event.accepted = true
+        }
+    }
+
     function activate(index) {
         if (index < 0 || index >= results.length)
             return
@@ -872,6 +1187,15 @@ PanelWindow {
             Behavior on opacity { enabled: palette.qmlAnimationsEnabled; NumberAnimation { duration: root.closingAnimation ? palette.motionPopupExit : palette.motionPopup; easing.type: palette.motionTransientFadeEasing } }
             Behavior on scale { enabled: palette.qmlAnimationsEnabled; NumberAnimation { duration: root.closingAnimation ? palette.motionPopupExit : palette.motionPopup; easing.type: palette.motionEasing } }
 
+            Keys.onShortcutOverride: function(event) {
+                if (root.isLauncherShortcutOverride(event, false))
+                    event.accepted = true
+            }
+
+            Keys.onPressed: function(event) {
+                root.handleLauncherKey(event, false)
+            }
+
             MouseArea {
                 anchors.fill: parent
                 onClicked: function(mouse) {
@@ -934,6 +1258,7 @@ PanelWindow {
                             width: Math.max(
                                 100,
                                 parent.width - 24 - modePill.width - powerQuickBtn.width
+                                    - (clipboardCapturePill.visible ? clipboardCapturePill.width + parent.spacing : 0)
                                     - 3 * parent.spacing
                             )
                             height: parent.height
@@ -982,282 +1307,15 @@ PanelWindow {
                                     root.actionIndex = 0
                             }
 
+                            Keys.onShortcutOverride: function(event) {
+                                if (root.isLauncherShortcutOverride(event, true))
+                                    event.accepted = true
+                            }
+
                             Keys.onPressed: function(event) {
-                                if (event.key === Qt.Key_Slash
-                                        && (event.modifiers & Qt.ControlModifier)) {
-                                    root.modeMenuOpen = !root.modeMenuOpen
-                                    if (root.modeMenuOpen) {
-                                        root.modeMenuIndex = 0
-                                        root.categoryMenuOpen = false
-                                        root.actionPanelOpen = false
-                                    }
-                                    event.accepted = true
-                                } else if (root.modeMenuOpen
-                                           && (event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
-                                    const direction = event.key === Qt.Key_Down ? 1 : -1
-                                    const count = root.modeOptions.length
-                                    root.modeMenuIndex = (root.modeMenuIndex + direction + count) % count
-                                    event.accepted = true
-                                } else if (root.modeMenuOpen
-                                           && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) {
-                                    const selectedMode = root.modeOptions[root.modeMenuIndex]
-                                    if (selectedMode)
-                                        root.openWithPrefix(selectedMode.prefix)
-                                    event.accepted = true
-                                } else if (root.modeMenuOpen && event.key === Qt.Key_Escape) {
-                                    root.modeMenuOpen = false
-                                    event.accepted = true
-                                } else if (root.categoryMenuOpen
-                                        && event.key === Qt.Key_K
-                                        && (event.modifiers & Qt.ControlModifier)
-                                        && root.selectedResult !== null) {
-                                    root.categoryMenuOpen = false
-                                    root.modeMenuOpen = false
-                                    root.actionPanelOpen = true
-                                    root.actionIndex = 0
-                                    root.panelBaseQuery = searchInput.text
-                                    event.accepted = true
-                                } else if (root.categoryMenuOpen
-                                        && (event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
-                                    categorySidebar.moveSelection(event.key === Qt.Key_Down ? 1 : -1)
-                                    event.accepted = true
-                                } else if (root.categoryMenuOpen
-                                           && (event.key === Qt.Key_Right
-                                               || event.key === Qt.Key_Return
-                                               || event.key === Qt.Key_Enter)) {
-                                    root.categoryMenuOpen = false
-                                    event.accepted = true
-                                } else if (root.categoryMenuOpen && event.key === Qt.Key_Escape) {
-                                    root.categoryMenuOpen = false
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Left
-                                           && event.modifiers === Qt.NoModifier
-                                           && !root.actionPanelOpen && !root.categoryMenuOpen
-                                           && !root.commandMode && !root.calcMode && !root.fileMode
-                                           && !root.clipboardMode && !root.actionMode && !root.emojiMode
-                                           && !root.killMode && !root.windowMode
-                                           && searchInput.cursorPosition === 0
-                                           && searchInput.selectedText.length === 0) {
-                                    root.openAppsBrowser()
-                                    event.accepted = true
-                                } else if ((event.key === Qt.Key_F6 || event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) && root.themeMode) {
-                                    themePane.toggleKbZone(event.key === Qt.Key_Backtab || !!(event.modifiers & Qt.ShiftModifier))
-                                    event.accepted = true
-                                    return
-                                } else if (event.key === Qt.Key_K
-                                           && (event.modifiers & Qt.ControlModifier)
-                                           && root.selectedResult !== null
-                                           && !root.themeMode) {
-                                    root.modeMenuOpen = false
-                                    root.actionPanelOpen = !root.actionPanelOpen
-                                    root.actionIndex = 0
-                                    if (root.actionPanelOpen)
-                                        root.panelBaseQuery = searchInput.text
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Right
-                                           && event.modifiers === Qt.NoModifier
-                                           && !root.actionPanelOpen
-                                           && root.selectedResult !== null
-                                           && !root.themeMode && !root.emojiMode
-                                           && searchInput.cursorPosition === searchInput.text.length
-                                           && searchInput.selectedText.length === 0) {
-                                    root.modeMenuOpen = false
-                                    root.actionPanelOpen = true
-                                    root.actionIndex = 0
-                                    root.panelBaseQuery = searchInput.text
-                                    event.accepted = true
-                                } else if (root.actionPanelOpen
-                                           && event.key === Qt.Key_Left
-                                           && event.modifiers === Qt.NoModifier) {
-                                    root.actionPanelOpen = false
-                                    event.accepted = true
-                                } else if (root.actionPanelOpen && event.key === Qt.Key_Escape) {
-                                    root.actionPanelOpen = false
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Escape && root.appBrowserMode) {
-                                    root.returnToUniversalSearch()
-                                    event.accepted = true
-                                } else if (root.actionPanelOpen
-                                           && (event.key === Qt.Key_Down || event.key === Qt.Key_Up)) {
-                                    const direction = event.key === Qt.Key_Down ? 1 : -1
-                                    root.actionIndex = actionPanel.panelMove(direction)
-                                    event.accepted = true
-                                } else if (root.actionPanelOpen
-                                           && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) {
-                                    const spec = actionPanel.actionAt(root.actionIndex)
-                                    if (spec && actionExecutor.runActionById(spec.id, root.selectedResult, root.selectedIndex)) {
-                                        root.actionPanelOpen = false
-                                        event.accepted = true
-                                    }
-                                } else if (root.emojiMode
-                                           && (event.key === Qt.Key_Left || event.key === Qt.Key_Right
-                                               || event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
-                                    if (root.results.length > 0) {
-                                        const len = root.results.length
-                                        const cur = Math.min(Math.max(0, root.emojiIndex), len - 1)
-                                        const column = cur % root.emojiColumns
-                                        let next = cur
-
-                                        if (event.key === Qt.Key_Left && column > 0)
-                                            next = cur - 1
-                                        else if (event.key === Qt.Key_Right
-                                                 && column < root.emojiColumns - 1 && cur + 1 < len)
-                                            next = cur + 1
-                                        else if (event.key === Qt.Key_Up && cur >= root.emojiColumns)
-                                            next = cur - root.emojiColumns
-                                        else if (event.key === Qt.Key_Down && cur + root.emojiColumns < len)
-                                            next = cur + root.emojiColumns
-
-                                        root.emojiIndex = next
-                                    }
-                                    event.accepted = true
-                                } else if (root.themeMode && (event.key === Qt.Key_Right || event.key === Qt.Key_Left)) {
-                                    if (themePane.kbZone === "glass")
-                                        themePane.glassMove(event.key === Qt.Key_Right ? 1 : -1)
-                                    else if (themePane.kbZone === "colors")
-                                        themePane.colorMove(event.key === Qt.Key_Right ? 1 : -1)
-                                    else if (themePane.kbZone === "variant")
-                                        themePane.variantMove(event.key === Qt.Key_Right ? 1 : -1)
-                                    else if (themePane.kbZone === "actions")
-                                        themePane.colorActionMove(event.key === Qt.Key_Right ? 1 : -1)
-                                    else if (themePane.kbZone === "catalog")
-                                        themePane.catMove(event.key === Qt.Key_Right ? 1 : -1, 0)
-                                    else
-                                        themePane.wpMove(event.key === Qt.Key_Right ? 1 : -1)
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Down) {
-                                    if (root.themeMode) {
-                                        if (themePane.kbZone === "glass")
-                                            themePane.glassMove(1)
-                                        else if (themePane.kbZone === "colors")
-                                            themePane.colorMove(1)
-                                        else if (themePane.kbZone === "variant")
-                                            themePane.variantMove(1)
-                                        else if (themePane.kbZone === "actions")
-                                            themePane.colorActionMove(1)
-                                        else if (themePane.kbZone === "catalog")
-                                            themePane.catMove(0, 1)
-                                        else
-                                            themePane.wpMove(1)
-                                    } else if (root.results.length > 0) {
-                                        const current = root.selectedIndex >= 0
-                                            ? root.selectedIndex : resultList.currentIndex
-                                        root.selectResultAt(
-                                            (current + 1) % root.results.length)
-                                        root.settleSelection()
-                                    }
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Up) {
-                                    if (root.themeMode) {
-                                        if (themePane.kbZone === "glass")
-                                            themePane.glassMove(-1)
-                                        else if (themePane.kbZone === "colors")
-                                            themePane.colorMove(-1)
-                                        else if (themePane.kbZone === "variant")
-                                            themePane.variantMove(-1)
-                                        else if (themePane.kbZone === "actions")
-                                            themePane.colorActionMove(-1)
-                                        else if (themePane.kbZone === "catalog")
-                                            themePane.catMove(0, -1)
-                                        else
-                                            themePane.wpMove(-1)
-                                    } else if (root.results.length > 0) {
-                                        const current = root.selectedIndex >= 0
-                                            ? root.selectedIndex : resultList.currentIndex
-                                        root.selectResultAt(
-                                            (current - 1 + root.results.length)
-                                            % root.results.length)
-                                        root.settleSelection()
-                                    }
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_PageDown) {
-                                    if (root.results.length > 0) {
-                                        const current = root.selectedIndex >= 0
-                                            ? root.selectedIndex : resultList.currentIndex
-                                        root.selectResultAt(
-                                            Math.min(root.results.length - 1, current + 6))
-                                        root.settleSelection()
-                                    }
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_PageUp) {
-                                    if (root.results.length > 0) {
-                                        const current = root.selectedIndex >= 0
-                                            ? root.selectedIndex : resultList.currentIndex
-                                        root.selectResultAt(
-                                            Math.max(0, current - 6))
-                                        root.settleSelection()
-                                    }
-                                    event.accepted = true
-                                } else if ((event.key === Qt.Key_Delete || event.key === Qt.Key_Back)
-                                           && (event.modifiers & Qt.ShiftModifier)) {
-                                    if (root.clipboardMode) {
-                                        root.deleteCurrentClipboardItem()
-                                        event.accepted = true
-                                    }
-                                } else if (event.key === Qt.Key_Delete
-                                           && root.clipboardMode
-                                           && searchInput.cursorPosition >= searchInput.text.length
-                                           && searchInput.selectedText.length === 0) {
-                                    root.deleteCurrentClipboardItem()
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Return
-                                           && (event.modifiers & Qt.ControlModifier)) {
-                                    if (actionExecutor.runSecondary(root.selectedResult)) {
-                                        event.accepted = true
-                                    }
-                                } else if (event.key === Qt.Key_Return
-                                           || event.key === Qt.Key_Enter) {
-                                    if (root.emojiMode && root.results.length > 0) {
-                                        root.emojiIndex = Math.min(Math.max(0, root.emojiIndex), root.results.length - 1)
-                                        root.activate(root.emojiIndex)
-                                        event.accepted = true
-                                    } else if (root.themeMode) {
-                                        let done = true
-                                        if (["colors", "variant", "actions", "glass"].includes(themePane.kbZone))
-                                            themePane.activatePaletteControl()
-                                        else if (themePane.kbZone === "catalog")
-                                            done = themePane.catActivateSelected()
-                                        else
-                                            done = themePane.wpActivateSelected()
-                                        if (!done)
-                                            root.activate(root.selectedIndex)
-                                        event.accepted = true
-                                    } else {
-                                        root.activate(root.selectedIndex)
-                                        event.accepted = true
-                                    }
-                                } else if (
-                                    event.key === Qt.Key_C
-                                    && (event.modifiers & Qt.ControlModifier)
-                                    && root.calcMode
-                                ) {                                    const value = searchInput.selectedText.length > 0
-                                                  ? searchInput.selectedText
-                                                  : searchInput.text.replace(/^=/, "").trim()
-
-                                    if (value.length > 0)
-                                        Quickshell.execDetached(["wl-copy", value])
-
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Backspace
-                                           && (searchInput.text === ":tema "
-                                               || searchInput.text === ":tela "
-                                               || searchInput.text === ":captura "
-                                               || searchInput.text === ":luz "
-                                               || searchInput.text === ":energia "
-                                               || searchInput.text === ":conexoes "
-                                               || searchInput.text === ":sistema "
-                                               || searchInput.text === ":sessao ")) {
-                                    searchInput.text = ": "
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Escape) {
-                                    if (root.themeMode && themePane.colorMode)
-                                        themePane.cancelColorPreview()
-                                    else
-                                        root.closeLauncher()
-                                    event.accepted = true
-                                }
-        }
-    }
+                                root.handleLauncherKey(event, true)
+                            }
+                        }
 
     Rectangle {
                             id: modePill
@@ -1301,7 +1359,7 @@ PanelWindow {
                                     if (root.commandMode) return "Comando"
                                     if (root.calcMode) return "Cálculo"
                                     if (root.fileMode) return "Arquivos"
-                                    if (root.clipboardMode) return "Área de transferência"
+                                    if (root.clipboardMode) return "Clipboard"
                                     if (root.actionMode) return queryRouter.getActionModeTitle(root.query)
                                     if (root.emojiMode) return "Emoji"
                                     if (root.killMode) return "Encerrar aplicativo"
@@ -1312,6 +1370,65 @@ PanelWindow {
                                        ? palette.primaryContainerForeground
                                        : root.launcherMuted
                                 font.family: palette.fontFamily
+                                font.pixelSize: palette.spotlightLabelFontSize
+                                font.weight: Font.DemiBold
+                            }
+                        }
+
+                        Rectangle {
+                            id: clipboardCapturePill
+                            visible: root.clipboardMode && clipboard.capturePauseKnown
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: 24
+                            width: visible ? capturePillLabel.implicitWidth + 16 : 0
+                            radius: palette.radiusButton
+                            readonly property bool hasError: clipboard.captureControlError.length > 0
+                            color: hasError
+                                   ? palette.errorContainer
+                                   : (clipboard.capturePaused
+                                      ? palette.withAlpha(palette.yellow, capturePillHover.hovered ? 0.24 : 0.16)
+                                      : (capturePillHover.hovered
+                                         ? palette.glassHoverSurface
+                                         : palette.glassCardSurface))
+                            border.width: 1
+                            border.color: hasError
+                                          ? palette.error
+                                          : (clipboard.capturePaused
+                                             ? palette.withAlpha(palette.yellow, 0.55)
+                                             : palette.pillBorder)
+
+                            HoverHandler {
+                                id: capturePillHover
+                                cursorShape: clipboard.captureControlRunning
+                                             ? Qt.ArrowCursor : Qt.PointingHandCursor
+                            }
+
+                            TapHandler {
+                                enabled: !clipboard.captureControlRunning
+                                onTapped: {
+                                    const desired = clipboard.captureControlError.length > 0
+                                        ? clipboard.capturePaused : !clipboard.capturePaused
+                                    clipboard.setCapturePaused(desired)
+                                    searchInput.forceActiveFocus()
+                                }
+                            }
+
+                            Text {
+                                id: capturePillLabel
+                                anchors.centerIn: parent
+                                text: clipboard.captureControlRunning
+                                      ? "Salvando…"
+                                      : (clipboardCapturePill.hasError
+                                         ? "Erro · tentar"
+                                         : (clipboard.capturePaused ? "󰐊  Pausado" : "󰏤  Pausar"))
+                                color: clipboardCapturePill.hasError
+                                       ? palette.error
+                                       : (clipboard.capturePaused
+                                          ? palette.yellow
+                                          : (capturePillHover.hovered
+                                             ? palette.primary
+                                             : root.launcherSecondary))
+                                font.family: palette.nerdFontFamily
                                 font.pixelSize: palette.spotlightLabelFontSize
                                 font.weight: Font.DemiBold
                             }
@@ -1365,10 +1482,93 @@ PanelWindow {
                     color: palette.outlineVariant
                 }
 
+                Rectangle {
+                    id: capturePausedBanner
+                    visible: root.clipboardMode && clipboard.capturePauseKnown && clipboard.capturePaused
+                    width: parent.width
+                    height: visible ? 32 : 0
+                    color: palette.withAlpha(palette.yellow, 0.10)
+
+                    Row {
+                        anchors.left: parent.left
+                        anchors.right: resumeBannerBtn.left
+                        anchors.leftMargin: palette.spacingTokens.hero
+                        anchors.rightMargin: palette.spacingTokens.md
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: palette.spacingTokens.sm
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "󰏤"
+                            color: palette.yellow
+                            font.family: palette.nerdFontFamily
+                            font.pixelSize: palette.spotlightBodyFontSize
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.max(0, parent.width - 22)
+                            text: "Captura pausada — novas cópias não estão sendo salvas"
+                            color: palette.surfaceForeground
+                            font.family: palette.fontFamily
+                            font.pixelSize: palette.spotlightBodyFontSize
+                            font.weight: Font.Medium
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    Rectangle {
+                        id: resumeBannerBtn
+                        anchors.right: parent.right
+                        anchors.rightMargin: palette.spacingTokens.xxxl
+                        anchors.verticalCenter: parent.verticalCenter
+                        height: 22
+                        width: resumeBannerLabel.implicitWidth + 16
+                        radius: palette.radiusButton
+                        color: palette.withAlpha(palette.yellow, resumeBannerHover.hovered ? 0.28 : 0.18)
+                        border.width: 1
+                        border.color: palette.withAlpha(palette.yellow, 0.55)
+
+                        HoverHandler {
+                            id: resumeBannerHover
+                            cursorShape: clipboard.captureControlRunning
+                                         ? Qt.ArrowCursor : Qt.PointingHandCursor
+                        }
+
+                        TapHandler {
+                            enabled: !clipboard.captureControlRunning
+                            onTapped: {
+                                clipboard.setCapturePaused(false)
+                                searchInput.forceActiveFocus()
+                            }
+                        }
+
+                        Text {
+                            id: resumeBannerLabel
+                            anchors.centerIn: parent
+                            text: clipboard.captureControlRunning ? "Salvando…" : "Retomar"
+                            color: palette.yellow
+                            font.family: palette.fontFamily
+                            font.pixelSize: palette.spotlightLabelFontSize
+                            font.weight: Font.DemiBold
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 14
+                        height: 1
+                        color: palette.outlineVariant
+                    }
+                }
+
                 Item {
                     id: contentArea
                     width: parent.width
-                    height: card.height - 94
+                    height: card.height - 94 - (capturePausedBanner.visible ? capturePausedBanner.height : 0)
 
                     // LEFT PANE: List of results (hidden in theme mode;
                     // keyboard nav still works through the model)
@@ -1659,7 +1859,7 @@ PanelWindow {
                         }
                         if (!root.selectedResult) return ""
                         const r = root.selectedResult
-                        if (r.kind === "clipboard") return "󰅍 Área de transferência · " + root.results.length + " itens"
+                        if (r.kind === "clipboard") return "󰅍  Área de transferência · " + root.results.length + (root.results.length === 1 ? " item" : " itens")
                         if (r.kind === "system") return "Ações do sistema"
                         if (r.kind === "app") return AppCategoryLogic.contextLabel(r.category)
                         if (r.kind === "window") return "Janelas"

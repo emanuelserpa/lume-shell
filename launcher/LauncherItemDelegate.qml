@@ -123,7 +123,8 @@ Item {
 
         Column {
             id: textCol
-            width: parent.width - leadingPreview.width - 67
+            width: parent.width - leadingPreview.width - resultRow.themeColors.spacingTokens.mdPlus
+                   - (enterHint.visible ? enterHint.width + resultRow.themeColors.spacingTokens.mdPlus : 0)
             anchors.verticalCenter: parent.verticalCenter
             spacing: resultRow.themeColors.spacingTokens.tiny
 
@@ -170,14 +171,17 @@ Item {
         }
 
         Text {
-            width: 42
+            id: enterHint
+            visible: resultRow.currentIndex === resultRow.index
+            width: visible ? 22 : 0
             anchors.verticalCenter: parent.verticalCenter
 
-            text: resultRow.currentIndex === resultRow.index
-                  ? "↵"
-                  : ""
+            text: visible ? "↵" : ""
 
-            color: resultRow.launcherMuted
+            color: resultRow.currentIndex === resultRow.index
+                   ? resultRow.themeColors.primaryContainerForeground
+                   : resultRow.launcherMuted
+            opacity: resultRow.currentIndex === resultRow.index ? 0.75 : 1.0
             font.family: resultRow.themeColors.fontFamily
             font.pixelSize: resultRow.themeColors.spotlightHintFontSize
             horizontalAlignment: Text.AlignRight

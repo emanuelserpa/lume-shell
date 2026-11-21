@@ -22,7 +22,7 @@ Item {
         theme: root.theme
         plain: root.plain
         text: ""
-        tablerIcon: "bar-controls"
+        tablerIcon: root.dnd ? "bell-off" : "bell"
         iconSize: root.theme.barIconSize
         fontPixelSize: root.theme.iconTokens.lg
         textColor: {
@@ -34,14 +34,14 @@ Item {
         highlighted: notificationPopup.visible || recordingPopup.visible || root.hasCritical
 
         Rectangle {
-            visible: root.notificationCount > 0
+            visible: root.notificationCount > 0 || root.hasCritical
             width: root.theme.spacingTokens.xsPlus
             height: width
             radius: width / 2
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.rightMargin: root.theme.spacingTokens.micro
-            anchors.topMargin: root.theme.spacingTokens.micro
+            anchors.rightMargin: root.theme.spacingTokens.xs
+            anchors.topMargin: root.theme.spacingTokens.tight
             color: root.hasCritical ? root.theme.red : root.theme.primary
         }
 

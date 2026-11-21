@@ -385,8 +385,8 @@ Item {
             anchors.bottomMargin: 2
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
+            anchors.leftMargin: root.theme.spacingTokens.sm
+            anchors.rightMargin: root.theme.spacingTokens.sm
             height: 1.5
             radius: 1
             color: root.theme.withAlpha(root.theme.surfaceForeground, 0.10)

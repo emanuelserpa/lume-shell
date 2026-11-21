@@ -138,6 +138,34 @@ function withoutBatteryAlertToasts(toasts) {
     })
 }
 
+function findToastIndexForIncoming(toasts, notification) {
+    if (!notification || !Array.isArray(toasts)) return -1
+    const key = String(notification.id ?? "")
+    const replaceKey = String(notification.replaceKey ?? "")
+    for (let i = 0; i < toasts.length; i++) {
+        const toast = toasts[i]
+        if (!toast) continue
+        if (String(toast.id ?? "") === key)
+            return i
+        if (replaceKey.length > 0 && String(toast.notification?.replaceKey ?? "") === replaceKey)
+            return i
+    }
+    return -1
+}
+
+function hasCriticalNotification(trackedList, internalList, criticalUrgency) {
+    const lists = [trackedList, internalList]
+    for (let l = 0; l < lists.length; l++) {
+        const list = lists[l]
+        if (!list || list.length === 0) continue
+        for (let i = 0; i < list.length; i++) {
+            if (list[i] && list[i].urgency === criticalUrgency)
+                return true
+        }
+    }
+    return false
+}
+
 function batteryIcon(n) {
     if (!n) return "󰁹"
     if (isChargingNotification(n)) {

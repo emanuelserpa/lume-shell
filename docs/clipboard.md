@@ -31,7 +31,7 @@ O callback do observador consome o conteúdo enviado por `wl-paste --watch` no
 `stdin` antes de consultar MIME e gravar o item. Isso impede que uma captura
 PNG grande bloqueie o pipe e paralise eventos seguintes.
 
-O botão **Pausar** no preview do clipboard persiste a preferência em
+O botão **Pausar** no cabeçalho do clipboard persiste a preferência em
 `$XDG_STATE_HOME/quickshell/clipboard-capture.json` (ou
 `~/.local/state/quickshell/clipboard-capture.json`). Enquanto pausado, os
 callbacks ainda drenam o pipe do Wayland, mas não consultam MIME nem armazenam a

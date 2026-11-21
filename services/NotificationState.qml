@@ -103,19 +103,15 @@ QtObject {
         return combined
     }
     readonly property int count: tracked ? tracked.length : 0
-    readonly property bool hasCritical: {
-        const list = tracked
-        if (!list || list.length === 0) return false
-        for (let i = 0; i < list.length; i++) {
-            if (list[i] && list[i].urgency === NotificationUrgency.Critical) {
-                return true
-            }
-        }
-        return false
-    }
+    readonly property bool hasCritical: NotificationContent.hasCriticalNotification(
+        root.tracked,
+        root.internalNotifications,
+        NotificationUrgency.Critical
+    )
 
     signal notificationReceived(var notification)
     signal notificationRestored(var notification)
+    signal internalNotificationDismissed(string notificationId)
     signal togglePopupRequested()
     signal batteryAlertsDismissed()
 
@@ -382,6 +378,7 @@ QtObject {
             root.expiringInternalNotificationId = ""
             internalExpiryTimer.stop()
         }
+        root.internalNotificationDismissed(String(notificationId))
     }
 
     function postInternalNotification(details) {
@@ -550,6 +547,16 @@ QtObject {
                 root.dismiss(list[i])
             }
         }
+        const remainingInternal = root.internalNotifications.filter(function(item) {
+            if (!root.isBatteryAlert(item)) return true
+            if (root.expiringInternalNotificationId === item.internalNotificationId) {
+                root.expiringInternalNotificationId = ""
+                internalExpiryTimer.stop()
+            }
+            return false
+        })
+        if (remainingInternal.length !== root.internalNotifications.length)
+            root.internalNotifications = remainingInternal
         root.batteryAlertsDismissed()
     }
 

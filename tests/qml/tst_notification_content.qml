@@ -214,4 +214,34 @@ TestCase {
         compare(next.wasCharging, false)
         compare(next.notice, null)
     }
+
+    function test_incomingNotificationReplacesMatchingReplaceKeyToast() {
+        const existing = [
+            { id: "internal-1", notification: { id: "internal-1", replaceKey: "battery-alert", summary: "Bateria muito fraca" } },
+            { id: "99", notification: { id: "99", replaceKey: "", summary: "Outro aviso" } }
+        ]
+        compare(NotificationContent.findToastIndexForIncoming(existing, {
+            id: "internal-2",
+            replaceKey: "battery-alert",
+            summary: "Bateria criticamente baixa"
+        }), 0)
+        compare(NotificationContent.findToastIndexForIncoming(existing, {
+            id: "100",
+            replaceKey: "",
+            summary: "Novo aviso"
+        }), -1)
+    }
+
+    function test_hasCriticalDetectsUntrackedInternalAlerts() {
+        verify(!NotificationContent.hasCriticalNotification(
+            [{ urgency: 1 }],
+            [{ urgency: 0 }],
+            2
+        ))
+        verify(NotificationContent.hasCriticalNotification(
+            [],
+            [{ urgency: 2, tracked: false }],
+            2
+        ))
+    }
 }

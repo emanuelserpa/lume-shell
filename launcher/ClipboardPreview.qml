@@ -75,7 +75,7 @@ Item {
                     readonly property string cType: root.result ? String(root.resultPayload.clipType ?? "text") : "text"
                     readonly property string cIcon: root.result ? String(root.resultPayload.icon ?? "") : ""
 
-                    color: root.themeColors.glassCardSurface
+                    color: root.themeColors.withAlpha(root.themeColors.primary, 0.12)
                     border.width: 0
                     border.color: root.themeColors.outlineVariant
 
@@ -96,7 +96,7 @@ Item {
                         color: {
                             if (!root.result || root.result.kind !== "clipboard")
                                 return root.launcherSecondary
-                            return root.themeColors.surfaceVariantForeground
+                            return root.themeColors.primary
                         }
                         font.family: root.themeColors.fontFamily
                         font.pixelSize: root.themeColors.spotlightLabelFontSize
@@ -120,23 +120,21 @@ Item {
                             : (chars + " caracteres")
                     }
                     color: root.launcherSecondary
-                    opacity: 0.75
+                    opacity: 0.80
                     font.family: root.themeColors.fontFamily
                     font.pixelSize: root.themeColors.spotlightBodyFontSize
                     elide: Text.ElideRight
                 }
             }
 
-            // Right: Action Buttons (Delete & Paste)
+            // Right: Item-scoped feedback & delete pill
             Row {
                 id: headerActions
                 anchors.right: parent.right
-                anchors.rightMargin: captureToggle.visible ? root.themeColors.spacingTokens.sm : 0
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: root.themeColors.spacingTokens.sm
                 visible: root.result !== null && root.result.kind === "clipboard"
 
-                // Error text if any
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: root.store.restoreError.length > 0
@@ -146,108 +144,34 @@ Item {
                     font.pixelSize: root.themeColors.spotlightBodyFontSize
                 }
 
-                // Delete Hint / Clickable Action
-                Text {
-                    id: deleteHint
+                Rectangle {
+                    id: deletePill
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "󰆴 Del"
-                    color: deleteMouse.containsMouse ? root.themeColors.error : root.launcherMuted
-                    opacity: deleteMouse.containsMouse ? 1.0 : 0.45
-                    font.family: root.themeColors.nerdFontFamily
-                    font.pixelSize: root.themeColors.spotlightLabelFontSize
+                    height: 22
+                    width: deleteHint.implicitWidth + 14
+                    radius: root.themeColors.radiusSm
+                    color: deleteMouse.containsMouse
+                           ? root.themeColors.withAlpha(root.themeColors.error, 0.14)
+                           : "transparent"
 
                     MouseArea {
                         id: deleteMouse
                         anchors.fill: parent
-                        anchors.margins: -4
+                        enabled: !root.store.deleteRunning
                         hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                         onClicked: root.deleteRequested()
                     }
-                }
 
-                // Separator bullet
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "·"
-                    color: root.launcherMuted
-                    opacity: 0.35
-                    font.family: root.themeColors.fontFamily
-                    font.pixelSize: root.themeColors.spotlightLabelFontSize
-                }
-
-                // Paste Hint / Clickable Action
-                Text {
-                    id: pasteHint
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: (root.store.restoreRunning || root.store.deleteRunning)
-                          ? (root.store.restoreRunning ? "Restaurando…" : "Removendo…")
-                          : "↵ Colar"
-                    color: pasteMouse.containsMouse ? root.launcherPrimary : root.launcherMuted
-                    opacity: pasteMouse.containsMouse ? 1.0 : 0.65
-                    font.family: root.themeColors.fontFamily
-                    font.pixelSize: root.themeColors.spotlightBodyFontSize
-
-                    MouseArea {
-                        id: pasteMouse
-                        anchors.fill: parent
-                        anchors.margins: -4
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.pasteRequested()
-                    }
-                }
-
-                Text {
-                    id: openImageHint
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: root.selectedImage
-                    text: root.store.imageOpenRunning ? "Abrindo imagem…" : "Ctrl+↵ Abrir imagem"
-                    color: openImageMouse.containsMouse ? root.launcherPrimary : root.launcherMuted
-                    opacity: openImageMouse.containsMouse ? 1.0 : 0.65
-                    font.family: root.themeColors.fontFamily
-                    font.pixelSize: root.themeColors.spotlightBodyFontSize
-
-                    MouseArea {
-                        id: openImageMouse
-                        anchors.fill: parent
-                        anchors.margins: -4
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.openImageRequested()
-                    }
-                }
-            }
-
-            Text {
-                id: captureToggle
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                visible: root.store.capturePauseKnown
-                text: root.store.captureControlRunning
-                      ? "Salvando…"
-                      : (root.store.captureControlError.length > 0
-                         ? "Erro · tentar"
-                         : (root.store.capturePaused ? "▶ Retomar" : "Ⅱ Pausar"))
-                color: root.store.captureControlError.length > 0
-                       ? root.themeColors.error
-                       : (captureMouse.containsMouse
-                          ? root.themeColors.primary : root.launcherMuted)
-                opacity: captureMouse.containsMouse ? 1.0 : 0.75
-                font.family: root.themeColors.fontFamily
-                font.pixelSize: root.themeColors.spotlightBodyFontSize
-
-                MouseArea {
-                    id: captureMouse
-                    anchors.fill: parent
-                    anchors.margins: -4
-                    enabled: !root.store.captureControlRunning
-                    hoverEnabled: true
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: {
-                        const desired = root.store.captureControlError.length > 0
-                            ? root.store.capturePaused : !root.store.capturePaused
-                        root.store.setCapturePaused(desired)
+                    Text {
+                        id: deleteHint
+                        anchors.centerIn: parent
+                        text: root.store.deleteRunning ? "Removendo…" : "󰆴  Remover"
+                        color: deleteMouse.containsMouse ? root.themeColors.error : root.launcherMuted
+                        opacity: deleteMouse.containsMouse ? 1.0 : 0.72
+                        font.family: root.themeColors.nerdFontFamily
+                        font.pixelSize: root.themeColors.spotlightLabelFontSize
+                        font.weight: Font.Medium
                     }
                 }
             }
@@ -260,7 +184,7 @@ Item {
             anchors.right: parent.right
             anchors.top: previewHeader.bottom
             anchors.bottom: parent.bottom
-            anchors.topMargin: root.themeColors.spacingTokens.xs
+            anchors.topMargin: root.themeColors.spacingTokens.sm
             radius: root.themeColors.radiusMd
             color: root.themeColors.withAlpha(root.themeColors.heroBackdropStart, 0.55)
             border.width: 1

@@ -15,6 +15,7 @@ Pill {
     readonly property real pct: bat?.ready ? bat.percentage * 100 : 0
     readonly property bool charging: bat?.state === UPowerDeviceState.Charging
     readonly property bool plugged: charging || bat?.state === UPowerDeviceState.FullyCharged
+    readonly property bool criticalLow: Boolean(bat?.ready) && !charging && pct <= 15
     readonly property real watts: bat?.ready ? Math.abs(bat.changeRate) : 0
     readonly property real secondsRemaining:
         !bat?.ready ? 0 : (charging ? bat.timeToFull : bat.timeToEmpty)
@@ -123,9 +124,13 @@ Pill {
             width: root.theme.iconTokens.mediaControl + 9
             height: parent.height
             radius: 5
-            color: Qt.alpha(root.theme.surfaceForeground, 0.16)
-            border.width: 0
-            border.color: Qt.alpha(root.theme.surfaceForeground, 0.35)
+            color: root.criticalLow
+                   ? root.theme.withAlpha(root.theme.red, 0.18)
+                   : Qt.alpha(root.theme.surfaceForeground, 0.16)
+            border.width: root.criticalLow ? 1 : 0
+            border.color: root.criticalLow
+                          ? root.theme.withAlpha(root.theme.red, 0.78)
+                          : Qt.alpha(root.theme.surfaceForeground, 0.35)
             antialiasing: true
 
             Item {
@@ -175,7 +180,7 @@ Pill {
             width: 2
             height: 5
             radius: 1
-            color: Qt.alpha(root.theme.surfaceForeground, 0.55)
+            color: root.criticalLow ? root.theme.red : Qt.alpha(root.theme.surfaceForeground, 0.55)
         }
 
         // The state badge is outside the body, so charging never moves the digits.

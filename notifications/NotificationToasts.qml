@@ -25,7 +25,7 @@ PanelWindow {
     // QMargins is valid at runtime; the shipped qmllint metadata cannot
     // resolve its grouped top/right members.
     // qmllint disable unqualified unresolved-type
-    margins.top: 45
+    margins.top: root.theme.barHeight + root.theme.spacingTokens.lg
     margins.right: root.theme.barPanelInset + root.theme.spacingTokens.md
     margins.bottom: 0
     // qmllint enable unqualified unresolved-type
@@ -81,6 +81,10 @@ PanelWindow {
             root.addToast(n, true)
         }
 
+        function onInternalNotificationDismissed(notificationId) {
+            root.closeToast(notificationId)
+        }
+
         function onBatteryAlertsDismissed() {
             const remaining = NotificationContent.withoutBatteryAlertToasts(root.activeToasts)
             const remainingIds = remaining.map(toast => toast.id)
@@ -110,13 +114,16 @@ PanelWindow {
         }
 
         const key = String(n.id)
-        const existing = root.activeToasts.findIndex(t => String(t.id) === key)
+        const existing = NotificationContent.findToastIndexForIncoming(root.activeToasts, n)
         if (existing !== -1) {
+            const previousKey = String(root.activeToasts[existing].id)
             const wasEntered = root.activeToasts[existing].entered
             toastItem.entered = wasEntered === undefined ? true : Boolean(wasEntered)
+            if (previousKey !== key)
+                toastModel.setProperty(existing, "toastKey", key)
             const updated = root.activeToasts.slice()
             updated[existing] = toastItem
-            root.closingIds = root.closingIds.filter(id => String(id) !== key)
+            root.closingIds = root.closingIds.filter(id => String(id) !== key && String(id) !== previousKey)
             root.activeToasts = updated
             return
         }
@@ -157,7 +164,7 @@ PanelWindow {
         id: toastColumn
         x: root.swipeRunway
         width: root.theme.popupWidths.large
-        spacing: root.theme.spacingTokens.md
+        spacing: root.theme.spacingTokens.lg
 
         // Existing cards move to their new slots immediately. Only the new
         // card animates, keeping the translucent stack from leaving trails.
