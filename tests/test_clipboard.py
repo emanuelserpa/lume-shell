@@ -551,6 +551,22 @@ class ClipboardBackendTestCase(unittest.TestCase):
         self.assertFalse(orphan.exists())
         self.assertTrue(live_thumb.exists())
 
+    def test_ensure_cache_dirs_skips_redundant_chmod_on_change_file(self):
+        clipboard_store.ensure_cache_dirs()
+        clipboard_store.CHANGE_FILE.write_text("123\n", encoding="utf-8")
+        clipboard_store.CHANGE_FILE.chmod(0o600)
+        initial_ctime = clipboard_store.CHANGE_FILE.lstat().st_ctime_ns
+
+        clipboard_store.ensure_cache_dirs()
+
+        # Calling chmod(0o600) when already 0o600 updates ctime and emits IN_ATTRIB,
+        # which makes Quickshell FileView continuously re-trigger clipboard refreshes.
+        self.assertEqual(clipboard_store.CHANGE_FILE.lstat().st_ctime_ns, initial_ctime)
+
+        clipboard_store.CHANGE_FILE.chmod(0o644)
+        clipboard_store.ensure_cache_dirs()
+        self.assertEqual(clipboard_store.CHANGE_FILE.lstat().st_mode & 0o777, 0o600)
+
 
 class ClipboardCaptureRetryTestCase(unittest.TestCase):
     """Transient owners (screenshot tools) may serve empty bytes on the

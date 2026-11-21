@@ -16,6 +16,13 @@ Item {
     property bool active: false
     property string displayedItemId: ""
     readonly property var resultPayload: root.result?.payload ?? ({})
+    readonly property string resolvedThumbnail: {
+        const clipId = root.resultPayload.clipId
+        const mapped = root.store && root.store.thumbs && clipId !== undefined && clipId !== null
+            ? String(root.store.thumbs[String(clipId)] ?? "")
+            : ""
+        return mapped.length > 0 ? mapped : String(root.resultPayload.thumbnail ?? "")
+    }
     readonly property bool selectedImage: root.result !== null
                                           && root.result.kind === "clipboard"
                                           && root.resultPayload.clipType === "image"
@@ -278,9 +285,7 @@ Item {
                 visible: root.result !== null
                          && root.result.kind === "clipboard"
                          && root.resultPayload.clipType === "image"
-                source: visible && root.result && root.resultPayload.thumbnail
-                        ? root.resultPayload.thumbnail
-                        : ""
+                source: visible ? root.resolvedThumbnail : ""
                 fillMode: Image.PreserveAspectFit
                 smooth: true
                 mipmap: true

@@ -17,6 +17,10 @@ exibe o estado de carregamento até essa consulta terminar. O arquivo de índice
 em cache continua disponível para compatibilidade, mas não é lido em paralelo
 com a consulta ao abrir o launcher.
 
+Itens em cache permanecem visíveis durante a atualização, sem repetir o rótulo
+“atualizando…” em cada linha; miniaturas e mudanças no estado `fresh` atualizam
+os itens no lugar sem reconstruir a lista nem deslocar a seleção.
+
 Enquanto o modo clipboard está aberto, a interface observa
 `~/.cache/quickshell/clipboard-change`. O backend atualiza esse marcador depois
 de confirmar uma mudança no SQLite; o Spotlight agrupa eventos próximos e

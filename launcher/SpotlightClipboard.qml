@@ -23,6 +23,7 @@ Item {
 
     property var items: []
     property var thumbs: ({})
+    property var attemptedThumbIds: ({})
     property bool available: true
     property bool loaded: false
     property bool fresh: false
@@ -100,10 +101,28 @@ Item {
         }
     }
 
+    function sameSnapshotItems(nextItems) {
+        if (!Array.isArray(nextItems) || nextItems.length !== root.items.length)
+            return false
+        for (let i = 0; i < nextItems.length; ++i) {
+            const current = root.items[i]
+            const incoming = nextItems[i]
+            if (!current || !incoming)
+                return false
+            if (String(current.id ?? "") !== String(incoming.id ?? "")
+                    || String(current.signature ?? "") !== String(incoming.signature ?? "")
+                    || String(current.type ?? "") !== String(incoming.type ?? "")
+                    || String(current.preview ?? "") !== String(incoming.preview ?? ""))
+                return false
+        }
+        return true
+    }
+
     function refresh() {
         // Keep the previous list visible while the database snapshot refreshes.
         root.loaded = root.items.length > 0
         root.fresh = false
+        root.attemptedThumbIds = ({})
         root.restoreError = ""
 
         if (snapshotProc.running)
@@ -172,12 +191,31 @@ Item {
             thumbDelay.restart()
     }
 
+    function hasPendingThumbnails() {
+        const shown = root.visibleResults
+        for (let i = 0; i < shown.length; ++i) {
+            const item = shown[i]
+            if (String(item.kind ?? "") !== "clipboard"
+                    || String(item.clipType ?? "") !== "image")
+                continue
+            const id = String(item.clipId ?? "")
+            const mime = String(item.mime ?? "")
+            if (id.length === 0 || mime.length === 0)
+                continue
+            if (String(root.thumbs[id] ?? "").length > 0 || root.attemptedThumbIds[id])
+                continue
+            return true
+        }
+        return false
+    }
+
     function requestThumbnails() {
         if (!root.active || !root.fresh)
             return
 
         const requests = []
         const shown = root.visibleResults
+        const nextAttempted = Object.assign({}, root.attemptedThumbIds)
 
         for (let i = 0; i < shown.length && requests.length < 24; ++i) {
             const item = shown[i]
@@ -192,15 +230,17 @@ Item {
             if (id.length === 0 || mime.length === 0)
                 continue
 
-            if (String(root.thumbs[id] ?? "").length > 0)
+            if (String(root.thumbs[id] ?? "").length > 0 || nextAttempted[id])
                 continue
 
+            nextAttempted[id] = true
             requests.push({ id: id, mime: mime })
         }
 
         if (requests.length === 0 || thumbProc.running)
             return
 
+        root.attemptedThumbIds = nextAttempted
         thumbProc.command = [
             "python3",
             Quickshell.shellDir + "/scripts/launcher-data.py",
@@ -225,9 +265,12 @@ Item {
                 const data = response.data
                 root.available = response.ok && data.available !== false
                 root.error = String(response.error ?? data.error ?? "")
-                root.itemsReplacing()
-                root.items = Array.isArray(data.items) ? data.items : []
-                root.itemsReplaced()
+                const nextItems = Array.isArray(data.items) ? data.items : []
+                if (!root.sameSnapshotItems(nextItems)) {
+                    root.itemsReplacing()
+                    root.items = nextItems
+                    root.itemsReplaced()
+                }
                 root.loaded = true
                 root.fresh = true
                 root.restoreError = ""
@@ -291,6 +334,8 @@ Item {
                     const incoming = response.data.thumbnails ?? ({})
                     root.thumbs = Object.assign({}, root.thumbs, incoming)
                 }
+                if (root.active && root.fresh && root.hasPendingThumbnails())
+                    root.scheduleThumbnails()
             }
         }
     }

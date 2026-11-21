@@ -112,6 +112,46 @@ TestCase {
         compare(routerInstance.results[0].title, "Arquivos")
     }
 
+    Component {
+        id: clipboardStubFactory
+        QtObject {
+            property bool available: true
+            property string error: ""
+            property var items: [{
+                id: "1", signature: "sig", preview: "Example",
+                subtitle: "7 chars", type: "text", icon: "icon",
+                fullText: "Example", mime: "text/plain"
+            }]
+            property bool loaded: true
+            property bool fresh: false
+            property var thumbs: ({})
+        }
+    }
+
+    function test_cachedClipboardRowsDoNotRepeatRefreshStatus() {
+        const stub = clipboardStubFactory.createObject(testCase)
+        let rebuildCount = 0
+        const onChanged = function() { rebuildCount += 1 }
+        routerInstance.resultsChanged.connect(onChanged)
+        try {
+            routerInstance.clipboard = stub
+            query = "#"
+
+            compare(routerInstance.results.length, 1)
+            compare(routerInstance.results[0].subtitle, "7 chars")
+            const countBeforeAsyncUpdates = rebuildCount
+
+            stub.fresh = true
+            stub.thumbs = ({ "1": "file:///tmp/thumb.jpg" })
+
+            compare(rebuildCount, countBeforeAsyncUpdates)
+            compare(routerInstance.results[0].subtitle, "7 chars")
+        } finally {
+            routerInstance.resultsChanged.disconnect(onChanged)
+            stub.destroy()
+        }
+    }
+
     function test_emojiGridReceivesAllFortyVisibleItems() {
         routerInstance.modes.emojiItems = Array.from({length: 45}, (_, index) => ({
             char: String(index),

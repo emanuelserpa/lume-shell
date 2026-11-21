@@ -160,6 +160,11 @@ PanelWindow {
             return -1
         if (root.emojiMode)
             return Math.min(Math.max(0, root.emojiIndex), results.length - 1)
+        if (root.selectedResultKey.length > 0) {
+            const keyedIndex = results.findIndex(item => String(item.id ?? "") === root.selectedResultKey)
+            if (keyedIndex >= 0)
+                return keyedIndex
+        }
         return Math.min(Math.max(0, resultList.currentIndex), results.length - 1)
     }
     readonly property var selectedResult: (selectedIndex >= 0 && selectedIndex < results.length)
@@ -178,7 +183,12 @@ PanelWindow {
     readonly property bool windowMode: queryMode === "windows"
 
     property var appUsage: ({})
-    property string clipboardSelectedIdBeforeRefresh: ""
+    property string selectedResultKey: ""
+    property bool suppressHighlightAnimation: false
+
+    ListModel {
+        id: resultsListModel
+    }
 
     readonly property var appBrowserApplications: {
         const entries = []
@@ -237,7 +247,7 @@ PanelWindow {
         }
         onNavigateRequested: function(prefix) {
             searchInput.text = prefix
-            resultList.currentIndex = 0
+            root.resetSelection()
             Qt.callLater(function() {
                 searchInput.forceActiveFocus()
                 searchInput.cursorPosition = searchInput.text.length
@@ -320,22 +330,6 @@ PanelWindow {
                 root.closeLauncher()
         }
 
-        function onItemsReplacing() {
-            const selected = root.selectedResult
-            root.clipboardSelectedIdBeforeRefresh = selected && selected.kind === "clipboard"
-                                                    ? String(selected.payload.clipId) : ""
-        }
-
-        function onItemsReplaced() {
-            const selectedId = root.clipboardSelectedIdBeforeRefresh
-            root.clipboardSelectedIdBeforeRefresh = ""
-            if (!selectedId || !root.visible || !root.clipboardMode)
-                return
-            const index = root.results.findIndex(item =>
-                item.kind === "clipboard" && String(item.payload.clipId) === selectedId)
-            if (index >= 0)
-                resultList.currentIndex = index
-        }
     }
 
 
@@ -343,16 +337,129 @@ PanelWindow {
         if (!root.clipboardMode)
             return
 
+        const currentIdx = root.selectedIndex
         const item = root.selectedResult
         if (!item || item.kind !== "clipboard"
                 || item.payload.clipId === undefined || item.payload.clipId === null)
             return
 
-        clipboard.removeItem(String(item.payload.clipId), String(item.payload.clipSignature ?? ""))
+        const nextItem = (currentIdx + 1 < root.results.length)
+            ? root.results[currentIdx + 1]
+            : (currentIdx > 0 ? root.results[currentIdx - 1] : null)
+        root.selectedResultKey = nextItem ? String(nextItem.id ?? "") : ""
 
-        if (resultList.currentIndex >= root.results.length) {
-            resultList.currentIndex = Math.max(0, root.results.length - 1)
+        clipboard.removeItem(String(item.payload.clipId), String(item.payload.clipSignature ?? ""))
+    }
+
+    function selectResultAt(index) {
+        if (root.results.length === 0) {
+            root.selectedResultKey = ""
+            resultList.currentIndex = -1
+            return
         }
+
+        const safeIndex = Math.min(Math.max(0, index), root.results.length - 1)
+        root.selectedResultKey = String(root.results[safeIndex]?.id ?? "")
+        resultList.currentIndex = safeIndex
+    }
+
+    function resetSelection() {
+        root.selectedResultKey = ""
+        resultList.currentIndex = root.results.length > 0 ? 0 : -1
+        if (root.results.length > 0)
+            resultList.positionViewAtIndex(0, ListView.Beginning)
+    }
+
+    function buildModelKeys(items) {
+        const counts = Object.create(null)
+        const keys = []
+        for (let i = 0; i < items.length; ++i) {
+            const base = String(items[i]?.id ?? i)
+            const seen = counts[base] ?? 0
+            counts[base] = seen + 1
+            keys.push(seen === 0 ? base : (base + "#" + seen))
+        }
+        return keys
+    }
+
+    function syncResultsModel() {
+        const items = root.results
+        if (!items || items.length === 0) {
+            resultsListModel.clear()
+            if (!root.emojiMode) {
+                root.selectedResultKey = ""
+                resultList.currentIndex = -1
+            }
+            return
+        }
+
+        const desired = root.buildModelKeys(items)
+        const desiredSet = Object.create(null)
+        for (let i = 0; i < desired.length; ++i)
+            desiredSet[desired[i]] = true
+
+        let overlap = 0
+        for (let i = 0; i < resultsListModel.count; ++i) {
+            if (desiredSet[String(resultsListModel.get(i).rowKey ?? "")])
+                overlap += 1
+        }
+
+        if (resultsListModel.count === 0 || overlap === 0) {
+            root.suppressHighlightAnimation = true
+            resultsListModel.clear()
+            for (let i = 0; i < desired.length; ++i)
+                resultsListModel.append({ rowKey: desired[i] })
+            Qt.callLater(function() {
+                root.suppressHighlightAnimation = false
+            })
+        } else {
+            for (let i = resultsListModel.count - 1; i >= 0; --i) {
+                if (!desiredSet[String(resultsListModel.get(i).rowKey ?? "")])
+                    resultsListModel.remove(i)
+            }
+            for (let i = 0; i < desired.length; ++i) {
+                if (i < resultsListModel.count
+                        && String(resultsListModel.get(i).rowKey ?? "") === desired[i])
+                    continue
+                let found = -1
+                for (let j = i + 1; j < resultsListModel.count; ++j) {
+                    if (String(resultsListModel.get(j).rowKey ?? "") === desired[i]) {
+                        found = j
+                        break
+                    }
+                }
+                if (found >= 0)
+                    resultsListModel.move(found, i, 1)
+                else
+                    resultsListModel.insert(i, { rowKey: desired[i] })
+            }
+        }
+
+        root.restoreSelectionAfterResultsChange()
+    }
+
+    function restoreSelectionAfterResultsChange() {
+        if (root.emojiMode)
+            return
+        if (root.results.length === 0) {
+            root.selectedResultKey = ""
+            resultList.currentIndex = -1
+            return
+        }
+
+        const previousKey = root.selectedResultKey
+        const matchingIndex = previousKey.length > 0
+            ? root.results.findIndex(item => String(item.id ?? "") === previousKey)
+            : -1
+        if (matchingIndex >= 0) {
+            if (resultList.currentIndex !== matchingIndex)
+                resultList.currentIndex = matchingIndex
+            return
+        }
+
+        const safeIndex = Math.min(Math.max(0, resultList.currentIndex), root.results.length - 1)
+        resultList.currentIndex = safeIndex
+        root.selectedResultKey = String(root.results[safeIndex]?.id ?? "")
     }
 
     function closeLauncher() {
@@ -367,7 +474,7 @@ PanelWindow {
         root.actionPanelOpen = false
         root.actionIndex = 0
         searchInput.text = ""
-        resultList.currentIndex = 0
+        root.resetSelection()
     }
 
     function openLauncher() {
@@ -382,7 +489,7 @@ PanelWindow {
         root.actionPanelOpen = false
         root.actionIndex = 0
         searchInput.text = ""
-        resultList.currentIndex = 0
+        root.resetSelection()
         modes.refreshWindows()
         Qt.callLater(function() {
             searchInput.forceActiveFocus()
@@ -448,7 +555,7 @@ PanelWindow {
         root.modeMenuOpen = false
         root.actionPanelOpen = false
         root.visible = true
-        resultList.currentIndex = 0
+        root.resetSelection()
         Qt.callLater(function() { searchInput.forceActiveFocus() })
     }
 
@@ -466,7 +573,7 @@ PanelWindow {
                 item.entry?.id ?? item.entry?.name ?? item.title ?? ""
             ) === selectedAppKey)
             if (matchingIndex >= 0)
-                resultList.currentIndex = matchingIndex
+                root.selectResultAt(matchingIndex)
         })
     }
 
@@ -488,7 +595,7 @@ PanelWindow {
         root.actionPanelOpen = false
         const text = prefix.endsWith(" ") ? prefix : (prefix + " ")
         searchInput.text = text
-        resultList.currentIndex = 0
+        root.resetSelection()
         // Set the mode before mapping the window so the first frame never
         // computes and lays out universal-search results that will be discarded.
         root.visible = true
@@ -497,8 +604,10 @@ PanelWindow {
             modes.searchEmoji(prefix.endsWith(" ") ? prefix : (prefix + " "))
         else if (prefix.trim() === "!" || prefix.trim() === "~")
             modes.refreshWindows()
-        else if (prefix.trim() === "#")
-            clipboard.refresh()
+        else if (prefix.trim() === "#") {
+            if (!clipboard.snapshotRunning)
+                clipboard.refresh()
+        }
 
         Qt.callLater(function() {
             searchInput.forceActiveFocus()
@@ -543,11 +652,12 @@ PanelWindow {
     Component.onCompleted: {
         if (!usageLoadProc.running)
             usageLoadProc.running = true
+        root.syncResultsModel()
     }
 
     onVisibleChanged: {
         if (visible) {
-            resultList.currentIndex = 0
+            root.resetSelection()
 
             if (root.openRequestedAt > 0) {
                 console.log("Spotlight open latency: "
@@ -564,6 +674,8 @@ PanelWindow {
             root.closingAnimation = false
         }
     }
+
+    onResultsChanged: root.syncResultsModel()
 
     Timer {
         id: closeAnimationTimer
@@ -838,7 +950,7 @@ PanelWindow {
                             clip: true
 
                             onTextChanged: {
-                                resultList.currentIndex = 0
+                                root.resetSelection()
                                 if (root.modeMenuOpen)
                                     root.modeMenuOpen = false
 
@@ -1028,8 +1140,10 @@ PanelWindow {
                                         else
                                             themePane.wpMove(1)
                                     } else if (root.results.length > 0) {
-                                        resultList.currentIndex =
-                                            (resultList.currentIndex + 1) % root.results.length
+                                        const current = root.selectedIndex >= 0
+                                            ? root.selectedIndex : resultList.currentIndex
+                                        root.selectResultAt(
+                                            (current + 1) % root.results.length)
                                         root.settleSelection()
                                     }
                                     event.accepted = true
@@ -1048,23 +1162,29 @@ PanelWindow {
                                         else
                                             themePane.wpMove(-1)
                                     } else if (root.results.length > 0) {
-                                        resultList.currentIndex =
-                                            (resultList.currentIndex - 1 + root.results.length)
-                                            % root.results.length
+                                        const current = root.selectedIndex >= 0
+                                            ? root.selectedIndex : resultList.currentIndex
+                                        root.selectResultAt(
+                                            (current - 1 + root.results.length)
+                                            % root.results.length)
                                         root.settleSelection()
                                     }
                                     event.accepted = true
                                 } else if (event.key === Qt.Key_PageDown) {
                                     if (root.results.length > 0) {
-                                        resultList.currentIndex =
-                                            Math.min(root.results.length - 1, resultList.currentIndex + 6)
+                                        const current = root.selectedIndex >= 0
+                                            ? root.selectedIndex : resultList.currentIndex
+                                        root.selectResultAt(
+                                            Math.min(root.results.length - 1, current + 6))
                                         root.settleSelection()
                                     }
                                     event.accepted = true
                                 } else if (event.key === Qt.Key_PageUp) {
                                     if (root.results.length > 0) {
-                                        resultList.currentIndex =
-                                            Math.max(0, resultList.currentIndex - 6)
+                                        const current = root.selectedIndex >= 0
+                                            ? root.selectedIndex : resultList.currentIndex
+                                        root.selectResultAt(
+                                            Math.max(0, current - 6))
                                         root.settleSelection()
                                     }
                                     event.accepted = true
@@ -1100,10 +1220,10 @@ PanelWindow {
                                         else
                                             done = themePane.wpActivateSelected()
                                         if (!done)
-                                            root.activate(resultList.currentIndex)
+                                            root.activate(root.selectedIndex)
                                         event.accepted = true
                                     } else {
-                                        root.activate(resultList.currentIndex)
+                                        root.activate(root.selectedIndex)
                                         event.accepted = true
                                     }
                                 } else if (
@@ -1166,7 +1286,7 @@ PanelWindow {
                                 enabled: modePill.activeCategory
                                 onTapped: {
                                     root.appBrowserCategory = "all"
-                                    resultList.currentIndex = 0
+                                    root.resetSelection()
                                 }
                             }
 
@@ -1276,11 +1396,11 @@ PanelWindow {
                                 onCategorySelected: function(categoryId) {
                                     root.appBrowserCategory = categoryId
                                     root.categoryMenuOpen = false
-                                    resultList.currentIndex = 0
+                                    root.resetSelection()
                                 }
                                 onCategoryHighlighted: function(categoryId) {
                                     root.appBrowserCategory = categoryId
-                                    resultList.currentIndex = 0
+                                    root.resetSelection()
                                 }
                             }
 
@@ -1312,7 +1432,7 @@ PanelWindow {
                             anchors.topMargin: palette.spacingTokens.smPlus
                             anchors.bottomMargin: palette.spacingTokens.tiny
 
-                            model: root.results
+                            model: resultsListModel
                             currentIndex: 0
 
                             WheelKinetic { scrollTarget: resultList }
@@ -1322,8 +1442,8 @@ PanelWindow {
                             keyNavigationWraps: true
                             interactive: contentHeight > height
 
-                            highlightMoveDuration: 90
-                            highlightResizeDuration: 90
+                            highlightMoveDuration: root.suppressHighlightAnimation ? 0 : 90
+                            highlightResizeDuration: root.suppressHighlightAnimation ? 0 : 90
 
                             highlight: Rectangle {
                                 radius: palette.radiusMd
@@ -1336,6 +1456,8 @@ PanelWindow {
 
                             delegate: LauncherItemDelegate {
                                 themeColors: palette
+                                resultsSource: root.results
+                                clipboardThumbs: clipboard.thumbs
                                 showProvider: !root.fileMode && !root.clipboardMode
                                               && !root.actionMode && !root.commandMode
                                               && !root.calcMode && !root.emojiMode
@@ -1347,13 +1469,14 @@ PanelWindow {
                                 launcherMuted: root.launcherMuted
                                 onActivated: function(idx) {
                                     if (root.clipboardMode) {
-                                        if (resultList.currentIndex === idx) {
+                                        if (root.selectedIndex === idx) {
                                             root.activate(idx)
                                         } else {
-                                            resultList.currentIndex = idx
+                                            root.selectResultAt(idx)
+                                            root.settleSelection()
                                         }
                                     } else {
-                                        resultList.currentIndex = idx
+                                        root.selectResultAt(idx)
                                         // Keep the newly expanded row fully visible.
                                         root.settleSelection()
                                         root.activate(idx)
@@ -1454,8 +1577,8 @@ PanelWindow {
                                 )
                         }
                         onPasteRequested: {
-                            if (resultList.currentIndex >= 0)
-                                root.activate(resultList.currentIndex)
+                            if (root.selectedIndex >= 0)
+                                root.activate(root.selectedIndex)
                         }
                     }
 

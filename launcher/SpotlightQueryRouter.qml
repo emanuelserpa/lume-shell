@@ -151,16 +151,13 @@ Item {
                 kind: "clipboard",
                 title: item.preview.length > 0 ? item.preview : "(conteúdo sem texto)",
                 subtitle: String(item.subtitle ?? "Copiar para a área de transferência")
-                          + (!root.clipboard.fresh ? " · atualizando…" : "")
                           + (String(item.type ?? "") === "image" ? " · Enter para restaurar" : ""),
                 icon: String(item.icon ?? "󰅇"),
                 clipId: item.id,
                 clipSignature: String(item.signature ?? ""),
                 clipType: String(item.type ?? "text"),
                 clipboardUrl: root.isDownloadableUrl(item.fullText) ? String(item.fullText).trim() : "",
-                thumbnail: String(root.clipboard.thumbs[String(item.id)] ?? ""),
                 mime: String(item.mime ?? ""),
-                cached: !root.clipboard.fresh,
                 fullText: String(item.fullText ?? item.preview ?? ""),
                 lineCount: Number(item.lineCount ?? 1),
                 charCount: Number(item.charCount ?? 0)

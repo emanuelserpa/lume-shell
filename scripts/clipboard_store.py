@@ -54,19 +54,28 @@ def ensure_dirs():
     except OSError:
         pass
 
+def _ensure_mode(path, expected_mode):
+    try:
+        current_mode = path.lstat().st_mode & 0o777
+    except FileNotFoundError:
+        return
+    if current_mode != expected_mode:
+        path.chmod(expected_mode)
+
 def ensure_cache_dirs():
     """Keep clipboard-derived caches private, even under a shared XDG cache."""
     if CACHE_DIR.is_symlink() or THUMBS_DIR.is_symlink():
         raise OSError("clipboard cache directories must not be symlinks")
     CACHE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
-    CACHE_DIR.chmod(0o700)
+    _ensure_mode(CACHE_DIR, 0o700)
     THUMBS_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
-    THUMBS_DIR.chmod(0o700)
+    _ensure_mode(THUMBS_DIR, 0o700)
     for private_file in (CACHE_INDEX_FILE, CHANGE_FILE):
         if private_file.is_symlink():
             private_file.unlink()
         elif private_file.is_file():
-            private_file.chmod(0o600)
+            # Avoid redundant chmod calls on clipboard-change so FileView watchers do not loop.
+            _ensure_mode(private_file, 0o600)
 
 def write_private_cache_file(path, contents):
     """Atomically replace one private cache file without following symlinks."""

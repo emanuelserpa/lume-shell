@@ -8,6 +8,8 @@ Item {
 
     required property var modelData
     required property int index
+    property var resultsSource: null
+    property var clipboardThumbs: null
     property int currentIndex: -1
     required property var themeColors
     property bool showProvider: false
@@ -18,16 +20,32 @@ Item {
 
     signal activated(int index)
 
-    readonly property var resultPayload: resultRow.modelData.payload ?? ({})
+    readonly property var rowData: {
+        if (resultRow.resultsSource
+                && resultRow.index >= 0
+                && resultRow.index < resultRow.resultsSource.length)
+            return resultRow.resultsSource[resultRow.index] ?? ({})
+        return resultRow.modelData ?? ({})
+    }
+
+    readonly property var resultPayload: resultRow.rowData.payload ?? ({})
+
+    readonly property string resolvedThumbnail: {
+        const clipId = resultPayload.clipId
+        const mapped = resultRow.clipboardThumbs && clipId !== undefined && clipId !== null
+            ? String(resultRow.clipboardThumbs[String(clipId)] ?? "")
+            : ""
+        return mapped.length > 0 ? mapped : String(resultPayload.thumbnail ?? "")
+    }
 
     readonly property bool imageClipboard:
-        modelData.kind === "clipboard"
-        && String(resultPayload.thumbnail ?? "").length > 0
+        String(resultRow.rowData.kind ?? "") === "clipboard"
+        && resultRow.resolvedThumbnail.length > 0
 
     // Selected (non-clipboard) rows expand to show full wrapped text
     // instead of truncating; clipboard already has the preview pane.
     readonly property bool expanded: resultRow.currentIndex === resultRow.index
-        && String(modelData.kind ?? "") !== "clipboard"
+        && String(resultRow.rowData.kind ?? "") !== "clipboard"
         && !resultRow.imageClipboard
 
     width: ListView.view ? ListView.view.width : (parent ? parent.width : 0)
@@ -60,7 +78,7 @@ Item {
                 anchors.fill: parent
                 anchors.margins: resultRow.imageClipboard ? 2 : 3
                 visible: resultRow.imageClipboard
-                source: visible ? String(resultRow.resultPayload.thumbnail) : ""
+                source: visible ? resultRow.resolvedThumbnail : ""
                 fillMode: Image.PreserveAspectFit
                 smooth: true
                 mipmap: true
@@ -75,7 +93,7 @@ Item {
                 width: resultRow.themeColors.spotlightIconTokens.result
                 height: resultRow.themeColors.spotlightIconTokens.result
                 visible: !thumbPreview.visible && source.toString().length > 0
-                source: (resultRow.modelData.kind === "app" || resultRow.modelData.kind === "window")
+                source: (resultRow.rowData.kind === "app" || resultRow.rowData.kind === "window")
                         && String(resultRow.resultPayload.icon ?? "").length > 0
                         ? AppIconResolver.resolve(
                               resultRow.resultPayload.icon,
@@ -86,17 +104,17 @@ Item {
             Text {
                 anchors.centerIn: parent
                 visible: !thumbPreview.visible && !rowIconImage.visible
-                text: resultRow.modelData.kind === "window"
+                text: resultRow.rowData.kind === "window"
                       ? "󰖯"
                       : String(resultRow.resultPayload.icon ?? "")
                 color: resultRow.resultPayload.color
                        ? resultRow.resultPayload.color
-                       : ((resultRow.modelData.kind === "kill" || resultRow.modelData.kind === "close_window")
+                       : ((resultRow.rowData.kind === "kill" || resultRow.rowData.kind === "close_window")
                           ? resultRow.themeColors.error
                           : (resultRow.currentIndex === resultRow.index
                              ? resultRow.themeColors.primary
                              : resultRow.themeColors.surfaceVariantForeground))
-                font.family: resultRow.modelData.kind === "emoji"
+                font.family: resultRow.rowData.kind === "emoji"
                              ? resultRow.themeColors.fontFamily
                              : resultRow.themeColors.nerdFontFamily
                 font.pixelSize: resultRow.themeColors.spotlightIconTokens.result
@@ -111,10 +129,10 @@ Item {
 
             Text {
                 width: parent.width
-                text: String(resultRow.modelData.title ?? "")
+                text: String(resultRow.rowData.title ?? "")
                 textFormat: Text.PlainText
                 color: resultRow.currentIndex === resultRow.index
-                       ? ((resultRow.modelData.kind === "kill" || resultRow.modelData.kind === "close_window")
+                       ? ((resultRow.rowData.kind === "kill" || resultRow.rowData.kind === "close_window")
                           ? resultRow.themeColors.errorContainerForeground
                           : resultRow.themeColors.primaryContainerForeground)
                        : resultRow.launcherForeground
@@ -131,15 +149,15 @@ Item {
                 width: parent.width
                 text: {
                     const section = resultRow.showProvider
-                            ? String(resultRow.modelData.section ?? "") : ""
-                    const subtitle = String(resultRow.modelData.subtitle ?? "")
+                            ? String(resultRow.rowData.section ?? "") : ""
+                    const subtitle = String(resultRow.rowData.subtitle ?? "")
                     return section.length > 0 && subtitle.length > 0
                             ? section + " · " + subtitle
                             : (section.length > 0 ? section : subtitle)
                 }
                 textFormat: Text.PlainText
                 color: resultRow.currentIndex === resultRow.index
-                       ? ((resultRow.modelData.kind === "kill" || resultRow.modelData.kind === "close_window")
+                       ? ((resultRow.rowData.kind === "kill" || resultRow.rowData.kind === "close_window")
                           ? resultRow.themeColors.errorContainerForeground
                           : resultRow.themeColors.primaryContainerForeground)
                        : resultRow.launcherSecondary

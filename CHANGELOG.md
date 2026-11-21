@@ -5,6 +5,11 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+- Stabilize Spotlight clipboard list selection across asynchronous refreshes,
+  thumbnail loading, and item deletion, and remove the repeated “updating”
+  label from cached rows.
+- Fix redundant `chmod` metadata writes on `clipboard-change` so Quickshell's
+  `FileView` does not loop refreshes and cancel clipboard thumbnail loading.
 - Reduce idle screen-recording status checks from every 5 seconds to every 15;
   checks remain every 2 seconds while recording.
 - Launch apps reopened from archived notifications in their own systemd app
