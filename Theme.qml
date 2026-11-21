@@ -234,6 +234,7 @@ QtObject {
     // Pure icon labels can use the symbol font directly.
     readonly property string iconFontFamily: "Symbols Nerd Font"
     readonly property string monoFontFamily: "JetBrainsMono Nerd Font"
+    readonly property string emojiFontFamily: "Noto Color Emoji"
 
     // Shared popup spacing scale. Values preserve the current compact layout.
     readonly property var spacingTokens: ({

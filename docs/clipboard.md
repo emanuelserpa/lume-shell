@@ -33,14 +33,20 @@ PNG grande bloqueie o pipe e paralise eventos seguintes.
 
 O botão **Pausar** no cabeçalho do clipboard persiste a preferência em
 `$XDG_STATE_HOME/quickshell/clipboard-capture.json` (ou
-`~/.local/state/quickshell/clipboard-capture.json`). Enquanto pausado, os
-callbacks ainda drenam o pipe do Wayland, mas não consultam MIME nem armazenam a
-seleção. **Retomar** volta a capturar as próximas mudanças; não importa
-retroativamente o conteúdo atual. A preferência sobrevive à reinicialização do
-shell. O recurso pausa toda captura e não tenta reconhecer senhas ou outros
-conteúdos sensíveis automaticamente. Se a preferência existir mas estiver
-corrompida ou inacessível, a captura fica pausada por segurança; apagar o arquivo
-restaura o padrão ativo.
+`~/.local/state/quickshell/clipboard-capture.json`). Enquanto pausado, uma faixa
+de aviso no topo do modo `#` deixa o estado visível com ação direta de
+**Retomar**; os callbacks ainda drenam o pipe do Wayland, mas não consultam MIME
+nem armazenam a seleção. **Retomar** volta a capturar as próximas mudanças; não
+importa retroativamente o conteúdo atual. A preferência sobrevive à
+reinicialização do shell. O recurso pausa toda captura e não tenta reconhecer
+senhas ou outros conteúdos sensíveis automaticamente. Se a preferência existir
+mas estiver corrompida ou inacessível, a captura fica pausada por segurança;
+apagar o arquivo restaura o padrão ativo.
+
+Atalhos de ação do item selecionado mantêm o foco no Spotlight mesmo após
+interagir com o texto da prévia: `Enter` restaura e fecha, `Ctrl+Enter` executa
+a ação secundária (`Abrir imagem` ou copiar mantendo aberto com indicação
+`Copiado ✓`), `Del` remove o item e `→` ou `Ctrl+K` abre o painel de ações.
 
 The paused `--capture` callback is covered through its real subprocess entrypoint
 with a 2.1 MiB stdin payload and temporary XDG directories. It exits without

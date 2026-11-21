@@ -228,7 +228,8 @@ QtObject {
                 kind: "hint",
                 title: "Nenhuma janela",
                 subtitle: "Nenhuma janela correspondente",
-                icon: "󰅖"
+                icon: "󰅖",
+                tablerIcon: "close"
             }]
         }
 
@@ -237,6 +238,7 @@ QtObject {
             title: item.title,
             subtitle: item.handle ? item.class + " · Fechar janela" : item.class + " · PID " + item.pid,
             icon: "󰅖",
+            tablerIcon: "close",
             pid: item.pid,
             handle: item.handle
         }))
@@ -260,7 +262,8 @@ QtObject {
                 kind: "hint",
                 title: "Nenhuma janela",
                 subtitle: "Nenhuma janela correspondente aberta",
-                icon: "󰖯"
+                icon: "󰖯",
+                tablerIcon: "device-desktop"
             }]
         }
 
@@ -270,6 +273,7 @@ QtObject {
             subtitle: item.class + (item.workspaceName ? " · Workspace " + item.workspaceName : "")
                       + (item.pid ? " · PID " + item.pid : ""),
             icon: item.class,
+            tablerIcon: "device-desktop",
             address: item.address,
             handle: item.handle,
             workspaceId: item.workspaceId,
@@ -286,7 +290,8 @@ QtObject {
                 kind: "hint",
                 title: "Calculadora",
                 subtitle: "Digite uma expressão, por exemplo: = 125 * 1.18",
-                icon: "󰪚"
+                icon: "󰪚",
+                tablerIcon: "calculator"
             }]
         }
 
@@ -295,7 +300,8 @@ QtObject {
                 kind: "hint",
                 title: "Expressão inválida",
                 subtitle: "Use números e operadores + − × ÷ % ( )",
-                icon: "󰅙"
+                icon: "󰅙",
+                tablerIcon: "close"
             }]
         }
 
@@ -304,6 +310,7 @@ QtObject {
             title: String(result),
             subtitle: expr + " · ↵ copiar para a área de transferência",
             icon: "󰪚",
+            tablerIcon: "calculator",
             value: String(result),
             expression: expr
         }]
@@ -319,6 +326,7 @@ QtObject {
                       ? "Executar no shell"
                       : "Digite depois de >",
             icon: "",
+            tablerIcon: "bar-terminal",
             command: cmd
         }]
     }

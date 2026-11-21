@@ -346,6 +346,8 @@ def _is_emoji_char(value):
     points = [ord(codepoint) for codepoint in char]
     if not points:
         return False
+    if len(points) == 1 and 0x1F3FB <= points[0] <= 0x1F3FF:
+        return False
     if 0x20E3 in points:  # Keycap sequences (e.g. 1️⃣).
         return True
     if any(0x1F000 <= point <= 0x1FAFF for point in points):

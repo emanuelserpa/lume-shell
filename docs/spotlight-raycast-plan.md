@@ -74,10 +74,21 @@ popup fica ancorado ao centro do Spotlight, ignora cliques para dispensar e
 fecha somente com `Esc`.
 
 `→` também abre as ações quando o cursor está no fim da consulta, sem seleção
-de texto; dentro da consulta, mantém a edição normal do cursor. No Clipboard,
-o rodapé indica `→ Ações` e a mesma tecla abre o painel do item selecionado;
-`Enter` restaura o item e `Ctrl+Enter` mantém a ação secundária. `←` fecha o
-painel. Tema e emoji preservam sua navegação própria.
+de texto (em itens acionáveis; `hint` e `config_category` omitem o painel);
+dentro da consulta, mantém a edição normal do cursor. No Clipboard, o rodapé
+indica `→ Ações` e a mesma tecla abre o painel do item selecionado; `Enter`
+restaura o item, `Ctrl+Enter` executa a ação secundária (inclusive com o painel
+aberto) e `Excluir` (`Del`) está disponível no catálogo para texto, links e
+imagens. `←` fecha o painel. Em sub-rotas de `:` (`:tema`, `:tela`, `:energia`,
+`:captura`, `:conexoes`, `:sistema`, `:sessao` e aliases), `Esc` (e `Backspace`
+no prefixo exato) volta para `: ` antes de fechar o launcher. Ações de terminal
+e reinício usam `scripts/open-terminal.sh` e `scripts/restart-shell.sh`, e
+`:captura` oferece *Parar gravação* dinamicamente enquanto uma gravação está
+ativa. As linhas de resultado, ações de `:`, painéis `Ctrl+K` e modos usam
+ícones outline Tabler (`TablerIcon`), a sincronização da lista reconstrói o
+modelo fora do clipboard (e remove duplicados/sobras) mantendo linhas inválidas
+ocultas no delegate, e o modo emoji usa `Theme.emojiFontFamily`. Tema e emoji
+preservam sua navegação própria.
 Verificado em sequência de teclado e IPC: `→` abriu o painel, `←` o fechou,
 `Ctrl+K` continuou abrindo; com o cursor dentro de `ghostty`, `→` apenas moveu
 o cursor para o fim.

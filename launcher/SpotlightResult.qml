@@ -29,7 +29,7 @@ QtObject {
                            clipboard: "Clipboard", emoji: "Emoji", calc: "Cálculo" }
         result.section = String(source.section ?? sections[kind] ?? "Ações")
         const payload = Object.assign({}, source.payload ?? {})
-        for (const field of ["kind", "title", "entry", "icon", "color", "accent",
+        for (const field of ["kind", "title", "entry", "icon", "tablerIcon", "color", "accent",
                              "thumbnail", "clipType", "clipboardUrl", "mime", "fullText", "lineCount",
                              "charCount", "usageCount", "cached", "path", "address", "handle",
                              "workspaceId", "workspaceName", "clipId", "clipSignature",

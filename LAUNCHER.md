@@ -134,7 +134,9 @@ Use the active `~/.config/hypr/hyprland.lua` for these bindings.
 Emoji mode uses an integrated Unicode CLDR Portuguese (PT-BR) dataset
 with English aliases and intelligent scoring. It supports Portuguese terms,
 gírias (ex: joinha, kkk, s2), accents/diacritics, and popularity ranking.
-The picker filters non-emoji punctuation from the catalog before ranking.
+The picker filters non-emoji punctuation and standalone skin-tone modifiers from
+the catalog before ranking, and renders cells explicitly with `Theme.emojiFontFamily`
+(`Noto Color Emoji`) so text-default pictographs always display in color.
 Choosing or copying an emoji records its usage in
 `$XDG_STATE_HOME/quickshell/launcher-emoji-usage.json` (defaulting to
 `~/.local/state/quickshell/launcher-emoji-usage.json`). Repeated use adds a

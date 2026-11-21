@@ -148,7 +148,7 @@ Item {
                     id: deletePill
                     anchors.verticalCenter: parent.verticalCenter
                     height: 22
-                    width: deleteHint.implicitWidth + 14
+                    width: deleteRow.implicitWidth + 14
                     radius: root.themeColors.radiusSm
                     color: deleteMouse.containsMouse
                            ? root.themeColors.withAlpha(root.themeColors.error, 0.14)
@@ -163,15 +163,29 @@ Item {
                         onClicked: root.deleteRequested()
                     }
 
-                    Text {
-                        id: deleteHint
+                    Row {
+                        id: deleteRow
                         anchors.centerIn: parent
-                        text: root.store.deleteRunning ? "Removendo…" : "󰆴  Remover"
-                        color: deleteMouse.containsMouse ? root.themeColors.error : root.launcherMuted
-                        opacity: deleteMouse.containsMouse ? 1.0 : 0.72
-                        font.family: root.themeColors.nerdFontFamily
-                        font.pixelSize: root.themeColors.spotlightLabelFontSize
-                        font.weight: Font.Medium
+                        spacing: root.themeColors.spacingTokens.xs
+
+                        TablerIcon {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 13
+                            height: 13
+                            iconName: "dashboard-trash"
+                            iconColor: deleteMouse.containsMouse ? root.themeColors.error : root.launcherMuted
+                            opacity: deleteMouse.containsMouse ? 1.0 : 0.72
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: root.store.deleteRunning ? "Removendo…" : "Remover"
+                            color: deleteMouse.containsMouse ? root.themeColors.error : root.launcherMuted
+                            opacity: deleteMouse.containsMouse ? 1.0 : 0.72
+                            font.family: root.themeColors.fontFamily
+                            font.pixelSize: root.themeColors.spotlightLabelFontSize
+                            font.weight: Font.Medium
+                        }
                     }
                 }
             }

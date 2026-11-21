@@ -65,6 +65,7 @@ Item {
                 title: trimmed,
                 subtitle: "Link detectado · Enter para verificar",
                 icon: "󰇚",
+                tablerIcon: "dashboard-arrow-down",
                 payload: { url: trimmed }
             }]
         }
@@ -76,7 +77,8 @@ Item {
                     kind: "hint",
                     title: "Nenhum download recente",
                     subtitle: "Cole um link de vídeo para começar",
-                    icon: "󰇚"
+                    icon: "󰇚",
+                    tablerIcon: "dashboard-arrow-down"
                 }]
             }
             return jobs.slice(0, 10).map(job => ({
@@ -84,6 +86,7 @@ Item {
                 title: String(job?.title ?? job?.url ?? ""),
                 subtitle: downloadSubtitle(job),
                 icon: "󰇚",
+                tablerIcon: "dashboard-arrow-down",
                 payload: {
                     jobId: String(job?.job_id ?? ""),
                     url: String(job?.url ?? ""),
@@ -102,7 +105,8 @@ Item {
                     kind: "hint",
                     title: "Arquivos",
                     subtitle: "Digite depois de @ para procurar em sua pasta pessoal",
-                    icon: "󰈔"
+                    icon: "󰈔",
+                    tablerIcon: "bar-file"
                 }]
             }
 
@@ -111,6 +115,7 @@ Item {
                 title: item.name,
                 subtitle: item.parent,
                 icon: item.is_dir ? "󰉋" : "󰈔",
+                tablerIcon: item.is_dir ? "bar-folder" : "bar-file",
                 path: item.path
             }))
         }
@@ -123,7 +128,8 @@ Item {
                     kind: "hint",
                     title: "Área de transferência indisponível",
                     subtitle: root.clipboard.error.length > 0 ? root.clipboard.error : "O acesso à área de transferência não está disponível",
-                    icon: "󰅇"
+                    icon: "󰅇",
+                    tablerIcon: "clipboard"
                 }]
             }
 
@@ -143,7 +149,8 @@ Item {
                     subtitle: !root.clipboard.loaded
                               ? "Carregando o histórico da área de transferência"
                               : "Nenhum item correspondente",
-                    icon: "󰅇"
+                    icon: "󰅇",
+                    tablerIcon: "clipboard"
                 }]
             }
 
@@ -153,6 +160,11 @@ Item {
                 subtitle: String(item.subtitle ?? "Copiar para a área de transferência")
                           + (String(item.type ?? "") === "image" ? " · Enter para restaurar" : ""),
                 icon: String(item.icon ?? "󰅇"),
+                tablerIcon: String(item.type ?? "") === "image"
+                            ? "photo"
+                            : (String(item.icon ?? "") === "󰌷"
+                               ? "link"
+                               : (String(item.icon ?? "") === "󰘐" ? "bar-code" : "clipboard")),
                 clipId: item.id,
                 clipSignature: String(item.signature ?? ""),
                 clipType: String(item.type ?? "text"),
@@ -182,7 +194,8 @@ Item {
                     kind: "hint",
                     title: "Base de emojis indisponível",
                     subtitle: "Arquivo de dados não encontrado",
-                    icon: "󰞅"
+                    icon: "󰞅",
+                    tablerIcon: "mood-smile"
                 }]
             }
 
@@ -193,7 +206,8 @@ Item {
                     kind: "hint",
                     title: "Nenhum emoji",
                     subtitle: "Tente outro termo (ex: fogo, joinha, coração, rindo)",
-                    icon: "󰞅"
+                    icon: "󰞅",
+                    tablerIcon: "mood-smile"
                 }]
             }
 

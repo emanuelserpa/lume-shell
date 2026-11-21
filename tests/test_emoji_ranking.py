@@ -80,6 +80,7 @@ class EmojiRankingTests(unittest.TestCase):
             catalog = Path(directory) / "emojis.json"
             catalog.write_text(json.dumps([
                 {"char": "[", "name": "Abertura", "keywords": ["abertura"], "pop": 9999},
+                {"char": "🏽", "name": "Pele morena", "keywords": ["abertura", "pele"], "pop": 8888},
                 {"char": "🪟", "name": "Janela", "keywords": ["abertura"], "pop": 0},
             ]), encoding="utf-8")
             with patch.object(helper, "EMOJI_DB_FILE", catalog), patch.object(helper, "load_emoji_usage", return_value={}):

@@ -22,6 +22,16 @@ function actionRoute(query) {
     return null
 }
 
+function parentActionPrefix(query, exactMatchOnly) {
+    const route = actionRoute(query)
+    if (!route)
+        return null
+    const trimmed = String(query ?? "").trim().toLowerCase()
+    if (exactMatchOnly && trimmed !== route.prefix)
+        return null
+    return ": "
+}
+
 function modeForQuery(query) {
     const value = String(query ?? "").trim()
     if (value.startsWith(">")) return "command"

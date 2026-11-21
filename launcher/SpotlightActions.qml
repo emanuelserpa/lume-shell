@@ -33,6 +33,7 @@ QtObject {
                 title: "Aparência e temas",
                 subtitle: "Tema atual: " + themeName + " · Enter para ver temas",
                 icon: "󰔎",
+                tablerIcon: "palette",
                 color: root.cPink
             },
             {
@@ -41,6 +42,7 @@ QtObject {
                 title: "Tela e energia",
                 subtitle: "Luz noturna: " + nlStatus + " · " + pLabel + " · " + idleStatus,
                 icon: "󰛨",
+                tablerIcon: "bar-sun",
                 color: root.cYellow
             },
             {
@@ -49,6 +51,7 @@ QtObject {
                 title: "Conexões e áudio",
                 subtitle: "Wi-Fi, Bluetooth e mixer de áudio · Enter para opções",
                 icon: "󰤨",
+                tablerIcon: "bar-wifi",
                 color: root.cCyan
             },
             {
@@ -57,6 +60,7 @@ QtObject {
                 title: "Captura e compartilhamento",
                 subtitle: "Captura de tela, gravação e leitura de QR code",
                 icon: "󰄡",
+                tablerIcon: "crop",
                 color: root.cCyan
             },
             {
@@ -65,6 +69,7 @@ QtObject {
                 title: "Sistema e sessão",
                 subtitle: "Informações e monitoramento do sistema, bloqueio e opções de energia",
                 icon: "󰒓",
+                tablerIcon: "bar-settings",
                 color: root.cOrange
             }
         ]
@@ -76,6 +81,7 @@ QtObject {
             title: "Escolher papel de parede…",
             subtitle: "Abrir o seletor e atualizar as cores do tema",
             icon: "󰈔",
+            tablerIcon: "photo",
             color: root.cPink
         }
         const wpRandomItem = {
@@ -83,6 +89,7 @@ QtObject {
             title: "Papel de parede aleatório",
             subtitle: "Escolher uma imagem e atualizar o tema",
             icon: "",
+            tablerIcon: "bar-refresh",
             color: root.cGreen
         }
         const cycleItem = {
@@ -90,6 +97,7 @@ QtObject {
             title: "Usar próximo tema",
             subtitle: "Avançar na lista de temas (atual: " + (ThemeState.currentPalette?.name ?? ThemeState.currentTheme) + ")",
             icon: "󰔎",
+            tablerIcon: "palette",
             color: root.cPink
         }
         const sortedList = (ThemeState.themesList ?? []).slice().sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", undefined, { sensitivity: "base" }))
@@ -112,6 +120,7 @@ QtObject {
                 title: t.name + (isCurrent ? "  ✓" : ""),
                 subtitle: sub,
                 icon: "󰔎",
+                tablerIcon: "palette",
                 color: t.accent ?? root.cPink
             }
         })
@@ -127,6 +136,7 @@ QtObject {
                     ? "Luz noturna ativa · " + (NightLightState.city.length > 0 ? NightLightState.city : "Solar") + " (" + NightLightState.currentTemp + "K)"
                     : "Luz noturna desligada · Horário solar de " + (NightLightState.city.length > 0 ? NightLightState.city : "clima") + " (Pôr: " + NightLightState.sunset + ")",
                 icon: NightLightState.nightLightEnabled ? "󰛨" : "󰛩",
+                tablerIcon: "bar-moon",
                 color: root.cYellow
             },
             {
@@ -135,6 +145,7 @@ QtObject {
                 title: "Ativar luz noturna agora",
                 subtitle: "Ativar o filtro sem esperar pelo horário automático",
                 icon: "󰛨",
+                tablerIcon: "bar-moon",
                 color: root.cYellow
             },
             {
@@ -143,6 +154,7 @@ QtObject {
                 title: "Desativar luz noturna",
                 subtitle: "Desativar o filtro de temperatura",
                 icon: "󰛩",
+                tablerIcon: "bar-sun",
                 color: root.cYellow
             }
         ]
@@ -158,6 +170,7 @@ QtObject {
                     ? "A tela permanece ligada e o computador não suspende por inatividade"
                     : "Impedir que a tela apague ou o computador suspenda por inatividade",
                 icon: IdleState.inhibited ? "󰅶" : "󰾪",
+                tablerIcon: "bar-coffee",
                 color: IdleState.inhibited ? root.cGreen : root.cSecondary
             },
             {
@@ -166,6 +179,7 @@ QtObject {
                 title: "Desempenho" + (curProfile === "performance" ? "  ✓" : ""),
                 subtitle: "Prioriza o desempenho e permite frequências mais altas" + (curProfile === "performance" ? " (ativo)" : ""),
                 icon: "󰓅",
+                tablerIcon: "bolt",
                 color: root.cGreen
             },
             {
@@ -174,6 +188,7 @@ QtObject {
                 title: "Equilibrado" + (curProfile === "balanced" ? "  ✓" : ""),
                 subtitle: "Equilíbrio entre desempenho e economia de energia" + (curProfile === "balanced" ? " (ativo)" : ""),
                 icon: "󰾆",
+                tablerIcon: "gauge",
                 color: root.cGreen
             },
             {
@@ -182,6 +197,7 @@ QtObject {
                 title: "Economia de energia" + (curProfile === "power-saver" ? "  ✓" : ""),
                 subtitle: "Reduz o desempenho para economizar bateria" + (curProfile === "power-saver" ? " (ativo)" : ""),
                 icon: "󰌪",
+                tablerIcon: "leaf",
                 color: root.cGreen
             }
         ]
@@ -195,6 +211,7 @@ QtObject {
                 title: "Dispositivos Bluetooth",
                 subtitle: "Abrir painel de pareamento e conexões Bluetooth",
                 icon: "󰂯",
+                tablerIcon: "bluetooth",
                 color: root.cCyan
             },
             {
@@ -203,6 +220,7 @@ QtObject {
                 title: "Mixer de áudio",
                 subtitle: "Ajustar entradas, saídas e canais de áudio",
                 icon: "󰕾",
+                tablerIcon: "bar-volume",
                 color: root.cCyan
             }
         ]
@@ -215,6 +233,7 @@ QtObject {
                 title: "Informações do sistema",
                 subtitle: "Resumo do sistema, hardware e ambiente gráfico",
                 icon: "󰍹",
+                tablerIcon: "device-desktop",
                 color: root.cOrange
             },
             {
@@ -222,54 +241,77 @@ QtObject {
                 title: "Reiniciar Quickshell",
                 subtitle: "Recarregar a barra, os serviços e os popups",
                 icon: "󰑓",
+                tablerIcon: "bar-refresh",
                 color: root.cOrange
             },
             {
                 kind: "app_exec",
-                command: ["kitty", "htop"],
+                command: [Quickshell.shellDir + "/scripts/open-terminal.sh", "--", "htop"],
                 title: "Monitor do sistema",
-                subtitle: "Abrir o htop no Kitty",
+                subtitle: "Abrir o htop no terminal padrão",
                 icon: "󰍹",
+                tablerIcon: "bar-cpu",
                 color: root.cOrange
             }
         ]
     }
 
     function captureActions() {
-        return [
+        const items = [
             {
                 kind: "system",
                 title: "Captura de área",
                 subtitle: "Selecionar uma região e copiar a imagem",
                 icon: "󰹑",
+                tablerIcon: "crop",
                 color: root.cCyan,
                 command: [Quickshell.shellDir + "/scripts/screenshot.sh", "area"]
-            },
-            {
-                kind: "system",
-                title: "Gravar tela",
-                subtitle: "Capturar a tela inteira sem áudio",
-                icon: "󰕧",
-                color: root.cCyan,
-                command: ["python3", "-B", Quickshell.shellDir + "/scripts/screen-recording.py", "start", "screen"]
-            },
-            {
-                kind: "system",
-                title: "Gravar tela com áudio",
-                subtitle: "Capturar a tela inteira com áudio do sistema e microfone",
-                icon: "󰕾",
-                color: root.cCyan,
-                command: ["python3", "-B", Quickshell.shellDir + "/scripts/screen-recording.py", "start", "screen", "--audio"]
-            },
-            {
-                kind: "system",
-                title: "Ler QR code da tela",
-                subtitle: "Selecionar uma região e copiar o código para a área de transferência",
-                icon: "󰄡",
-                color: root.cCyan,
-                command: [Quickshell.shellDir + "/scripts/scan-qr.sh"]
             }
         ]
+        if (ScreenRecordingState.recording) {
+            const elapsed = ScreenRecordingState.elapsedText.length > 0
+                ? ScreenRecordingState.elapsedText
+                : "0:00"
+            items.push({
+                kind: "screen_recording_stop",
+                title: "Parar gravação",
+                subtitle: "Gravação em andamento (" + elapsed + ") · Enter para parar",
+                icon: "󰓛",
+                tablerIcon: "player-stop",
+                color: root.cRed
+            })
+        } else {
+            items.push(
+                {
+                    kind: "system",
+                    title: "Gravar tela",
+                    subtitle: "Capturar a tela inteira sem áudio",
+                    icon: "󰕧",
+                    tablerIcon: "bar-record",
+                    color: root.cCyan,
+                    command: ["python3", "-B", Quickshell.shellDir + "/scripts/screen-recording.py", "start", "screen"]
+                },
+                {
+                    kind: "system",
+                    title: "Gravar tela com áudio",
+                    subtitle: "Capturar a tela inteira com áudio do sistema e microfone",
+                    icon: "󰕾",
+                    tablerIcon: "microphone",
+                    color: root.cCyan,
+                    command: ["python3", "-B", Quickshell.shellDir + "/scripts/screen-recording.py", "start", "screen", "--audio"]
+                }
+            )
+        }
+        items.push({
+            kind: "system",
+            title: "Ler QR code da tela",
+            subtitle: "Selecionar uma região e copiar o código para a área de transferência",
+            icon: "󰄡",
+            tablerIcon: "network-qr",
+            color: root.cCyan,
+            command: [Quickshell.shellDir + "/scripts/scan-qr.sh"]
+        })
+        return items
     }
 
     function sessionActions() {
@@ -279,6 +321,7 @@ QtObject {
                 title: "Bloquear sessão",
                 subtitle: "Bloquear a tela imediatamente",
                 icon: "󰌾",
+                tablerIcon: "bar-lock",
                 color: root.cRed,
                 command: [Quickshell.shellDir + "/scripts/session-action.sh", "lock"]
             },
@@ -287,6 +330,7 @@ QtObject {
                 title: "Suspender",
                 subtitle: "Suspender o computador (dormir)",
                 icon: "󰤄",
+                tablerIcon: "bar-moon",
                 color: root.cRed,
                 command: [Quickshell.shellDir + "/scripts/session-action.sh", "suspend"]
             },
@@ -295,6 +339,7 @@ QtObject {
                 title: "Encerrar sessão",
                 subtitle: "Fechar aplicativos e encerrar sessão gráfica",
                 icon: "󰗼",
+                tablerIcon: "logout",
                 color: root.cRed,
                 command: [Quickshell.shellDir + "/scripts/session-action.sh", "logout"]
             },
@@ -303,6 +348,7 @@ QtObject {
                 title: "Reiniciar computador",
                 subtitle: "Reinicializar o sistema operacional",
                 icon: "󰜉",
+                tablerIcon: "bar-refresh",
                 color: root.cRed,
                 command: [Quickshell.shellDir + "/scripts/session-action.sh", "reboot"]
             },
@@ -311,6 +357,7 @@ QtObject {
                 title: "Desligar computador",
                 subtitle: "Fechar aplicativos e desligar o computador",
                 icon: "󰐥",
+                tablerIcon: "power",
                 color: root.cRed,
                 command: [Quickshell.shellDir + "/scripts/session-action.sh", "poweroff"]
             }

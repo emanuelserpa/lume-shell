@@ -34,4 +34,7 @@ Additional outline drawings (`bluetooth.svg`, `bluetooth-off.svg`, `microphone.s
 `microphone-off.svg`, `headphones.svg`, `mouse.svg`, `device-mobile.svg`, `package.svg`,
 `power.svg`, `logout.svg`, `bell.svg`, `bell-off.svg`, `close.svg`) unify the remaining
 detail popups, quick controls, and notification center under the same 24-unit stroke-2
-vector icon contract.
+vector icon contract. Spotlight actions, launcher modes, and the `Ctrl+K` action panel also reuse
+this contract with `palette.svg`, `clipboard.svg`, `copy.svg`, `photo.svg`, `crop.svg`,
+`leaf.svg`, `gauge.svg`, `player-stop.svg`, `external-link.svg`, `layout-grid.svg`,
+`calculator.svg`, `mood-smile.svg`, and `link.svg`.

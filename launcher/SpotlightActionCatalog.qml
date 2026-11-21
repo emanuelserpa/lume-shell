@@ -11,78 +11,84 @@ QtObject {
         const clipboardItem = item?.payload ?? item
         if (kind === "clipboard" && String(clipboardItem.clipType ?? "") === "image") {
             return [
-                { id: "restore", title: "Restaurar", icon: "󰔎", hint: "Enter", primary: true, group: "Principal" },
-                { id: "open-image", title: "Abrir imagem", icon: "󰋩", hint: "Ctrl+Enter", primary: false, group: "Ações" }
+                { id: "restore", title: "Restaurar", icon: "󰔎", tablerIcon: "clipboard", hint: "Enter", primary: true, group: "Principal" },
+                { id: "open-image", title: "Abrir imagem", icon: "󰋩", tablerIcon: "photo", hint: "Ctrl+Enter", primary: false, group: "Ações" },
+                { id: "delete", title: "Excluir", icon: "󰆴", tablerIcon: "dashboard-trash", hint: "Del", primary: false, group: "Gerenciar" }
             ]
         }
         if (kind === "clipboard" && String(clipboardItem.clipboardUrl ?? "").length > 0) {
             return [
-                { id: "restore", title: "Restaurar", icon: "󰔎", hint: "Enter", primary: true, group: "Principal" },
-                { id: "copy", title: "Copiar", icon: "󰅍", hint: "Ctrl+Enter", primary: false, group: "Copiar" },
-                { id: "open-player", title: "Abrir no Aurora MPV", icon: "󰐹", hint: "", primary: false, group: "Ações" },
-                { id: "download-video", title: "Baixar vídeo…", icon: "󰇚", hint: "", primary: false, group: "Ações" },
-                { id: "download-audio", title: "Baixar áudio…", icon: "󰝚", hint: "", primary: false, group: "Ações" }
+                { id: "restore", title: "Restaurar", icon: "󰔎", tablerIcon: "clipboard", hint: "Enter", primary: true, group: "Principal" },
+                { id: "copy", title: "Copiar", icon: "󰅍", tablerIcon: "copy", hint: "Ctrl+Enter", primary: false, group: "Copiar" },
+                { id: "open-player", title: "Abrir no Aurora MPV", icon: "󰐹", tablerIcon: "bar-play", hint: "", primary: false, group: "Ações" },
+                { id: "download-video", title: "Baixar vídeo…", icon: "󰇚", tablerIcon: "dashboard-arrow-down", hint: "", primary: false, group: "Ações" },
+                { id: "download-audio", title: "Baixar áudio…", icon: "󰝚", tablerIcon: "bar-music", hint: "", primary: false, group: "Ações" },
+                { id: "delete", title: "Excluir", icon: "󰆴", tablerIcon: "dashboard-trash", hint: "Del", primary: false, group: "Gerenciar" }
             ]
         }
         switch (kind) {
         case "app":
             return [
-                { id: "open", title: "Abrir", icon: "󰌌", hint: "Enter", primary: true, group: "Principal" },
-                { id: "open-new", title: "Nova instância", icon: "󰐥", hint: "", primary: false, group: "Ações" },
-                { id: "copy-command", title: "Copiar comando", icon: "󰅍", hint: "Ctrl+Enter", primary: false, group: "Copiar" }
+                { id: "open", title: "Abrir", icon: "󰌌", tablerIcon: "external-link", hint: "Enter", primary: true, group: "Principal" },
+                { id: "open-new", title: "Nova instância", icon: "󰐥", tablerIcon: "external-link", hint: "", primary: false, group: "Ações" },
+                { id: "copy-command", title: "Copiar comando", icon: "󰅍", tablerIcon: "copy", hint: "Ctrl+Enter", primary: false, group: "Copiar" }
             ]
         case "file":
             return [
-                { id: "open", title: "Abrir", icon: "󰌌", hint: "Enter", primary: true, group: "Principal" },
-                { id: "copy-path", title: "Copiar caminho", icon: "󰅍", hint: "Ctrl+Enter", primary: false, group: "Copiar" },
-                { id: "reveal", title: "Abrir pasta", icon: "󰈔", hint: "", primary: false, group: "Ações" },
-                { id: "terminal", title: "Abrir no terminal", icon: "󰆍", hint: "", primary: false, group: "Ações" }
+                { id: "open", title: "Abrir", icon: "󰌌", tablerIcon: "external-link", hint: "Enter", primary: true, group: "Principal" },
+                { id: "copy-path", title: "Copiar caminho", icon: "󰅍", tablerIcon: "copy", hint: "Ctrl+Enter", primary: false, group: "Copiar" },
+                { id: "reveal", title: "Abrir pasta", icon: "󰈔", tablerIcon: "bar-folder", hint: "", primary: false, group: "Ações" },
+                { id: "terminal", title: "Abrir no terminal", icon: "󰆍", tablerIcon: "bar-terminal", hint: "", primary: false, group: "Ações" }
             ]
         case "window":
             return [
-                { id: "focus", title: "Focar", icon: "󰍉", hint: "Enter", primary: true, group: "Principal" },
-                { id: "close", title: "Fechar", icon: "󰅙", hint: "Ctrl+Enter", primary: false, group: "Gerenciar" }
+                { id: "focus", title: "Focar", icon: "󰍉", tablerIcon: "search", hint: "Enter", primary: true, group: "Principal" },
+                { id: "close", title: "Fechar", icon: "󰅙", tablerIcon: "close", hint: "Ctrl+Enter", primary: false, group: "Gerenciar" }
             ]
         case "clipboard":
             return [
-                { id: "restore", title: "Restaurar", icon: "󰔎", hint: "Enter", primary: true, group: "Principal" },
-                { id: "copy", title: "Copiar", icon: "󰅍", hint: "Ctrl+Enter", primary: false, group: "Copiar" },
-                { id: "delete", title: "Excluir", icon: "󰆴", hint: "", primary: false, group: "Gerenciar" }
+                { id: "restore", title: "Restaurar", icon: "󰔎", tablerIcon: "clipboard", hint: "Enter", primary: true, group: "Principal" },
+                { id: "copy", title: "Copiar", icon: "󰅍", tablerIcon: "copy", hint: "Ctrl+Enter", primary: false, group: "Copiar" },
+                { id: "delete", title: "Excluir", icon: "󰆴", tablerIcon: "dashboard-trash", hint: "Del", primary: false, group: "Gerenciar" }
             ]
         case "emoji":
             return [
-                { id: "insert", title: "Inserir", icon: "󰚌", hint: "Enter", primary: true, group: "Principal" },
-                { id: "copy", title: "Copiar", icon: "󰅍", hint: "Ctrl+Enter", primary: false, group: "Copiar" }
+                { id: "insert", title: "Inserir", icon: "󰚌", tablerIcon: "external-link", hint: "Enter", primary: true, group: "Principal" },
+                { id: "copy", title: "Copiar", icon: "󰅍", tablerIcon: "copy", hint: "Ctrl+Enter", primary: false, group: "Copiar" }
             ]
         case "calc":
             return [
-                { id: "copy-result", title: "Copiar resultado", icon: "󰅍", hint: "Enter", primary: true, group: "Principal" },
-                { id: "copy-expression", title: "Copiar expressão", icon: "󰅍", hint: "", primary: false, group: "Copiar" }
+                { id: "copy-result", title: "Copiar resultado", icon: "󰅍", tablerIcon: "copy", hint: "Enter", primary: true, group: "Principal" },
+                { id: "copy-expression", title: "Copiar expressão", icon: "󰅍", tablerIcon: "copy", hint: "", primary: false, group: "Copiar" }
             ]
         case "command":
             return [
-                { id: "run", title: "Executar", icon: "󰌌", hint: "Enter", primary: true, group: "Principal" },
-                { id: "copy-command", title: "Copiar comando", icon: "󰅍", hint: "Ctrl+Enter", primary: false, group: "Copiar" }
+                { id: "run", title: "Executar", icon: "󰌌", tablerIcon: "bar-terminal", hint: "Enter", primary: true, group: "Principal" },
+                { id: "copy-command", title: "Copiar comando", icon: "󰅍", tablerIcon: "copy", hint: "Ctrl+Enter", primary: false, group: "Copiar" }
             ]
         case "system":
             return [
-                { id: "run", title: "Executar", icon: "󰐥", hint: "Enter", primary: true, group: "Principal" }
+                { id: "run", title: "Executar", icon: "󰐥", tablerIcon: "external-link", hint: "Enter", primary: true, group: "Principal" }
             ]
         case "url":
             return [
-                { id: "download-video", title: "Baixar vídeo…", icon: "󰇚", hint: "Enter", primary: true, group: "Principal" },
-                { id: "open-player", title: "Abrir no Aurora MPV", icon: "󰐹", hint: "", primary: false, group: "Ações" },
-                { id: "download-audio", title: "Baixar áudio…", icon: "󰝚", hint: "", primary: false, group: "Ações" }
+                { id: "download-video", title: "Baixar vídeo…", icon: "󰇚", tablerIcon: "dashboard-arrow-down", hint: "Enter", primary: true, group: "Principal" },
+                { id: "open-player", title: "Abrir no Aurora MPV", icon: "󰐹", tablerIcon: "bar-play", hint: "", primary: false, group: "Ações" },
+                { id: "download-audio", title: "Baixar áudio…", icon: "󰝚", tablerIcon: "bar-music", hint: "", primary: false, group: "Ações" }
             ]
         case "download":
             return [
-                { id: "reveal-download", title: "Abrir pasta", icon: "󰈔", hint: "Enter", primary: true, group: "Principal" },
-                { id: "retry-download", title: "Tentar de novo", icon: "󰑓", hint: "", primary: false, group: "Ações" },
-                { id: "cancel-download", title: "Cancelar", icon: "󰅙", hint: "", primary: false, group: "Gerenciar" }
+                { id: "reveal-download", title: "Abrir pasta", icon: "󰈔", tablerIcon: "bar-folder", hint: "Enter", primary: true, group: "Principal" },
+                { id: "retry-download", title: "Tentar de novo", icon: "󰑓", tablerIcon: "bar-refresh", hint: "", primary: false, group: "Ações" },
+                { id: "cancel-download", title: "Cancelar", icon: "󰅙", tablerIcon: "close", hint: "", primary: false, group: "Gerenciar" }
+            ]
+        case "config_category":
+            return [
+                { id: "open", title: "Abrir", icon: "󰌌", tablerIcon: "external-link", hint: "Enter", primary: true, group: "Principal" }
             ]
         default:
             return [
-                { id: "activate", title: "Executar", icon: "󰌌", hint: "Enter", primary: true, group: "Principal" }
+                { id: "activate", title: "Executar", icon: "󰌌", tablerIcon: "external-link", hint: "Enter", primary: true, group: "Principal" }
             ]
         }
     }

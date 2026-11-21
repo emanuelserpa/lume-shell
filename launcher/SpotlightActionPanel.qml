@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Widgets
+import qs.components
 import "SpotlightActionLogic.js" as ActionLogic
 
 // Painel de Detalhes & Ações do Spotlight inspirado no Raycast (Detail & Actions)
@@ -55,6 +56,28 @@ Item {
         }
     }
 
+    readonly property string headerTablerIcon: {
+        const payloadIcon = String(root.targetPayload.tablerIcon ?? "")
+        if (payloadIcon.length > 0) return payloadIcon
+        switch (root.kind) {
+        case "window": return "device-desktop"
+        case "file": return "bar-file"
+        case "command": return "bar-terminal"
+        case "clipboard": return "clipboard"
+        case "calc": return "calculator"
+        case "emoji": return "mood-smile"
+        case "theme_select": return "palette"
+        case "system": return "bar-settings"
+        case "screen_recording_stop": return "player-stop"
+        case "restart_quickshell": return "bar-refresh"
+        case "kill": return "close"
+        case "close_window": return "close"
+        case "url": return "dashboard-arrow-down"
+        case "download": return "dashboard-arrow-down"
+        default: return root.kind === "emoji" ? "" : "bar-settings"
+        }
+    }
+
     readonly property string iconGlyph: {
         switch (root.kind) {
         case "window": return "󰖯"
@@ -80,8 +103,22 @@ Item {
         return ""
     }
 
+    function ensureCurrentVisible() {
+        const yTop = root.currentIndex * 40
+        const yBottom = yTop + 36
+        if (yTop < actionsFlick.contentY)
+            actionsFlick.contentY = yTop
+        else if (yBottom > actionsFlick.contentY + actionsFlick.height)
+            actionsFlick.contentY = yBottom - actionsFlick.height
+    }
+
+    onCurrentIndexChanged: root.ensureCurrentVisible()
+
     Column {
-        anchors.fill: parent
+        id: topSection
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         spacing: root.themeColors.spacingTokens.xl
 
         // =====================================================================
@@ -113,9 +150,19 @@ Item {
                     source: visible ? Quickshell.iconPath(root.targetPayload.icon, true) : ""
                 }
 
+                TablerIcon {
+                    id: headerTablerIconView
+                    anchors.centerIn: parent
+                    width: root.themeColors.spotlightIconTokens.detail
+                    height: root.themeColors.spotlightIconTokens.detail
+                    visible: !headerAppIcon.visible && root.headerTablerIcon.length > 0
+                    iconName: visible ? root.headerTablerIcon : ""
+                    iconColor: root.themeColors.primary
+                }
+
                 Text {
                     anchors.centerIn: parent
-                    visible: !headerAppIcon.visible
+                    visible: !headerAppIcon.visible && !headerTablerIconView.visible
                     text: root.iconGlyph
                     color: root.themeColors.primary
                     font.family: root.themeColors.nerdFontFamily
@@ -206,11 +253,11 @@ Item {
                     spacing: root.themeColors.spacingTokens.sm
                     visible: root.detailSecondary.length > 0
 
-                    Text {
-                        text: "󰄲"
-                        color: root.themeColors.primary
-                        font.family: root.themeColors.nerdFontFamily
-                        font.pixelSize: root.themeColors.spotlightBodyFontSize
+                    TablerIcon {
+                        width: 13
+                        height: 13
+                        iconName: "bolt"
+                        iconColor: root.themeColors.primary
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
@@ -235,6 +282,7 @@ Item {
             spacing: root.themeColors.spacingTokens.md
 
             Text {
+                id: actionsSectionLabel
                 text: "Ações"
                 color: root.themeColors.surfaceVariantForeground
                 font.family: root.themeColors.fontFamily
@@ -244,17 +292,32 @@ Item {
             }
 
             Rectangle {
-                width: parent.width - 130
+                width: Math.max(0, parent.width - actionsSectionLabel.implicitWidth - root.themeColors.spacingTokens.md)
                 height: 1
                 color: root.themeColors.borderSubtle
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
+    }
 
-        // =====================================================================
-        // LISTA DE AÇÕES (REFINADA: SEM WIREFRAME, COM ÍCONES E KEYCAPS)
-        // =====================================================================
+    // =====================================================================
+    // LISTA DE AÇÕES (ROLÁVEL, SEM WIREFRAME, COM ÍCONES E KEYCAPS)
+    // =====================================================================
+    Flickable {
+        id: actionsFlick
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: topSection.bottom
+        anchors.bottom: footerGuide.top
+        anchors.topMargin: root.themeColors.spacingTokens.xl
+        anchors.bottomMargin: root.themeColors.spacingTokens.md
+        contentWidth: width
+        contentHeight: actionsColumn.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+
         Column {
+            id: actionsColumn
             width: parent.width
             spacing: root.themeColors.spacingTokens.xs
 
@@ -270,6 +333,7 @@ Item {
 
                     readonly property bool isSelected: index === root.currentIndex
                     readonly property string actionIcon: String(action.icon ?? "󰌌")
+                    readonly property string actionTablerIcon: String(action.tablerIcon ?? "")
                     readonly property string actionHint: String(action.hint ?? "")
                     readonly property bool isDestructive: action.id === "close" || action.id === "delete"
 
@@ -302,20 +366,41 @@ Item {
                         anchors.rightMargin: root.themeColors.spacingTokens.lg
                         spacing: root.themeColors.spacingTokens.lg
 
-                        // Ícone da ação
-                        Text {
+                        // Ícone da ação (Tabler outline consistente, fallback Nerd Font)
+                        Item {
+                            width: root.themeColors.spotlightIconTokens.action + 2
+                            height: width
                             anchors.verticalCenter: parent.verticalCenter
-                            text: actionRow.actionIcon
-                            color: actionRow.isDestructive
-                                   ? root.themeColors.error
-                                   : (actionRow.isSelected ? root.themeColors.primary : root.themeColors.surfaceVariantForeground)
-                            font.family: root.themeColors.nerdFontFamily
-                            font.pixelSize: root.themeColors.spotlightIconTokens.action
+
+                            TablerIcon {
+                                id: rowTablerIcon
+                                anchors.centerIn: parent
+                                width: root.themeColors.spotlightIconTokens.action
+                                height: width
+                                visible: actionRow.actionTablerIcon.length > 0
+                                iconName: visible ? actionRow.actionTablerIcon : ""
+                                iconColor: actionRow.isDestructive
+                                           ? root.themeColors.error
+                                           : (actionRow.isSelected ? root.themeColors.primary : root.themeColors.surfaceVariantForeground)
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: !rowTablerIcon.visible
+                                text: actionRow.actionIcon
+                                color: actionRow.isDestructive
+                                       ? root.themeColors.error
+                                       : (actionRow.isSelected ? root.themeColors.primary : root.themeColors.surfaceVariantForeground)
+                                font.family: root.themeColors.nerdFontFamily
+                                font.pixelSize: root.themeColors.spotlightIconTokens.action
+                            }
                         }
 
                         // Título da ação
                         Text {
-                            width: parent.width - 24 - (hintBadge.visible ? (hintBadge.width + 10) : 0)
+                            width: parent.width - (root.themeColors.spotlightIconTokens.action + 2)
+                                   - root.themeColors.spacingTokens.lg
+                                   - (hintBadge.visible ? (hintBadge.width + root.themeColors.spacingTokens.lg) : 0)
                             anchors.verticalCenter: parent.verticalCenter
                             text: (actionRow.action.title ?? "")
                             color: actionRow.isSelected
@@ -372,50 +457,53 @@ Item {
                 }
             }
         }
+    }
 
-        // =====================================================================
-        // RODAPÉ: GUIA DE TECLADO SUTIL
-        // =====================================================================
-        Item {
-            width: parent.width
-            height: 20
+    // =====================================================================
+    // RODAPÉ: GUIA DE TECLADO SUTIL
+    // =====================================================================
+    Item {
+        id: footerGuide
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: 20
 
-            Row {
-                anchors.centerIn: parent
-                spacing: root.themeColors.spacingTokens.md
+        Row {
+            anchors.centerIn: parent
+            spacing: root.themeColors.spacingTokens.md
 
-                Text {
-                    text: "↑↓ navegar"
-                    color: root.themeColors.surfaceVariantForeground
-                    font.family: root.themeColors.fontFamily
-                    font.pixelSize: root.themeColors.spotlightLabelFontSize
-                }
+            Text {
+                text: "↑↓ navegar"
+                color: root.themeColors.surfaceVariantForeground
+                font.family: root.themeColors.fontFamily
+                font.pixelSize: root.themeColors.spotlightLabelFontSize
+            }
 
-                Text {
-                    text: "·"
-                    color: root.themeColors.borderSubtle
-                    font.pixelSize: root.themeColors.spotlightLabelFontSize
-                }
+            Text {
+                text: "·"
+                color: root.themeColors.borderSubtle
+                font.pixelSize: root.themeColors.spotlightLabelFontSize
+            }
 
-                Text {
-                    text: "Enter executar"
-                    color: root.themeColors.surfaceVariantForeground
-                    font.family: root.themeColors.fontFamily
-                    font.pixelSize: root.themeColors.spotlightLabelFontSize
-                }
+            Text {
+                text: "Enter executar"
+                color: root.themeColors.surfaceVariantForeground
+                font.family: root.themeColors.fontFamily
+                font.pixelSize: root.themeColors.spotlightLabelFontSize
+            }
 
-                Text {
-                    text: "·"
-                    color: root.themeColors.borderSubtle
-                    font.pixelSize: root.themeColors.spotlightLabelFontSize
-                }
+            Text {
+                text: "·"
+                color: root.themeColors.borderSubtle
+                font.pixelSize: root.themeColors.spotlightLabelFontSize
+            }
 
-                Text {
-                    text: "Esc fechar"
-                    color: root.themeColors.surfaceVariantForeground
-                    font.family: root.themeColors.fontFamily
-                    font.pixelSize: root.themeColors.spotlightLabelFontSize
-                }
+            Text {
+                text: "Esc fechar"
+                color: root.themeColors.surfaceVariantForeground
+                font.family: root.themeColors.fontFamily
+                font.pixelSize: root.themeColors.spotlightLabelFontSize
             }
         }
     }

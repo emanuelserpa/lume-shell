@@ -94,7 +94,10 @@ Item {
             return true
         case "open-terminal":
             closeRequested()
-            Quickshell.execDetached(["kitty", "--directory", operation.directory])
+            Quickshell.execDetached([
+                Quickshell.shellDir + "/scripts/open-terminal.sh",
+                "--dir", operation.directory
+            ])
             return true
         case "focus-window":
             closeRequested()
@@ -234,7 +237,12 @@ Item {
         }
         if (item.kind === "restart_quickshell") {
             closeRequested()
-            Quickshell.execDetached(["systemctl", "--user", "restart", "quickshell"])
+            Quickshell.execDetached([Quickshell.shellDir + "/scripts/restart-shell.sh"])
+            return
+        }
+        if (item.kind === "screen_recording_stop") {
+            closeRequested()
+            ScreenRecordingState.stop()
             return
         }
         if (item.kind === "app_exec" && data.command) {

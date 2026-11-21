@@ -174,6 +174,9 @@ PanelWindow {
     readonly property var selectedResult: (selectedIndex >= 0 && selectedIndex < results.length)
                                          ? results[selectedIndex]
                                          : null
+    readonly property bool resultHasActionPanel: root.selectedResult !== null
+        && root.selectedResult.kind !== "hint"
+        && root.selectedResult.kind !== "config_category"
 
     readonly property string queryMode: ModeLogic.modeForQuery(query)
     readonly property bool commandMode: queryMode === "command"
@@ -409,7 +412,7 @@ PanelWindow {
                 overlap += 1
         }
 
-        if (resultsListModel.count === 0 || overlap === 0) {
+        if (!root.clipboardMode || resultsListModel.count === 0 || overlap === 0) {
             root.suppressHighlightAnimation = true
             resultsListModel.clear()
             for (let i = 0; i < desired.length; ++i)
@@ -418,9 +421,14 @@ PanelWindow {
                 root.suppressHighlightAnimation = false
             })
         } else {
+            const seenKeys = Object.create(null)
             for (let i = resultsListModel.count - 1; i >= 0; --i) {
-                if (!desiredSet[String(resultsListModel.get(i).rowKey ?? "")])
+                const key = String(resultsListModel.get(i).rowKey ?? "")
+                if (!desiredSet[key] || seenKeys[key]) {
                     resultsListModel.remove(i)
+                } else {
+                    seenKeys[key] = true
+                }
             }
             for (let i = 0; i < desired.length; ++i) {
                 if (i < resultsListModel.count
@@ -438,6 +446,8 @@ PanelWindow {
                 else
                     resultsListModel.insert(i, { rowKey: desired[i] })
             }
+            while (resultsListModel.count > desired.length)
+                resultsListModel.remove(resultsListModel.count - 1)
         }
 
         root.restoreSelectionAfterResultsChange()
@@ -671,7 +681,7 @@ PanelWindow {
         } else if (root.categoryMenuOpen
                 && event.key === Qt.Key_K
                 && (event.modifiers & Qt.ControlModifier)
-                && root.selectedResult !== null) {
+                && root.resultHasActionPanel) {
             root.categoryMenuOpen = false
             root.modeMenuOpen = false
             root.actionPanelOpen = true
@@ -707,7 +717,7 @@ PanelWindow {
             event.accepted = true
         } else if (event.key === Qt.Key_K
                    && (event.modifiers & Qt.ControlModifier)
-                   && root.selectedResult !== null
+                   && root.resultHasActionPanel
                    && !root.themeMode) {
             root.modeMenuOpen = false
             root.actionPanelOpen = !root.actionPanelOpen
@@ -718,7 +728,7 @@ PanelWindow {
         } else if (event.key === Qt.Key_Right
                    && !hasMainModifier
                    && !root.actionPanelOpen
-                   && root.selectedResult !== null
+                   && root.resultHasActionPanel
                    && !root.themeMode && !root.emojiMode
                    && (!fromSearchInput
                        || (searchInput.cursorPosition === searchInput.text.length
@@ -911,20 +921,19 @@ PanelWindow {
             event.accepted = true
         } else if (fromSearchInput
                    && event.key === Qt.Key_Backspace
-                   && (searchInput.text === ":tema "
-                       || searchInput.text === ":tela "
-                       || searchInput.text === ":captura "
-                       || searchInput.text === ":luz "
-                       || searchInput.text === ":energia "
-                       || searchInput.text === ":conexoes "
-                       || searchInput.text === ":sistema "
-                       || searchInput.text === ":sessao ")) {
-            searchInput.text = ": "
+                   && ModeLogic.parentActionPrefix(searchInput.text, true) !== null) {
+            searchInput.text = ModeLogic.parentActionPrefix(searchInput.text, true)
+            searchInput.cursorPosition = searchInput.text.length
             event.accepted = true
         } else if (event.key === Qt.Key_Escape) {
             if (root.themeMode && themePane.colorMode)
                 themePane.cancelColorPreview()
-            else
+            else if (ModeLogic.parentActionPrefix(root.query, false) !== null) {
+                searchInput.text = ModeLogic.parentActionPrefix(root.query, false)
+                root.resetSelection()
+                searchInput.forceActiveFocus()
+                searchInput.cursorPosition = searchInput.text.length
+            } else
                 root.closeLauncher()
             event.accepted = true
         }
@@ -1124,8 +1133,8 @@ PanelWindow {
     Item {
         id: centerAnchor
         width: root.themeMode ? Math.min(1000, parent.width - 32)
-               : root.emojiMode && root.actionPanelOpen && root.selectedResult !== null ? 1000
-               : (root.clipboardMode || (root.actionPanelOpen && root.selectedResult !== null)) ? 820
+               : root.emojiMode && root.actionPanelOpen && root.resultHasActionPanel ? 1000
+               : (root.clipboardMode || (root.actionPanelOpen && root.resultHasActionPanel)) ? 820
                : (root.emojiMode ? 600 : 560)
         height: card.height
 
@@ -1162,7 +1171,7 @@ PanelWindow {
                     : root.themeMode ? Math.min(600, Math.max(400, themePane.preferredHeight + 94), root.height - centerAnchor.anchors.topMargin - 32)
                     : root.clipboardMode ? 500
                     : root.appBrowserMode ? root.appBrowserHeight
-                    : (root.actionPanelOpen && root.selectedResult !== null) ? 480
+                    : (root.actionPanelOpen && root.resultHasActionPanel) ? 480
                     : (94
                        + (root.results.length > 0
                           ? Math.min(root.results.length, 6) * 49 + 7
@@ -1223,29 +1232,27 @@ PanelWindow {
                             height: 24
                             anchors.verticalCenter: parent.verticalCenter
 
-                            TablerIcon {
-                                width: 22
-                                height: 22
-                                anchors.centerIn: parent
-                                visible: !root.appBrowserMode && !root.commandMode && !root.calcMode && !root.fileMode && !root.clipboardMode && !root.actionMode && !root.emojiMode && !root.killMode && !root.windowMode
-                                iconName: "search"
-                                iconColor: root.launcherPrimary
+                            readonly property string headerTablerIcon: {
+                                if (root.appBrowserMode) return "layout-grid"
+                                if (root.themeMode) return "palette"
+                                if (root.commandMode) return "bar-terminal"
+                                if (root.calcMode) return "calculator"
+                                if (root.fileMode) return "bar-file"
+                                if (root.clipboardMode) return "clipboard"
+                                if (root.emojiMode) return "mood-smile"
+                                if (root.killMode) return "close"
+                                if (root.windowMode) return "device-desktop"
+                                if (root.actionMode) return "bar-settings"
+                                return "search"
                             }
 
-                            Text {
+                            TablerIcon {
+                                id: headerTablerIconItem
+                                width: 20
+                                height: 20
                                 anchors.centerIn: parent
-                                visible: root.appBrowserMode || root.commandMode || root.calcMode || root.fileMode || root.clipboardMode || root.actionMode || root.emojiMode || root.killMode || root.windowMode
-                                text: root.appBrowserMode ? "󰀻" : (root.themeMode ? "󰔎"
-                                      : (root.commandMode ? ""
-                                      : (root.calcMode ? "󰪚"
-                                         : (root.fileMode ? "󰈔"
-                                            : (root.clipboardMode ? "󰅇"
-                                               : (root.emojiMode ? "󰞅"
-                                                  : (root.killMode ? "󰅖"
-                                                     : (root.windowMode ? "󰖯" : "󰒓"))))))))
-                                color: root.killMode ? palette.error : root.launcherPrimary
-                                font.family: palette.nerdFontFamily
-                                font.pixelSize: palette.spotlightIconTokens.mode
+                                iconName: parent.headerTablerIcon
+                                iconColor: root.killMode ? palette.error : root.launcherPrimary
                             }
                         }
 
@@ -1380,9 +1387,16 @@ PanelWindow {
                             visible: root.clipboardMode && clipboard.capturePauseKnown
                             anchors.verticalCenter: parent.verticalCenter
                             height: 24
-                            width: visible ? capturePillLabel.implicitWidth + 16 : 0
+                            width: visible ? capturePillRow.implicitWidth + 16 : 0
                             radius: palette.radiusButton
                             readonly property bool hasError: clipboard.captureControlError.length > 0
+                            readonly property color pillTextColor: hasError
+                                ? palette.error
+                                : (clipboard.capturePaused
+                                   ? palette.yellow
+                                   : (capturePillHover.hovered
+                                      ? palette.primary
+                                      : root.launcherSecondary))
                             color: hasError
                                    ? palette.errorContainer
                                    : (clipboard.capturePaused
@@ -1413,24 +1427,32 @@ PanelWindow {
                                 }
                             }
 
-                            Text {
-                                id: capturePillLabel
+                            Row {
+                                id: capturePillRow
                                 anchors.centerIn: parent
-                                text: clipboard.captureControlRunning
-                                      ? "Salvando…"
-                                      : (clipboardCapturePill.hasError
-                                         ? "Erro · tentar"
-                                         : (clipboard.capturePaused ? "󰐊  Pausado" : "󰏤  Pausar"))
-                                color: clipboardCapturePill.hasError
-                                       ? palette.error
-                                       : (clipboard.capturePaused
-                                          ? palette.yellow
-                                          : (capturePillHover.hovered
-                                             ? palette.primary
-                                             : root.launcherSecondary))
-                                font.family: palette.nerdFontFamily
-                                font.pixelSize: palette.spotlightLabelFontSize
-                                font.weight: Font.DemiBold
+                                spacing: palette.spacingTokens.xs
+
+                                TablerIcon {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 12
+                                    height: 12
+                                    visible: !clipboard.captureControlRunning && !clipboardCapturePill.hasError
+                                    iconName: clipboard.capturePaused ? "bar-play" : "bar-pause"
+                                    iconColor: clipboardCapturePill.pillTextColor
+                                }
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: clipboard.captureControlRunning
+                                          ? "Salvando…"
+                                          : (clipboardCapturePill.hasError
+                                             ? "Erro · tentar"
+                                             : (clipboard.capturePaused ? "Pausado" : "Pausar"))
+                                    color: clipboardCapturePill.pillTextColor
+                                    font.family: palette.fontFamily
+                                    font.pixelSize: palette.spotlightLabelFontSize
+                                    font.weight: Font.DemiBold
+                                }
                             }
                         }
 
@@ -1464,12 +1486,12 @@ PanelWindow {
                                 }
                             }
 
-                            Text {
+                            TablerIcon {
                                 anchors.centerIn: parent
-                                text: "󰒓"
-                                font.family: palette.nerdFontFamily
-                                font.pixelSize: palette.spotlightIconTokens.mode
-                                color: root.actionMode ? palette.primaryContainerForeground : root.launcherPrimary
+                                width: 15
+                                height: 15
+                                iconName: "bar-settings"
+                                iconColor: root.actionMode ? palette.primaryContainerForeground : root.launcherPrimary
                             }
                         }
                     }
@@ -1497,12 +1519,12 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: palette.spacingTokens.sm
 
-                        Text {
+                        TablerIcon {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "󰏤"
-                            color: palette.yellow
-                            font.family: palette.nerdFontFamily
-                            font.pixelSize: palette.spotlightBodyFontSize
+                            width: 14
+                            height: 14
+                            iconName: "bar-pause"
+                            iconColor: palette.yellow
                         }
 
                         Text {
@@ -1576,7 +1598,7 @@ PanelWindow {
                         id: listContainer
                         visible: !root.themeMode
                         width: root.clipboardMode ? 380
-                               : (root.actionPanelOpen && root.selectedResult !== null)
+                               : (root.actionPanelOpen && root.resultHasActionPanel)
                                  ? (root.emojiMode ? 600 : 380)
                                : (root.themeMode ? 0 : parent.width)
                         anchors.left: parent.left
@@ -1628,7 +1650,7 @@ PanelWindow {
 
                             anchors.fill: parent
                             anchors.leftMargin: root.categoryMenuOpen ? 166 : 8
-                            anchors.rightMargin: (root.clipboardMode || root.themeMode || (root.actionPanelOpen && root.selectedResult !== null)) ? 4 : 8
+                            anchors.rightMargin: (root.clipboardMode || root.themeMode || (root.actionPanelOpen && root.resultHasActionPanel)) ? 4 : 8
                             anchors.topMargin: palette.spacingTokens.smPlus
                             anchors.bottomMargin: palette.spacingTokens.tiny
 
@@ -1717,7 +1739,9 @@ PanelWindow {
                                     Text {
                                         anchors.centerIn: parent
                                         text: emojiResultDelegate.modelData.payload.emoji ?? ""
+                                        font.family: palette.emojiFontFamily
                                         font.pixelSize: palette.spotlightIconTokens.emoji
+                                        color: palette.surfaceForeground
                                     }
 
                                     MouseArea {
@@ -1742,7 +1766,7 @@ PanelWindow {
                     // DIVIDER: Visible in clipboard mode & action panel mode
                     Rectangle {
                         id: clipboardDivider
-                        visible: root.clipboardMode || (root.actionPanelOpen && root.selectedResult !== null && !root.themeMode)
+                        visible: root.clipboardMode || (root.actionPanelOpen && root.resultHasActionPanel && !root.themeMode)
                         width: 1
                         anchors.left: root.themeMode ? parent.left : listContainer.right
                         anchors.top: parent.top
@@ -1809,7 +1833,7 @@ PanelWindow {
                     // RIGHT PANE: Detalhes & Ações Contextuais (Raycast Detail & Actions, Ctrl+K)
                     SpotlightActionPanel {
                         id: actionPanel
-                        visible: root.actionPanelOpen && root.selectedResult !== null && !root.themeMode
+                        visible: root.actionPanelOpen && root.resultHasActionPanel && !root.themeMode
                         anchors.left: clipboardDivider.right
                         anchors.right: parent.right
                         anchors.top: parent.top
@@ -1859,8 +1883,14 @@ PanelWindow {
                         }
                         if (!root.selectedResult) return ""
                         const r = root.selectedResult
-                        if (r.kind === "clipboard") return "󰅍  Área de transferência · " + root.results.length + (root.results.length === 1 ? " item" : " itens")
-                        if (r.kind === "system") return "Ações do sistema"
+                        if (r.kind === "clipboard") return "Área de transferência · " + root.results.length + (root.results.length === 1 ? " item" : " itens")
+                        if (r.kind === "config_category") return "Categorias"
+                        if (root.actionMode && !root.themeMode) {
+                            const route = ModeLogic.actionRoute(root.query)
+                            if (route)
+                                return route.title
+                        }
+                        if (r.kind === "system" || r.kind === "screen_recording_stop") return "Ações do sistema"
                         if (r.kind === "app") return AppCategoryLogic.contextLabel(r.category)
                         if (r.kind === "window") return "Janelas"
                         if (r.kind === "file") return "Arquivos"
@@ -1872,7 +1902,7 @@ PanelWindow {
                         }
                         return r.section ?? ""
                     }
-                    hasActions: root.actionBarVisible && root.selectedResult !== null
+                    hasActions: root.actionBarVisible && root.resultHasActionPanel
                                 && !root.actionPanelOpen && !root.themeMode
                     arrowActions: root.clipboardMode
                     hasSelection: root.selectedResult !== null
@@ -1893,6 +1923,8 @@ PanelWindow {
                     }
                     onSecondaryClicked: actionExecutor.runSecondary(root.selectedResult)
                     onActionsClicked: {
+                        if (!root.resultHasActionPanel)
+                            return
                         root.categoryMenuOpen = false
                         root.modeMenuOpen = false
                         root.actionPanelOpen = !root.actionPanelOpen

@@ -5,6 +5,22 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+- Use crisp monochrome Tabler SVG icons across Spotlight (`:`), actions (`Ctrl+K`),
+  result rows, and clipboard thumbnails, bind `Spotlight` emoji cells to the color
+  emoji font (filtering standalone skin-tone modifiers), and prevent stale extra
+  list-model rows or circular fallback glyphs when filtering app categories.
+- Replace internal notifications with matching `replaceKey` in place (avoiding
+  stacked duplicate low/critical battery toasts), include active internal
+  critical alerts in `NotificationControl`, switch `NotificationControl` to
+  `bell`/`bell-off` icons, and highlight critical battery levels (`<= 15%`).
+- Move the Spotlight clipboard capture pause/resume control to the mode header
+  with an explicit paused banner, keep the preview header scoped to item
+  metadata and removal, and add `"Copiado ✓"` feedback for stay-open copies.
+- Fix Spotlight `Ctrl+Enter` (including keypad Enter and inside `Ctrl+K`
+  actions), action-panel shortcut delivery when preview text had focus,
+  subroute `Esc`/`Backspace` back-navigation in `:`, scrollable action panels,
+  and agnostic terminal (`open-terminal.sh`), shell restart
+  (`restart-shell.sh`), and live stop-recording actions.
 - Stabilize Spotlight clipboard list selection across asynchronous refreshes,
   thumbnail loading, and item deletion, and remove the repeated “updating”
   label from cached rows.

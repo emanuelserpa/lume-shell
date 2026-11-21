@@ -30,7 +30,7 @@ The system is organized into modular QML components connected through a reactive
   - Battery and UPower status notifications are toast-only: they do not enter
     the tracked list, counter, or persistent history. Quickshell's own low-
     battery alerts still use the toast path and retain their urgency behavior.
-  - Internal notifications use the same toast, history, DND, counter and dismissal path as notifications received from applications. They may provide an `image` source for the toast image slot; download completion and failure notices use it for the media thumbnail.
+  - Internal notifications use the same toast, history, DND, counter and dismissal path as notifications received from applications (with battery alerts staying toast-only via `tracked: false` and still contributing to `hasCritical` while active). Incoming notifications with a matching `replaceKey` update the existing toast in place rather than stacking duplicates, and `dismissBatteryAlerts()` clears both tracked and internal battery alerts. They may provide an `image` source for the toast image slot; download completion and failure notices use it for the media thumbnail.
   - Performs HTML entity decoding and markup sanitization (`formatText`).
   - Resolves app icon names and image paths through the shared `resolveIcon` method.
   - Computes relative timestamps (`agora`, `2m`, `1h`, `2d`).
@@ -84,9 +84,8 @@ The system is organized into modular QML components connected through a reactive
   while invoking the original notification action. Actions use restrained text
   controls with a hover surface rather than persistent filled chips.
 - **`bar/NotificationControl.qml`**: Status bar module.
-  - Displays glyphs for notification and DND states (`󱅫`, `󰂠`, `󰪓`, `󰂜`).
-  - Displays the notification and DND state glyphs, with the tracked count.
-  - Pill clicks: Left-click toggles popup history; the popup header holds the DND toggle.
+  - Displays semantic Tabler `bell` / `bell-off` icons with a status dot (red on critical tracked or active internal alerts, primary accent on unread tracked notifications) and highlights critical states.
+  - Pill clicks: Left-click toggles popup history; right-click toggles DND (the popup header also holds the DND toggle).
 - **`bar/NotificationPopup.qml`**: Detailed history and control panel. Its
   empty history view uses `components/EmptyState.qml`; `NotificationState`
   still owns the history and visibility decision.

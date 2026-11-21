@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Widgets
+import qs.components
 import "AppIconResolver.js" as AppIconResolver
 
 Item {
@@ -21,10 +22,11 @@ Item {
     signal activated(int index)
 
     readonly property var rowData: {
-        if (resultRow.resultsSource
-                && resultRow.index >= 0
-                && resultRow.index < resultRow.resultsSource.length)
-            return resultRow.resultsSource[resultRow.index] ?? ({})
+        if (resultRow.resultsSource) {
+            if (resultRow.index >= 0 && resultRow.index < resultRow.resultsSource.length)
+                return resultRow.resultsSource[resultRow.index] ?? ({})
+            return ({})
+        }
         return resultRow.modelData ?? ({})
     }
 
@@ -42,14 +44,19 @@ Item {
         String(resultRow.rowData.kind ?? "") === "clipboard"
         && resultRow.resolvedThumbnail.length > 0
 
+    readonly property bool hasValidRow: !resultRow.resultsSource || Boolean(resultRow.rowData.kind)
+
     // Selected (non-clipboard) rows expand to show full wrapped text
     // instead of truncating; clipboard already has the preview pane.
     readonly property bool expanded: resultRow.currentIndex === resultRow.index
         && String(resultRow.rowData.kind ?? "") !== "clipboard"
         && !resultRow.imageClipboard
 
+    visible: resultRow.hasValidRow
     width: ListView.view ? ListView.view.width : (parent ? parent.width : 0)
-    height: imageClipboard ? 66 : (resultRow.expanded ? Math.min(120, textCol.implicitHeight + 16) : 47)
+    height: !resultRow.hasValidRow
+            ? 0
+            : (imageClipboard ? 66 : (resultRow.expanded ? Math.min(120, textCol.implicitHeight + 16) : 47))
 
     TapHandler {
         onTapped: resultRow.activated(resultRow.index)
@@ -101,12 +108,33 @@ Item {
                         : ""
             }
 
+            TablerIcon {
+                id: rowTablerIcon
+                anchors.centerIn: parent
+                width: resultRow.themeColors.spotlightIconTokens.result
+                height: resultRow.themeColors.spotlightIconTokens.result
+                visible: !thumbPreview.visible
+                         && !rowIconImage.visible
+                         && String(resultRow.resultPayload.tablerIcon ?? "").length > 0
+                iconName: visible ? String(resultRow.resultPayload.tablerIcon ?? "") : ""
+                iconColor: resultRow.resultPayload.color
+                           ? resultRow.resultPayload.color
+                           : ((resultRow.rowData.kind === "kill" || resultRow.rowData.kind === "close_window")
+                              ? resultRow.themeColors.error
+                              : (resultRow.currentIndex === resultRow.index
+                                 ? resultRow.themeColors.primary
+                                 : resultRow.themeColors.surfaceVariantForeground))
+            }
+
             Text {
                 anchors.centerIn: parent
-                visible: !thumbPreview.visible && !rowIconImage.visible
+                visible: Boolean(resultRow.rowData.kind)
+                         && !thumbPreview.visible && !rowIconImage.visible && !rowTablerIcon.visible
+                         && (resultRow.rowData.kind === "window"
+                             || String(resultRow.resultPayload.icon ?? "").length > 0)
                 text: resultRow.rowData.kind === "window"
                       ? "󰖯"
-                      : String(resultRow.resultPayload.icon ?? "")
+                      : String(resultRow.resultPayload.icon ?? "")
                 color: resultRow.resultPayload.color
                        ? resultRow.resultPayload.color
                        : ((resultRow.rowData.kind === "kill" || resultRow.rowData.kind === "close_window")

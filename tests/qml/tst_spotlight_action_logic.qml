@@ -4,6 +4,7 @@ import QtQuick
 import QtTest
 import "../../launcher" as Launcher
 import "../../launcher/SpotlightActionLogic.js" as ActionLogic
+import "../../launcher/SpotlightModeLogic.js" as ModeLogic
 
 TestCase {
     id: testCase
@@ -118,12 +119,14 @@ TestCase {
         }
         const actions = actionCatalog.actionsFor(item)
 
-        compare(actions.length, 2)
+        compare(actions.length, 3)
         compare(actions[0].id, "restore")
         compare(actions[0].primary, true)
         compare(actions[1].id, "open-image")
         compare(actions[1].title, "Abrir imagem")
         compare(actions[1].hint, "Ctrl+Enter")
+        compare(actions[2].id, "delete")
+        compare(actions[2].hint, "Del")
 
         const primaryOperation = ActionLogic.resolveCatalogAction(
             actions[0].id, item, actions[0].primary, true, "/home/test")
@@ -132,6 +135,10 @@ TestCase {
         const secondaryOperation = ActionLogic.resolveCatalogAction(
             actions[1].id, item, actions[1].primary, true, "/home/test")
         compare(secondaryOperation.type, "open-clipboard-image")
+
+        const deleteOperation = ActionLogic.resolveCatalogAction(
+            actions[2].id, item, actions[2].primary, true, "/home/test")
+        compare(deleteOperation.type, "delete-clipboard")
     }
 
     function test_linkClipboardKeepsEnterRestoreAndOffersPlayerAndDownloads() {
@@ -144,7 +151,7 @@ TestCase {
         }
         const actions = actionCatalog.actionsFor(item)
 
-        compare(actions.length, 5)
+        compare(actions.length, 6)
         compare(actions[0].id, "restore")
         compare(actions[0].primary, true)
         compare(actions[1].id, "copy")
@@ -156,6 +163,8 @@ TestCase {
         compare(openPlayer.url, item.clipboardUrl)
         compare(actions[3].id, "download-video")
         compare(actions[4].id, "download-audio")
+        compare(actions[5].id, "delete")
+        compare(actions[5].hint, "Del")
         compare(ActionLogic.resolveCatalogAction(
             actions[0].id, item, true, true, "/home/test").type, "activate")
         compare(ActionLogic.resolveCatalogAction(
@@ -225,5 +234,13 @@ TestCase {
         compare(result.payload.fullText, "clipboard contents")
         compare(result.payload.lineCount, 2)
         compare(result.payload.charCount, 34)
+    }
+
+    function test_actionSubrouteParentNavigationCoversAliases() {
+        compare(ModeLogic.parentActionPrefix(":tema ", true), ": ")
+        compare(ModeLogic.parentActionPrefix(":power", true), ": ")
+        compare(ModeLogic.parentActionPrefix(":tema escuro", true), null)
+        compare(ModeLogic.parentActionPrefix(":tema escuro", false), ": ")
+        compare(ModeLogic.parentActionPrefix(": ", false), null)
     }
 }
