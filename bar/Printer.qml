@@ -40,8 +40,10 @@ Item {
     CommandJson {
         id: printerState
         command: ["python3", Quickshell.shellDir + "/scripts/printer-status.py"]
+        // Keep queue updates responsive during a job, but avoid frequent CUPS
+        // and network probes while the printer is idle or not detected.
         interval: root.jobCount > 0 ? 2000
-                  : (root.detected ? 5000 : 10000)
+                  : (root.detected ? 15000 : 30000)
         onResultChanged: {
             if (printerState.result.ok && printerState.result.data.visible) {
                 root.lastKnownPrinterData = printerState.result.data

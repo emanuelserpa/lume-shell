@@ -43,7 +43,8 @@ require additional approval.
   Keep `current-state.md` a map; put details in the feature guide. Avoid copying
   the same rules, token values, or implementation descriptions across documents.
 - Use patch versions for fixes/polish and minor versions for meaningful features
-  or layout changes. The documented project baseline is v1.2.0.
+  or layout changes. Git tags define public versions; check the package recipe
+  for the current local build version.
 
 ## Constraints
 

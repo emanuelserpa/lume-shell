@@ -70,8 +70,10 @@ Pill {
     Connections {
         target: detailsPopup
         function onVisibleChanged() {
-            if (detailsPopup.visible)
+            if (detailsPopup.visible) {
                 sensorState.refresh()
+                usageState.refresh()
+            }
         }
     }
 
@@ -84,7 +86,7 @@ Pill {
             String(root.previousTotal),
             String(root.previousIdle)
         ]
-        interval: 5000
+        interval: detailsPopup.visible ? 2000 : 15000
 
         onResultChanged: {
             if (!usageState.result.ok)

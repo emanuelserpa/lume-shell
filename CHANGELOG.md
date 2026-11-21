@@ -5,6 +5,12 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+- Reduce idle screen-recording status checks from every 5 seconds to every 15;
+  checks remain every 2 seconds while recording.
+- Launch apps reopened from archived notifications in their own systemd app
+  scope so they do not inflate Lume's service resource accounting.
+- Slow background CPU and printer status probes while their popups are closed
+  or the printer queue is idle; opening either popup refreshes its data.
 - Add player selection by dots and wheel to the media island and popup, with a
   subtle playback pulse for non-selected players that are playing.
 - Resolve themed tray and context-menu icons to file paths before rendering,

@@ -56,7 +56,10 @@ Item {
     CommandJson {
         id: recordingState
         command: ["python3", Quickshell.shellDir + "/scripts/screen-recording.py", "status"]
-        interval: root.recording ? 2000 : 5000
+        // Catch recordings started outside Lume without waking the shell too
+        // often while idle. UI actions refresh this immediately; while a
+        // recording is active, keep the elapsed/status updates responsive.
+        interval: root.recording ? 2000 : 15000
         onResultChanged: {
             const result = recordingState.result
             const data = result.data ?? ({})

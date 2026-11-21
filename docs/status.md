@@ -1,49 +1,21 @@
 # Status do projeto
 
-Resumo de orientação, não histórico de atividade. Para detalhes e critérios,
-consulte o backlog e o plano indicados abaixo.
+O Lume é distribuído para Arch Linux pelo pacote `lume-shell`, sob licença MIT.
+O código atual está em `main`; tags Git definem as versões públicas. Consulte
+o [guia do pacote](../packaging/arch/README.md) para instalação e release.
 
-- **Revisão solicitada em 19/11/2026:** [segurança, memória e desempenho](security-performance-audit.md).
-  As correções foram validadas, empacotadas e instaladas localmente como
-  `0.1.3-1`; o serviço está ativo. A verificação de inicialização removeu os
-  PNGs órfãos do cache de notificações (os 2.000 registros do banco não tinham
-  imagens vinculadas). A release GitHub ainda depende do commit e push. As
-  referências a versões antigas abaixo são evidências de etapas anteriores.
+- **Próxima revisão visual:** concluir P0-01 do [plano visual](design-plan.md):
+  testar calendário e popup de atualizações na sessão instalada, inclusive
+  retomada da suspensão, interação e resultado após reabrir.
+- **Qualidade remota:** continua suspensa por decisão do usuário; validação
+  local e build de release são fluxos separados.
+- **Distribuição e temas:** ainda falta conferir o pacote em uma sessão Arch
+  recém-instalada e validar GTK4/libadwaita e recarga de aplicativos abertos.
+- **Desempenho:** a [auditoria](security-performance-audit.md) registra as
+  correções de segurança e memória e as medições que ainda faltam. A versão
+  instalada localmente não define o estado da release pública.
 
-- **Próxima prioridade:** concluir a verificação visual de P0-01 no
-  [plano visual](design-plan.md); a lógica de calendário/log tem cobertura
-  automatizada. Após observar que o resultado salvo mantinha o ícone de updates
-  na barra indefinidamente, o comportamento foi ajustado para ocultá-lo quando
-  não houver pendências nem atualização em execução; o resultado continua no
-  histórico. `0.1.0-23` está instalado; falta observar o autohide após uma
-  atualização que deixe zero pendências e validar a interação do popup.
-- **Progresso técnico:** P0-02 a P0-04 e P1-01 passaram validação offline.
-  P1-02 foi reproduzido em simulação controlada e corrigido com watchdog,
-  backoff, fila limitada e aviso no histórico; a suíte offline está em 136/136.
-  P1-03 teve falsos sucessos corrigidos, teste de integração de `Process` real e
-  lacuna de erro no cartão do clima corrigida; revisão Wayland confirmou aviso e
-  tooltip, e o item foi fechado. P1-04 fechou com pausa persistente, revisão dos
-  estados Pausar/Retomar e seleção Wayland validada em Labwc headless isolado.
-  P1-05 teve build, instalação, IPC em Labwc headless, atualização e remoção
-  verificados em Arch descartável; ainda não pode ser fechado ou distribuído
-  enquanto a licença pública estiver indefinida.
-  P1-06 tem testes de falha isolada e confirmações de runtime: Kitty carregou a
-  paleta Chameleon por IPC, Hyprland reporta as cores correspondentes e uma janela
-  GTK3 mínima renderizou o fundo esperado em Labwc headless; GTK4/libadwaita,
-  reload de apps e Mango continuam por conferir.
-  P0-05 (CI do GitHub) está suspenso temporariamente a pedido do usuário; o
-  workflow de qualidade foi removido e o build de release não depende mais dele.
-  Ao retomar, primeiro investigar as cinco falhas vistas no CI remoto; localmente
-  a suíte completa passou com 248 testes.
-  As demais pendências estão em [backlog técnico](technical-todo.md); não foram
-  marcadas como concluídas sem reprodução ou decisão necessária.
-- **Planos de domínio:** [Spotlight](spotlight-raycast-plan.md),
-  [Theme Studio](wallpaper-color-plan.md) e [backend Wayland](wayland-backend-plan.md)
-  só se aplicam a mudanças nesses recursos. A flexibilidade da barra está
-  documentada em [bar-flexibility-plan.md](bar-flexibility-plan.md); o seletor
-  Ilhas/Contínua foi implementado preservando o layout de módulos, e os perfis
-  responsivos restantes continuam planejados.
-
-Atualize este resumo quando a prioridade recomendada mudar. Registre progresso,
-decisões e evidências no documento da tarefa; não transforme este arquivo em
-diário nem replique a lista completa do backlog.
+Planos de [Spotlight](spotlight-raycast-plan.md), [cores do wallpaper](wallpaper-color-plan.md),
+[barra](bar-flexibility-plan.md) e [Wayland](wayland-backend-plan.md) só se aplicam
+quando a mudança atingir esses recursos. Detalhes de implementação ficam nos
+guias de domínio; este arquivo apenas aponta o próximo trabalho.

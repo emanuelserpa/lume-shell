@@ -39,7 +39,9 @@ placement, monitor behavior, and font rendering.
 
 ## Release gate
 
-Tag releases only after the reusable quality workflow validates the exact tag
-commit. The Arch package is built first; publication and its SHA-256 checksum
-run in the `release` GitHub Environment. Configure that environment with the
-repository's required reviewer(s) so approval gates publication.
+Run the local validator on the intended commit before tagging. The current
+release workflow builds the Arch package from the tag commit, then publishes
+the package and SHA-256 checksum through the `release` GitHub Environment.
+The remote quality workflow is currently disabled; the release workflow does
+not run the test suite. Publication approval depends on the repository's
+Environment settings, which must be checked on GitHub separately.

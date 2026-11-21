@@ -588,7 +588,13 @@ QtObject {
             desktopEntry = desktopEntry.slice(0, -8)
         if (!/^[A-Za-z0-9._-]+$/.test(desktopEntry)) return false
 
-        Quickshell.execDetached(["gtk-launch", desktopEntry])
+        // Archived notification clicks can reopen full desktop apps. Give
+        // those processes their own app.slice scope instead of charging their
+        // memory and lifetime to the Lume shell service cgroup.
+        Quickshell.execDetached([
+            "systemd-run", "--user", "--scope", "--slice=app.slice", "--",
+            "gtk-launch", desktopEntry
+        ])
         return true
     }
 

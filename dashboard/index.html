@@ -26,9 +26,6 @@
     h2 { font-size:15px; margin:0 0 15px; letter-spacing:-.015em } h3 { font-size:13px; margin:20px 0 8px }
     .priority { border-left:3px solid var(--accent); padding:2px 0 2px 13px; margin:0 0 14px }
     .priority strong { display:block; font-size:16px } .priority p { margin:5px 0 0; color:var(--muted) }
-    .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:21px }
-    .metric { padding:13px; border-radius:12px; background:var(--bg) } .metric b { display:block; font-size:24px; letter-spacing:-.04em } .metric span { font-size:11px; color:var(--muted) }
-    .bar { height:7px; border-radius:9px; overflow:hidden; background:var(--line); margin:12px 0 6px } .bar i { display:block; height:100%; background:var(--accent); border-radius:inherit; transition:width .3s }
     .subtle { font-size:12px; color:var(--muted) }
     .task-list,.commit-list { display:grid; gap:9px; padding:0; margin:0; list-style:none }
     .task { display:grid; grid-template-columns:44px 1fr; gap:10px; align-items:start; padding:10px 0; border-top:1px solid var(--line) }
@@ -40,7 +37,7 @@
     .links a:hover { border-color:var(--accent); color:var(--accent) }
     .loading { color:var(--muted); font-size:13px } footer { text-align:center; color:var(--muted); font-size:11px; padding:22px 0 0 }
     @media(max-width:760px) { .wide,.side,.half { grid-column:span 12 } nav { gap:12px } .top { align-items:flex-start; padding:18px 0 } }
-    @media(max-width:460px) { nav { flex-wrap:wrap; justify-content:flex-end } .metrics { grid-template-columns:1fr 1fr } .metrics .metric:last-child { grid-column:span 2 } }
+    @media(max-width:460px) { nav { flex-wrap:wrap; justify-content:flex-end } }
   </style>
 </head>
 <body>
@@ -51,14 +48,11 @@
   <main class="wrap">
     <div class="eyebrow">Painel de desenvolvimento</div>
     <h1>Estado do projeto</h1>
-    <p class="intro">Prioridades, pendências técnicas e mudanças recentes do Lume. O status e o backlog vêm diretamente da documentação do repositório.</p>
+    <p class="intro">Prioridades e mudanças recentes do Lume, com o status lido da documentação do repositório.</p>
     <div class="grid">
-      <section class="card wide"><h2>Agora</h2><div id="priority" class="loading">Lendo status do projeto…</div>
-        <div class="bar" aria-label="Progresso do backlog"><i id="progress" style="width:0%"></i></div><div id="progress-label" class="subtle">Carregando pendências…</div>
-        <div class="metrics"><div class="metric"><b id="open-count">—</b><span>itens em aberto</span></div><div class="metric"><b id="done-count">—</b><span>itens concluídos</span></div><div class="metric"><b>4</b><span>fases visuais planejadas</span></div></div>
-      </section>
-      <section class="card side"><h2>Documentação</h2><div class="links"><a href="../docs/status.md">Status</a><a href="../docs/technical-todo.md">Backlog técnico</a><a href="../docs/design-plan.md">Plano visual</a><a href="../docs/architecture.md">Arquitetura</a></div><h3>Planos específicos</h3><div class="links"><a href="../docs/spotlight-raycast-plan.md">Spotlight</a><a href="../docs/wallpaper-color-plan.md">Temas</a><a href="../docs/wayland-backend-plan.md">Wayland</a></div></section>
-      <section class="card half"><h2>Pendências prioritárias</h2><div id="tasks" class="loading">Lendo backlog…</div></section>
+      <section class="card wide"><h2>Agora</h2><div id="priority" class="loading">Lendo status do projeto…</div></section>
+      <section class="card side"><h2>Documentação</h2><div class="links"><a href="../docs/status.md">Status</a><a href="../docs/design-plan.md">Plano visual</a><a href="../docs/architecture.md">Arquitetura</a></div><h3>Planos específicos</h3><div class="links"><a href="../docs/spotlight-raycast-plan.md">Spotlight</a><a href="../docs/wallpaper-color-plan.md">Temas</a><a href="../docs/wayland-backend-plan.md">Wayland</a></div></section>
+      <section class="card half"><h2>Outros pontos</h2><div id="tasks" class="loading">Lendo status…</div></section>
       <section class="card half"><h2>Atualizações recentes</h2><div id="commits" class="loading">Buscando commits…</div></section>
     </div>
     <footer id="updated">Sem dependências externas para renderizar o painel. Atualizado ao abrir.</footer>
@@ -67,25 +61,21 @@
     const $ = id => document.getElementById(id);
     const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
     async function loadDocs() {
-      const [sr,tr] = await Promise.all([fetch("../docs/status.md"),fetch("../docs/technical-todo.md")]);
-      if (!sr.ok || !tr.ok) throw Error("Não foi possível ler status e backlog. Abra por um servidor HTTP.");
-      const [status,todo] = await Promise.all([sr.text(),tr.text()]);
-      const m = status.match(/\*\*Próxima prioridade:\*\*\s*([^\n]+)/);
-      const label = m ? m[1].replace(/\[([^\]]+)\]\([^)]+\)/g,"$1").replace(/\*\*/g,"").trim() : "Consulte o backlog técnico";
-      $("priority").innerHTML = `<div class="priority"><strong>${esc(label)}</strong><p>Critérios e cenários de validação estão no backlog técnico.</p></div>`;
-      const items = [...todo.matchAll(/^- \[([ xX])\] \*\*(P\d-\d+) — ([^*]+)\*\.?([^\n]*(?:\n  [^\n]*)*)/gm)].map(x=>({done:x[1].toLowerCase()==="x",id:x[2],title:x[3].trim()}));
-      const total=items.length,done=items.filter(x=>x.done).length,open=total-done,pct=total?Math.round(done*100/total):0;
-      $("progress").style.width=`${pct}%`; $("progress-label").textContent=`${pct}% do backlog marcado como concluído · ${done} de ${total} itens`;
-      $("open-count").textContent=open; $("done-count").textContent=done;
-      const next=items.filter(x=>!x.done).slice(0,6);
-      $("tasks").innerHTML=next.length?`<ul class="task-list">${next.map(x=>`<li class="task"><span class="tag">${esc(x.id)}</span><p>${esc(x.title)}</p></li>`).join("")}</ul>`:`<p class="subtle">Nenhuma pendência aberta no backlog.</p>`;
-      $("updated").textContent=`Status e backlog lidos do repositório · atualizado ${new Intl.DateTimeFormat("pt-BR",{dateStyle:"medium",timeStyle:"short"}).format(new Date())}`;
+      const sr = await fetch("../docs/status.md");
+      if (!sr.ok) throw Error("Não foi possível ler o status. Abra por um servidor HTTP.");
+      const status = await sr.text();
+      const plain = s => s.replace(/\[([^\]]+)\]\([^)]+\)/g,"$1").replace(/[`*]/g,"").replace(/\s+/g," ").trim();
+      const items = [...status.matchAll(/^- \*\*([^*]+):\*\*\s*([^\n]+(?:\n  [^\n]+)*)/gm)].map(x=>({title:x[1],detail:plain(x[2])}));
+      const first = items.shift();
+      $("priority").innerHTML = first ? `<div class="priority"><strong>${esc(first.title)}</strong><p>${esc(first.detail)}</p></div>` : '<p class="subtle">Consulte o status do projeto.</p>';
+      $("tasks").innerHTML = items.length ? `<ul class="task-list">${items.map(x=>`<li class="task"><span class="tag">•</span><p><strong>${esc(x.title)}</strong> — ${esc(x.detail)}</p></li>`).join("")}</ul>` : '<p class="subtle">Sem outros pontos no status.</p>';
+      $("updated").textContent=`Status lido do repositório · atualizado ${new Intl.DateTimeFormat("pt-BR",{dateStyle:"medium",timeStyle:"short"}).format(new Date())}`;
     }
     async function loadCommits() {
       const r=await fetch("https://api.github.com/repos/emanuelserpa/lume-shell/commits?per_page=6",{headers:{Accept:"application/vnd.github+json"}}); if(!r.ok) throw Error();
       const data=await r.json(); $("commits").innerHTML=`<ul class="commit-list">${data.map(c=>`<li class="commit"><time>${new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"short"}).format(new Date(c.commit.author.date))}</time><a href="${esc(c.html_url)}">${esc(c.commit.message.split("\n")[0])}</a></li>`).join("")}</ul>`;
     }
-    loadDocs().catch(e=>$("priority").innerHTML=`<p class="subtle">${esc(e.message)}</p>`);
+    loadDocs().catch(e=>{ $("priority").innerHTML=`<p class="subtle">${esc(e.message)}</p>`; $("tasks").textContent="Status indisponível."; });
     loadCommits().catch(()=>$("commits").innerHTML='<p class="subtle">Feed do GitHub indisponível. O restante do painel continua funcionando.</p>');
   </script>
 </body>

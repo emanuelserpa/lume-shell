@@ -46,19 +46,21 @@ nenhuma mudança de runtime necessária para usar os documentos.
 
 **Objetivo:** informação correta e ações acessíveis durante mudanças de estado.
 
-Concluir o item **P0-01** em [pendências técnicas](technical-todo.md): calendário
-reativo, combinações de estado do popup de atualização e acesso persistente a
-resultado/log. Esse backlog contém os cenários e critérios detalhados, evitando
-manter duas listas de implementação. A atualização de datas do calendário agora
+Concluir a revisão de calendário e atualizações: calendário reativo,
+combinações de estado do popup e acesso persistente a resultado/log. A
+atualização de datas do calendário agora
 é função pura e simulável. Um harness integrado em `PanelWindow` confirmou que
 o popup cabe com lista expandida durante execução e erro; ainda faltam a abertura
 pela barra instalada, interação e persistência após reabertura, além da retomada
-real após suspensão, antes de encerrar a fase. A pill também permanece disponível
-para reabrir resultado restaurado quando a contagem chega a zero; cobertura QML
-e limites estão no checklist visual e no P0-01.
+real após suspensão, antes de encerrar a fase. O indicador se oculta quando não
+há pendências nem execução; o resultado anterior permanece no histórico. A
+cobertura QML e os limites estão no [checklist visual](visual-regression-checklist.md).
 
-Aceitação e evidências: conforme P0-01 no backlog. Não instalar pacotes nem
-mudar o relógio real para testar.
+Aceitação: conferir virada de dia/mês/ano e retomada da suspensão com o
+calendário aberto; abrir pela barra instalada e verificar cliques, foco, lista
+expandida durante execução/erro e acesso ao resultado/log após reabrir. Usar
+simulações para falhas e relógio, sem iniciar atualização real nem mudar a hora
+do sistema. Registrar evidências no checklist visual.
 
 ## Fase 2 — Legibilidade e teclado (prioridade alta; após fase 1)
 
@@ -137,5 +139,4 @@ sozinhos não provam foco, teclado, contraste ou comportamento após suspensão.
 Não considerar esta revisão uma validação completa do shell.
 
 Ordem de prioridade: fase 1 → fase 2 → fase 3 → fase 4. A implementação de cada
-fase deve atualizar o [backlog técnico](technical-todo.md), este plano e os
-documentos de domínio quando necessário.
+fase deve atualizar este plano e os documentos de domínio quando necessário.
