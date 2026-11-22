@@ -397,7 +397,8 @@ PopupWindow {
                                 maximum: 1.5
                                 dragMaximum: 1.0
                                 referenceValue: 1.0
-                                accent: root.theme.primary
+                                accent: root.sink?.audio?.muted ? root.theme.red : root.theme.primary
+                                boostAccent: root.sink?.audio?.muted ? root.theme.red : root.theme.yellow
                                 available: Boolean(root.sink?.audio)
                                 onValueRequested: function(value) {
                                     if (root.sink?.audio)
@@ -411,9 +412,12 @@ PopupWindow {
                             text: root.sink?.audio
                                   ? Math.round(root.sink.audio.volume * 100) + "%"
                                   : "--%"
-                            color: root.theme.offWhite
+                            color: root.sink?.audio?.muted
+                                   ? root.theme.red
+                                   : (root.sink?.audio && root.sink.audio.volume > 1.001 ? root.theme.yellow : root.theme.offWhite)
                             font.family: root.theme.fontFamily
                             font.pixelSize: root.theme.typeTokens.body
+                            font.weight: root.sink?.audio && root.sink.audio.volume > 1.001 ? Font.DemiBold : Font.Normal
                             horizontalAlignment: Text.AlignRight
                         }
                     }
@@ -516,9 +520,12 @@ PopupWindow {
                                         Text {
                                             width: 42
                                             text: streamDelegate.modelData.audio ? Math.round(streamDelegate.modelData.audio.volume * 100) + "%" : "--%"
-                                            color: root.theme.offWhite
+                                            color: streamDelegate.modelData.audio?.muted
+                                                   ? root.theme.red
+                                                   : (streamDelegate.modelData.audio && streamDelegate.modelData.audio.volume > 1.001 ? root.theme.yellow : root.theme.offWhite)
                                             font.family: root.theme.fontFamily
                                             font.pixelSize: root.theme.typeTokens.meta
+                                            font.weight: streamDelegate.modelData.audio && streamDelegate.modelData.audio.volume > 1.001 ? Font.DemiBold : Font.Normal
                                             horizontalAlignment: Text.AlignRight
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
@@ -550,7 +557,8 @@ PopupWindow {
                                             maximum: 1.5
                                             dragMaximum: 1.0
                                             referenceValue: 1.0
-                                            accent: root.theme.primary
+                                            accent: streamDelegate.modelData.audio?.muted ? root.theme.red : root.theme.primary
+                                            boostAccent: streamDelegate.modelData.audio?.muted ? root.theme.red : root.theme.yellow
                                             available: Boolean(streamDelegate.modelData.audio)
                                             onValueRequested: function(value) {
                                                 if (streamDelegate.modelData.audio)
@@ -707,11 +715,14 @@ PopupWindow {
                                 theme: root.theme
                                 showIcon: false
                                 showValue: false
-                                wheelEnabled: false
+                                wheelEnabled: true
                                 thumbAlwaysVisible: true
                                 value: root.source?.audio ? root.source.audio.volume : 0
                                 maximum: 1.5
-                                accent: root.theme.pink
+                                dragMaximum: 1.0
+                                referenceValue: 1.0
+                                accent: root.source?.audio?.muted ? root.theme.red : root.theme.pink
+                                boostAccent: root.source?.audio?.muted ? root.theme.red : root.theme.yellow
                                 available: Boolean(root.source?.audio)
                                 onValueRequested: function(value) {
                                     if (root.source?.audio)
@@ -725,9 +736,12 @@ PopupWindow {
                             text: root.source?.audio
                                   ? Math.round(root.source.audio.volume * 100) + "%"
                                   : "--%"
-                            color: root.theme.offWhite
+                            color: root.source?.audio?.muted
+                                   ? root.theme.red
+                                   : (root.source?.audio && root.source.audio.volume > 1.001 ? root.theme.yellow : root.theme.offWhite)
                             font.family: root.theme.fontFamily
                             font.pixelSize: root.theme.typeTokens.body
+                            font.weight: root.source?.audio && root.source.audio.volume > 1.001 ? Font.DemiBold : Font.Normal
                             horizontalAlignment: Text.AlignRight
                         }
                     }

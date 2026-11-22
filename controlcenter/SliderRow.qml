@@ -1,5 +1,6 @@
 import QtQuick
 import qs.components
+import "../services/SliderLogic.js" as SliderLogic
 
 Item {
     id: root
@@ -10,12 +11,13 @@ Item {
     property real value: 0
     property real maximum: 1
     property real minimum: 0
-    // Optional visual/drag limit for the normal range. Values may still
-    // exceed it through the wheel, up to `maximum`.
+    // Optional drag/click ceiling inside [minimum, maximum]. Values may still
+    // exceed it via the wheel up to `maximum` (e.g. 100% drag cap, 150% boost).
     property real dragMaximum: maximum
     property real referenceValue: -1
     property string valueText: ""
     property color accent: theme.accent
+    property color boostAccent: theme.yellow
     property bool available: true
     property bool wheelEnabled: true
     property bool iconClickable: false
@@ -29,32 +31,49 @@ Item {
     property int trackRadius: trackHeight / 2
     property int thumbSize: root.theme.sliderTokens.thumbSize
 
+    property real _wheelAngleAccum: 0
+    property real _wheelPixelAccum: 0
+
     signal valueRequested(real value)
     signal iconActivated()
 
     implicitHeight: root.theme.softControlHeight
 
     readonly property real step: root.maximum > 10 ? 5 : 0.05
+    readonly property bool hasReference: root.referenceValue >= root.minimum && root.referenceValue <= root.maximum
+    readonly property bool hasBoostZone: SliderLogic.hasBoostZone(root.minimum, root.maximum, root.referenceValue)
+    readonly property real valueRatio: SliderLogic.normalizedRatio(root.value, root.minimum, root.maximum)
+    readonly property real referenceRatio: SliderLogic.normalizedRatio(root.referenceValue, root.minimum, root.maximum)
+    readonly property bool isBoosted: SliderLogic.isBoosted(root.value, root.minimum, root.maximum, root.referenceValue)
 
     function stepDelta(up) {
         if (!root.available || !root.wheelEnabled) return
-        var next = up ? (root.value + root.step) : (root.value - root.step)
-        if (root.maximum <= 10) {
-            next = Math.round(next * 100) / 100
-        }
-        next = Math.max(root.minimum, Math.min(root.maximum, next))
-        root.valueRequested(next)
+        root.valueRequested(SliderLogic.stepValue(
+            root.value, up, root.step, root.minimum, root.maximum, root.referenceValue))
     }
-
-    readonly property real referenceRatio: (root.referenceValue - root.minimum)
-        / Math.max(0.0001, root.maximum - root.minimum)
 
     WheelHandler {
         enabled: root.available && root.wheelEnabled
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         onWheel: function(event) {
-            if (event.angleDelta.y !== 0)
-                root.stepDelta(event.angleDelta.y > 0)
+            event.accepted = true
+            if (event.pixelDelta.y !== 0) {
+                root._wheelPixelAccum += event.pixelDelta.y
+                const threshold = 24
+                while (Math.abs(root._wheelPixelAccum) >= threshold) {
+                    const up = root._wheelPixelAccum > 0
+                    root._wheelPixelAccum -= up ? threshold : -threshold
+                    root.stepDelta(up)
+                }
+            } else if (event.angleDelta.y !== 0) {
+                root._wheelAngleAccum += event.angleDelta.y
+                const threshold = 120
+                while (Math.abs(root._wheelAngleAccum) >= threshold) {
+                    const up = root._wheelAngleAccum > 0
+                    root._wheelAngleAccum -= up ? threshold : -threshold
+                    root.stepDelta(up)
+                }
+            }
         }
     }
 
@@ -115,43 +134,48 @@ Item {
             color: root.theme.sliderTrack
             clip: true
 
+            // Distinct subtle backdrop for the scroll-only boost region (> referenceValue).
+            Rectangle {
+                visible: root.hasBoostZone
+                x: track.width * root.referenceRatio
+                width: Math.max(0, track.width - x)
+                height: parent.height
+                color: root.theme.withAlpha(root.boostAccent, root.available ? 0.14 : 0.06)
+            }
+
             Rectangle {
                 id: fill
-                width: parent.width * Math.max(0, Math.min(1, (root.value - root.minimum) / Math.max(0.0001, root.maximum - root.minimum)))
+                width: parent.width * root.valueRatio
                 height: parent.height
                 radius: parent.radius
                 color: root.available ? root.accent : root.theme.grey
             }
+
+            // Highlight the portion of fill extending past referenceValue.
+            Rectangle {
+                visible: root.isBoosted
+                x: track.width * root.referenceRatio
+                width: Math.max(0, fill.width - x)
+                height: parent.height
+                color: root.available ? root.boostAccent : root.theme.grey
+            }
         }
 
+        // Reference notch (e.g. 100% unity mark) layered cleanly behind the thumb.
         Rectangle {
-            visible: root.referenceValue >= root.minimum && root.referenceValue <= root.maximum
+            visible: root.hasReference
             x: Math.max(0, Math.min(track.width - width, track.width * root.referenceRatio - width / 2))
-            y: track.y - 3
+            y: track.y - 2
             width: 2
-            height: track.height + 6
+            height: track.height + 4
             radius: 1
             color: root.theme.surfaceForeground
-            opacity: 0.9
+            opacity: root.available ? 0.80 : 0.35
             z: 1
         }
 
-        Text {
-            visible: root.referenceValue >= root.minimum && root.referenceValue <= root.maximum
-            x: Math.max(0, Math.min(track.width - width, track.width * root.referenceRatio - width / 2))
-            y: 0
-            width: 32
-            height: 9
-            text: "100%"
-            color: root.theme.surfaceForeground
-            opacity: 0.85
-            font.family: root.theme.fontFamily
-            font.pixelSize: 8
-            horizontalAlignment: Text.AlignHCenter
-            z: 2
-        }
-
         Rectangle {
+            id: thumb
             width: root.thumbSize
             height: root.thumbSize
             radius: root.thumbSize / 2
@@ -159,9 +183,10 @@ Item {
             x: Math.max(0, Math.min(parent.width - width, fill.width - width / 2))
             color: root.theme.surfaceContainerHighest
             border.width: 2
-            border.color: root.accent
+            border.color: root.isBoosted && root.available ? root.boostAccent : root.accent
             visible: root.available && (root.thumbAlwaysVisible || trackMouse.containsMouse || trackMouse.pressed)
             scale: trackMouse.pressed ? 1.08 : 1
+            z: 3
 
             Behavior on scale {
                 enabled: root.theme.qmlAnimationsEnabled
@@ -177,8 +202,8 @@ Item {
             cursorShape: Qt.PointingHandCursor
 
             function apply(mouseX) {
-                const ratio = Math.max(0, Math.min(1, mouseX / width))
-                root.valueRequested(root.minimum + ratio * (root.dragMaximum - root.minimum))
+                root.valueRequested(SliderLogic.valueFromPointer(
+                    mouseX, width, root.minimum, root.maximum, root.dragMaximum))
             }
 
             onPressed: function(mouse) { apply(mouse.x) }
@@ -196,9 +221,12 @@ Item {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         text: root.valueText
-        color: root.available ? root.theme.offWhite : root.theme.grey
+        color: !root.available
+               ? root.theme.grey
+               : (root.isBoosted ? root.boostAccent : root.theme.offWhite)
         font.family: root.theme.fontFamily
         font.pixelSize: root.theme.dashboardLabelFontSize
+        font.weight: root.isBoosted ? Font.DemiBold : Font.Normal
         horizontalAlignment: Text.AlignRight
     }
 }

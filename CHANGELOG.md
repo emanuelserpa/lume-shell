@@ -5,10 +5,14 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
-- Mark 100% on output-volume sliders and reserve levels above 100% for scroll
-  adjustment up to 150%.
-- Report NetworkManager connectivity separately from ICMP ping latency in the
-  network popup, so networks that block ping are not mislabeled as offline.
+- Mark 100% and shade the 100–150% boost region on audio sliders (`SliderRow`),
+  keeping pointer drag aligned 1:1 within 0–100% while wheel/touchpad scroll
+  pauses at 100% and unlocks boost up to 150% with aligned Quick Settings
+  readouts.
+- Poll network connectivity reliably while `NetworkPopup` is open, fall back from
+  ICMP ping to NetworkManager connectivity and TCP latency probes when ICMP is
+  blocked, and surface captive portals explicitly instead of mislabeling networks
+  as offline.
 - Use crisp monochrome Tabler SVG icons across Spotlight (`:`), actions (`Ctrl+K`),
   result rows, and clipboard thumbnails, bind `Spotlight` emoji cells to the color
   emoji font (filtering standalone skin-tone modifiers), and prevent stale extra

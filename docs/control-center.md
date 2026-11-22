@@ -35,9 +35,11 @@ The master output, microphone input, and per-application volume controls in
 `AudioPopup` reuse the same `SliderRow` as Quick Settings, with the existing
 150% volume range and PipeWire mute/device actions preserved. In Quick Settings,
 the output and microphone icons toggle mute while their sliders continue to
-adjust volume. Output sliders mark the 100% point; dragging stays in the normal
-0–100% range, while scrolling over the slider can raise volume to 150%. The
-current readout still shows the amplified value.
+adjust volume. Output, application, and microphone sliders mark the 100% point
+with a distinct 100–150% boost track region; dragging tracks 1:1 across 0–100%
+and caps at 100%, while scrolling over the slider pauses at 100% and can raise
+volume to 150%. Quick Settings shows aligned percentage readouts for all three
+sliders and highlights amplified values.
 On ThinkPads, `scripts/micmute-led.sh` mirrors the default PipeWire source mute
 state to `platform::micmute`; its user service listens for source/server changes
 and avoids repeated sysfs writes when the LED already matches.

@@ -276,6 +276,7 @@ PopupWindow {
                         trackRightInset: root.theme.popupInsets.standard
                         thumbAlwaysVisible: true
                         accent: root.sink?.audio?.muted ? root.theme.red : root.theme.primary
+                        boostAccent: root.sink?.audio?.muted ? root.theme.red : root.theme.yellow
                         available: Boolean(root.sink?.audio)
                         onValueRequested: function(val) {
                             if (root.sink?.audio)
@@ -295,10 +296,14 @@ PopupWindow {
                         iconClickable: true
                         value: root.source?.audio ? root.source.audio.volume : 0
                         maximum: 1.5
-                        showValue: false
+                        dragMaximum: 1.0
+                        referenceValue: 1.0
+                        valueText: root.source?.audio ? Math.round(root.source.audio.volume * 100) + "%" : "--%"
+                        showValue: true
                         trackRightInset: root.theme.popupInsets.standard
                         thumbAlwaysVisible: true
                         accent: root.source?.audio?.muted ? root.theme.red : root.theme.pink
+                        boostAccent: root.source?.audio?.muted ? root.theme.red : root.theme.yellow
                         available: Boolean(root.source?.audio)
                         onValueRequested: function(val) {
                             if (root.source?.audio)
@@ -317,7 +322,8 @@ PopupWindow {
                         tablerIcon: "bar-sun"
                         value: root.brightness
                         maximum: 100
-                        showValue: false
+                        valueText: root.brightnessAvailable ? root.brightness + "%" : "--%"
+                        showValue: true
                         trackRightInset: root.theme.popupInsets.standard
                         thumbAlwaysVisible: true
                         accent: root.theme.yellow

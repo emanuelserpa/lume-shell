@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.components
+import "../services/NetworkPingLogic.js" as NetworkPingLogic
 
 PopupWindow {
     id: root
@@ -62,6 +63,7 @@ PopupWindow {
     readonly property bool wifiEnabled: wifiStateReady && Boolean(networkData?.wifi_enabled)
     readonly property string activeSsid: String(networkData?.active_ssid ?? "")
     readonly property string activeDevice: String(networkData?.active_device ?? "")
+    readonly property bool hasActiveConnection: root.activeSsid.length > 0 || root.networkData?.active_type === "ethernet"
 
     // PopupAnchor metadata is incomplete in this qmllint version.
     // qmllint disable missing-property unqualified unresolved-type
@@ -92,9 +94,20 @@ PopupWindow {
             showSpeedTest = false
             stopSpeedTest()
         } else {
-            pingState.refresh()
+            if (root.hasActiveConnection)
+                pingState.refresh()
             card.forceActiveFocus()
         }
+    }
+
+    onHasActiveConnectionChanged: {
+        if (root.visible && root.hasActiveConnection)
+            pingState.refresh()
+    }
+
+    onActiveSsidChanged: {
+        if (root.visible && root.hasActiveConnection)
+            pingState.refresh()
     }
 
     onShowQrChanged: showQrPassword = false
@@ -149,25 +162,28 @@ PopupWindow {
 
     CommandJson {
         id: pingState
-        command: ["bash", Quickshell.shellDir + "/scripts/network-ping.sh"]
-        interval: (root.visible && !root.speedTestRunning) ? 3500 : 0
-        autoStart: false
+        command: ["python3", "-B", Quickshell.shellDir + "/scripts/network-ping.py"]
+        interval: (root.visible && root.hasActiveConnection && !root.speedTestRunning) ? 3500 : 0
+        autoStart: root.visible && root.hasActiveConnection && !root.speedTestRunning
     }
 
-    readonly property int pingMs: Number(pingState.result.data.ping ?? -1)
-    readonly property string pingStatus: String(pingState.result.data.status ?? "unknown")
-    readonly property color pingColor: root.pingMs >= 0
-        ? (root.pingMs < 60 ? root.theme.green : root.theme.yellow)
-        : (root.pingStatus === "online" ? root.theme.green
-           : (root.pingStatus === "portal" || root.pingStatus === "limited"
-              ? root.theme.yellow
-              : (root.pingStatus === "offline" ? root.theme.red : root.theme.secondary)))
-    readonly property string pingLabel: root.pingMs >= 0
-        ? root.pingMs + " ms"
-        : (root.pingStatus === "online" ? "Online"
-           : (root.pingStatus === "portal" ? "Portal"
-              : (root.pingStatus === "limited" ? "Limitada"
-                 : (root.pingStatus === "offline" ? "Offline" : "Verificando…"))))
+    readonly property var pingPresentation: NetworkPingLogic.derivePingPresentation(
+        pingState.result.data.ping,
+        pingState.result.data.status,
+        pingState.generation > 0,
+        Boolean(root.networkData?.portal))
+    readonly property int pingMs: root.pingPresentation.pingMs
+    readonly property string pingStatus: root.pingPresentation.status
+    readonly property color pingColor: root.pingPresentation.tone === "good"
+        ? root.theme.green
+        : (root.pingPresentation.tone === "warn"
+           ? root.theme.yellow
+           : (root.pingPresentation.tone === "high"
+              ? root.theme.orange
+              : (root.pingPresentation.tone === "error"
+                 ? root.theme.red
+                 : root.theme.surfaceVariantForeground)))
+    readonly property string pingLabel: root.pingPresentation.label
 
     function formatSpeed(bytesPerSec) {
         if (!bytesPerSec || bytesPerSec <= 0) return "0 B/s"
