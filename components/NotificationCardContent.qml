@@ -133,7 +133,7 @@ Column {
                 source: root.appIconSource
                 sourceSize: Qt.size(64, 64)
                 fillMode: Image.PreserveAspectFit
-                asynchronous: true
+                asynchronous: !root.appIconSource.startsWith("image://icon/")
                 visible: !bodyImgContainer.hasPrimaryImage
                           && status === Image.Ready
             }
@@ -157,7 +157,7 @@ Column {
                     sourceSize.width: 64
                     sourceSize.height: 64
                     fillMode: Image.PreserveAspectFit
-                    asynchronous: true
+                    asynchronous: !root.appIconSource.startsWith("image://icon/")
                     smooth: true
                     mipmap: true
                 }

@@ -98,7 +98,8 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
 
             Image {
-                visible: root.hasLeadingImage
+                id: leadingImageItem
+                visible: root.hasLeadingImage && status === Image.Ready
                 anchors.centerIn: parent
                 width: root.leadingIconPixelSize
                 height: root.leadingIconPixelSize
@@ -108,7 +109,7 @@ Rectangle {
             }
 
             TablerIcon {
-                visible: root.leadingTablerIcon.length > 0
+                visible: !leadingImageItem.visible && root.leadingTablerIcon.length > 0
                 anchors.centerIn: parent
                 width: root.leadingIconPixelSize
                 height: root.leadingIconPixelSize
@@ -117,7 +118,7 @@ Rectangle {
             }
 
             Text {
-                visible: !root.hasLeadingImage && root.leadingTablerIcon.length === 0 && root.leadingIcon.length > 0
+                visible: !leadingImageItem.visible && root.leadingTablerIcon.length === 0 && root.leadingIcon.length > 0
                 anchors.centerIn: parent
                 text: root.leadingIcon
                 color: root.leadingIconColor

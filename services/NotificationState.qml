@@ -614,8 +614,10 @@ QtObject {
             name = notification.hints["image-path"] || notification.hints["image_path"]
         if (name && typeof name === "string") {
             if (name.toLowerCase().indexOf("battery") !== -1) return ""
+            if (name.startsWith("image://icon/"))
+                name = name.substring(13)
             if (name.startsWith("/") || name.startsWith("file://")) return name
-            return Quickshell.iconPath(name, "")
+            return Quickshell.iconPath(name, true)
         }
         if (notification.image
                 && (notification.image.startsWith("/") || notification.image.startsWith("file://")))

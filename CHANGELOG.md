@@ -5,6 +5,10 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+- Fix a Quickshell `KIconLoader` crash when opening the notification history by
+  keeping `image://icon/` notification icon loads on the GUI thread, checking
+  icon availability via `Quickshell.iconPath(name, true)`, and hiding the
+  fallback `PopupListRow` glyph once `leadingImage` is ready.
 - Mark 100% and shade the 100–150% boost region on audio sliders (`SliderRow`),
   keeping pointer drag aligned 1:1 within 0–100% while wheel/touchpad scroll
   pauses at 100% and unlocks boost up to 150% with aligned Quick Settings
