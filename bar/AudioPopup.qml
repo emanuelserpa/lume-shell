@@ -391,10 +391,12 @@ PopupWindow {
                                 theme: root.theme
                                 showIcon: false
                                 showValue: false
-                                wheelEnabled: false
+                                wheelEnabled: true
                                 thumbAlwaysVisible: true
                                 value: root.sink?.audio ? root.sink.audio.volume : 0
                                 maximum: 1.5
+                                dragMaximum: 1.0
+                                referenceValue: 1.0
                                 accent: root.theme.primary
                                 available: Boolean(root.sink?.audio)
                                 onValueRequested: function(value) {
@@ -542,10 +544,12 @@ PopupWindow {
                                             theme: root.theme
                                             showIcon: false
                                             showValue: false
-                                            wheelEnabled: false
+                                            wheelEnabled: true
                                             thumbAlwaysVisible: true
                                             value: streamDelegate.modelData.audio ? streamDelegate.modelData.audio.volume : 0
                                             maximum: 1.5
+                                            dragMaximum: 1.0
+                                            referenceValue: 1.0
                                             accent: root.theme.primary
                                             available: Boolean(streamDelegate.modelData.audio)
                                             onValueRequested: function(value) {

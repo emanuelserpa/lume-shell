@@ -5,6 +5,10 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+- Mark 100% on output-volume sliders and reserve levels above 100% for scroll
+  adjustment up to 150%.
+- Report NetworkManager connectivity separately from ICMP ping latency in the
+  network popup, so networks that block ping are not mislabeled as offline.
 - Use crisp monochrome Tabler SVG icons across Spotlight (`:`), actions (`Ctrl+K`),
   result rows, and clipboard thumbnails, bind `Spotlight` emoji cells to the color
   emoji font (filtering standalone skin-tone modifiers), and prevent stale extra

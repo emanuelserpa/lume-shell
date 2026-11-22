@@ -10,6 +10,10 @@ Item {
     property real value: 0
     property real maximum: 1
     property real minimum: 0
+    // Optional visual/drag limit for the normal range. Values may still
+    // exceed it through the wheel, up to `maximum`.
+    property real dragMaximum: maximum
+    property real referenceValue: -1
     property string valueText: ""
     property color accent: theme.accent
     property bool available: true
@@ -41,6 +45,9 @@ Item {
         next = Math.max(root.minimum, Math.min(root.maximum, next))
         root.valueRequested(next)
     }
+
+    readonly property real referenceRatio: (root.referenceValue - root.minimum)
+        / Math.max(0.0001, root.maximum - root.minimum)
 
     WheelHandler {
         enabled: root.available && root.wheelEnabled
@@ -118,6 +125,33 @@ Item {
         }
 
         Rectangle {
+            visible: root.referenceValue >= root.minimum && root.referenceValue <= root.maximum
+            x: Math.max(0, Math.min(track.width - width, track.width * root.referenceRatio - width / 2))
+            y: track.y - 3
+            width: 2
+            height: track.height + 6
+            radius: 1
+            color: root.theme.surfaceForeground
+            opacity: 0.9
+            z: 1
+        }
+
+        Text {
+            visible: root.referenceValue >= root.minimum && root.referenceValue <= root.maximum
+            x: Math.max(0, Math.min(track.width - width, track.width * root.referenceRatio - width / 2))
+            y: 0
+            width: 32
+            height: 9
+            text: "100%"
+            color: root.theme.surfaceForeground
+            opacity: 0.85
+            font.family: root.theme.fontFamily
+            font.pixelSize: 8
+            horizontalAlignment: Text.AlignHCenter
+            z: 2
+        }
+
+        Rectangle {
             width: root.thumbSize
             height: root.thumbSize
             radius: root.thumbSize / 2
@@ -144,7 +178,7 @@ Item {
 
             function apply(mouseX) {
                 const ratio = Math.max(0, Math.min(1, mouseX / width))
-                root.valueRequested(root.minimum + ratio * (root.maximum - root.minimum))
+                root.valueRequested(root.minimum + ratio * (root.dragMaximum - root.minimum))
             }
 
             onPressed: function(mouse) { apply(mouse.x) }

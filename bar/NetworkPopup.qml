@@ -155,6 +155,19 @@ PopupWindow {
     }
 
     readonly property int pingMs: Number(pingState.result.data.ping ?? -1)
+    readonly property string pingStatus: String(pingState.result.data.status ?? "unknown")
+    readonly property color pingColor: root.pingMs >= 0
+        ? (root.pingMs < 60 ? root.theme.green : root.theme.yellow)
+        : (root.pingStatus === "online" ? root.theme.green
+           : (root.pingStatus === "portal" || root.pingStatus === "limited"
+              ? root.theme.yellow
+              : (root.pingStatus === "offline" ? root.theme.red : root.theme.secondary)))
+    readonly property string pingLabel: root.pingMs >= 0
+        ? root.pingMs + " ms"
+        : (root.pingStatus === "online" ? "Online"
+           : (root.pingStatus === "portal" ? "Portal"
+              : (root.pingStatus === "limited" ? "Limitada"
+                 : (root.pingStatus === "offline" ? "Offline" : "Verificando…"))))
 
     function formatSpeed(bytesPerSec) {
         if (!bytesPerSec || bytesPerSec <= 0) return "0 B/s"
@@ -441,13 +454,13 @@ PopupWindow {
                                     width: root.theme.iconTokens.smPlus
                                     height: root.theme.iconTokens.smPlus
                                     iconName: "network-speedometer"
-                                    iconColor: root.pingMs < 0 ? root.theme.red : (root.pingMs < 60 ? root.theme.green : root.theme.yellow)
+                                    iconColor: root.pingColor
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
                                 Text {
-                                    text: root.pingMs >= 0 ? (root.pingMs + " ms") : "Offline"
-                                    color: root.pingMs < 0 ? root.theme.red : (root.pingMs < 60 ? root.theme.green : root.theme.yellow)
+                                    text: root.pingLabel
+                                    color: root.pingColor
                                     font.family: root.theme.fontFamily
                                     font.pixelSize: root.theme.typeTokens.meta
                                     font.weight: Font.DemiBold

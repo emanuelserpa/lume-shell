@@ -269,7 +269,10 @@ PopupWindow {
                         iconClickable: true
                         value: root.sink?.audio ? root.sink.audio.volume : 0
                         maximum: 1.5
-                        showValue: false
+                        dragMaximum: 1.0
+                        referenceValue: 1.0
+                        valueText: root.sink?.audio ? Math.round(root.sink.audio.volume * 100) + "%" : "--%"
+                        showValue: true
                         trackRightInset: root.theme.popupInsets.standard
                         thumbAlwaysVisible: true
                         accent: root.sink?.audio?.muted ? root.theme.red : root.theme.primary
