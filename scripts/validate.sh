@@ -274,7 +274,8 @@ fi
 
 if bash -n "$REPO_ROOT/scripts/install-cpu-boost-system.sh" \
     && bash -n "$REPO_ROOT/scripts/doctor.sh" \
-    && sh -n "$REPO_ROOT/system/cpu-boost-privileged"; then
+    && sh -n "$REPO_ROOT/system/cpu-boost-privileged" \
+    && sh -n "$REPO_ROOT/system/power-profile-privileged"; then
     record_ok "System integration and doctor shell syntax"
 else
     record_fail "System integration or doctor shell syntax"

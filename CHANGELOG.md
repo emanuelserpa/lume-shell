@@ -5,6 +5,11 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+- Add an `Ultra Eco` (`extra-low-power`) battery profile below `Economia` that
+  combines `low-power` / `power-saver`, boost off, and a 1.6 GHz `schedutil`
+  CPU frequency cap via a passwordless Polkit helper, automatically activates
+  while discharging at `<= 15%` (restoring the previous profile on AC), and
+  displays a leaf badge next to the bar battery indicator when active.
 - Fix a Quickshell `KIconLoader` crash when opening the notification history by
   keeping `image://icon/` notification icon loads on the GUI thread, checking
   icon availability via `Quickshell.iconPath(name, true)`, and hiding the

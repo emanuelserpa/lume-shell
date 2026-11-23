@@ -1,0 +1,95 @@
+#!/bin/sh
+# Root-owned allowlisted writer for Lume power profile and CPU frequency cap.
+set -eu
+
+if [ "$#" -ne 4 ] || [ "$1" != "apply" ]; then
+    echo "usage: lumeshell-power-profile apply <platform|skip> <cap-1600000|max|keep> <boost-on|boost-off|keep>" >&2
+    exit 2
+fi
+
+platform_value=$2
+cap_mode=$3
+boost_mode=$4
+
+case "$platform_value" in
+    low-power|quiet|balanced|balanced-performance|performance)
+        platform_path=/sys/firmware/acpi/platform_profile
+        if [ -f "$platform_path" ]; then
+            printf '%s' "$platform_value" > "$platform_path"
+        fi
+        ;;
+    skip)
+        ;;
+    *)
+        echo "invalid platform profile: $platform_value" >&2
+        exit 2
+        ;;
+esac
+
+case "$cap_mode" in
+    cap-1600000)
+        for policy in /sys/devices/system/cpu/cpufreq/policy*; do
+            [ -d "$policy" ] || continue
+            if [ -f "$policy/scaling_available_governors" ] && [ -f "$policy/scaling_governor" ]; then
+                if grep -qw "schedutil" "$policy/scaling_available_governors"; then
+                    printf '%s' "schedutil" > "$policy/scaling_governor"
+                fi
+            fi
+            if [ -f "$policy/cpuinfo_min_freq" ] && [ -f "$policy/cpuinfo_max_freq" ] && [ -f "$policy/scaling_max_freq" ]; then
+                min_freq=$(cat "$policy/cpuinfo_min_freq")
+                max_freq=$(cat "$policy/cpuinfo_max_freq")
+                target=1600000
+                [ "$target" -lt "$min_freq" ] && target="$min_freq"
+                [ "$target" -gt "$max_freq" ] && target="$max_freq"
+                printf '%s' "$target" > "$policy/scaling_max_freq"
+            fi
+        done
+        ;;
+    max)
+        for policy in /sys/devices/system/cpu/cpufreq/policy*; do
+            [ -d "$policy" ] || continue
+            if [ -f "$policy/cpuinfo_max_freq" ] && [ -f "$policy/scaling_max_freq" ]; then
+                max_freq=$(cat "$policy/cpuinfo_max_freq")
+                printf '%s' "$max_freq" > "$policy/scaling_max_freq"
+            fi
+            if [ -f "$policy/scaling_governor" ] && [ -f "$policy/scaling_available_governors" ]; then
+                cur_gov=$(cat "$policy/scaling_governor")
+                if [ "$cur_gov" = "powersave" ] && grep -qw "schedutil" "$policy/scaling_available_governors"; then
+                    printf '%s' "schedutil" > "$policy/scaling_governor"
+                fi
+            fi
+        done
+        ;;
+    keep)
+        ;;
+    *)
+        echo "invalid cpu cap mode: $cap_mode" >&2
+        exit 2
+        ;;
+esac
+
+generic_boost=/sys/devices/system/cpu/cpufreq/boost
+intel_no_turbo=/sys/devices/system/cpu/intel_pstate/no_turbo
+
+case "$boost_mode" in
+    boost-on)
+        if [ -f "$generic_boost" ]; then
+            printf '1' > "$generic_boost"
+        elif [ -f "$intel_no_turbo" ]; then
+            printf '0' > "$intel_no_turbo"
+        fi
+        ;;
+    boost-off)
+        if [ -f "$generic_boost" ]; then
+            printf '0' > "$generic_boost"
+        elif [ -f "$intel_no_turbo" ]; then
+            printf '1' > "$intel_no_turbo"
+        fi
+        ;;
+    keep)
+        ;;
+    *)
+        echo "invalid boost mode: $boost_mode" >&2
+        exit 2
+        ;;
+esac

@@ -45,7 +45,7 @@ PopupWindow {
     anchor.margins.top: root.theme.popupInsets.small
     // qmllint enable missing-property unqualified unresolved-type
 
-    implicitWidth: root.theme.popupWidths.small
+    implicitWidth: root.theme.popupWidths.medium
     implicitHeight: (root.chargeLimitVisible ? 240 : 184)
                    + (root.cpuBoostVisible ? 54 + (root.cpuBoostError.length > 0 ? 14 : 0) : 0)
                    + (root.healthVisible ? 30 : 0)
@@ -245,7 +245,7 @@ PopupWindow {
                 }
             }
 
-            // Perfil de energia (Economia | Balanceado | Desempenho)
+            // Perfil de energia (Ultra Eco | Economia | Equilibrado | Desempenho)
             Column {
                 width: parent.width
                 spacing: root.theme.spacingTokens.xsPlus
@@ -254,6 +254,7 @@ PopupWindow {
                     width: parent.width
 
                     Text {
+                        id: profileHeading
                         text: "Perfil de energia"
                         color: root.theme.foreground
                         font.family: root.theme.fontFamily
@@ -262,11 +263,18 @@ PopupWindow {
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
-                    Item { width: Math.max(0, parent.width - 170); height: 1 }
+                    Item {
+                        width: Math.max(0, parent.width - profileHeading.implicitWidth - profileBackendLabel.implicitWidth)
+                        height: 1
+                    }
 
                     Text {
-                        text: String(root.profileData?.backend_label ?? "")
-                        color: root.theme.surfaceVariantForeground
+                        id: profileBackendLabel
+                        text: String(root.profileData?.active ?? "") === "extra-low-power"
+                              ? (Boolean(root.profileData?.auto_activated) ? "Ultra Eco · ≤ 15% auto" : "Ultra Eco · 1.6 GHz")
+                              : String(root.profileData?.backend_label ?? "")
+                        color: String(root.profileData?.active ?? "") === "extra-low-power"
+                               ? root.theme.green : root.theme.surfaceVariantForeground
                         font.family: root.theme.fontFamily
                         font.pixelSize: root.theme.typeTokens.caption
                         anchors.verticalCenter: parent.verticalCenter
@@ -336,6 +344,7 @@ PopupWindow {
                     width: parent.width
 
                     Text {
+                        id: chargeLimitHeading
                         text: "Limite de carga"
                         color: root.theme.foreground
                         font.family: root.theme.fontFamily
@@ -344,9 +353,13 @@ PopupWindow {
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
-                    Item { width: Math.max(0, parent.width - 195); height: 1 }
+                    Item {
+                        width: Math.max(0, parent.width - chargeLimitHeading.implicitWidth - chargeLimitLabel.implicitWidth)
+                        height: 1
+                    }
 
                     Text {
+                        id: chargeLimitLabel
                         text: Number(root.chargeLimitData?.limit) === 100 ? "Viagem 100%" : "Eco 80%"
                         color: root.theme.surfaceVariantForeground
                         font.family: root.theme.fontFamily

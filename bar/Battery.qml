@@ -16,6 +16,8 @@ Pill {
     readonly property bool charging: bat?.state === UPowerDeviceState.Charging
     readonly property bool plugged: charging || bat?.state === UPowerDeviceState.FullyCharged
     readonly property bool criticalLow: Boolean(bat?.ready) && !charging && pct <= 15
+    readonly property bool extraLowPower: PowerProfileState.isExtraLowPower
+    readonly property bool showLeafBadge: root.extraLowPower && !root.charging
     readonly property real watts: bat?.ready ? Math.abs(bat.changeRate) : 0
     readonly property real secondsRemaining:
         !bat?.ready ? 0 : (charging ? bat.timeToFull : bat.timeToEmpty)
@@ -105,7 +107,7 @@ Pill {
     Item {
         id: batteryGlyph
         anchors.centerIn: parent
-        width: batteryBody.width + 4 + (root.charging ? 12 : 0)
+        width: batteryBody.width + 4 + ((root.charging || root.showLeafBadge) ? 12 : 0)
         height: root.theme.iconTokens.xxlPlus
         z: 2
 
@@ -183,7 +185,7 @@ Pill {
             color: root.criticalLow ? root.theme.red : Qt.alpha(root.theme.surfaceForeground, 0.55)
         }
 
-        // The state badge is outside the body, so charging never moves the digits.
+        // The state badge is outside the body, so charging/eco never moves the digits.
         Shape {
             visible: root.charging
             x: batteryBody.width + 4
@@ -196,6 +198,16 @@ Pill {
                 fillColor: root.theme.surfaceForeground
                 PathSvg { path: "M 7 1 L 2 8 L 5.5 8 L 4.5 13 L 10 6 L 6.5 6 Z" }
             }
+        }
+
+        TablerIcon {
+            visible: root.showLeafBadge
+            x: batteryBody.width + 4
+            anchors.verticalCenter: parent.verticalCenter
+            width: 12
+            height: 12
+            iconName: "leaf"
+            iconColor: root.criticalLow ? root.theme.red : root.theme.green
         }
     }
 
@@ -235,13 +247,22 @@ Pill {
     tooltipText: {
         const p = Math.round(pct)
         const rem = formatRemaining(secondsRemaining)
+        const ecoSuffix = root.extraLowPower ? " · Ultra Eco" : ""
         if (charging) {
-            return rem ? "Carregando: " + p + "% (" + rem + " até 100%)" : "Carregando: " + p + "%"
+            return (rem ? "Carregando: " + p + "% (" + rem + " até 100%)" : "Carregando: " + p + "%") + ecoSuffix
         }
         if (plugged) {
-            return "Carga completa: " + p + "%"
+            return "Carga completa: " + p + "%" + ecoSuffix
         }
-        return rem ? "Bateria: " + p + "% (" + rem + " restantes)" : "Bateria: " + p + "%"
+        return (rem ? "Bateria: " + p + "% (" + rem + " restantes)" : "Bateria: " + p + "%") + ecoSuffix
+    }
+
+    Connections {
+        target: PowerProfileState
+        function onActiveProfileChanged() {
+            if (popup.visible)
+                cpuBoostState.refresh()
+        }
     }
 
     BatteryPopup {

@@ -199,6 +199,15 @@ QtObject {
                 icon: "󰌪",
                 tablerIcon: "leaf",
                 color: root.cGreen
+            },
+            {
+                kind: "power_profile",
+                profile: "extra-low-power",
+                title: "Ultra Eco" + (curProfile === "extra-low-power" ? "  ✓" : ""),
+                subtitle: "Economia máxima (1,6 GHz e turbo desativado; automático ≤ 15%)" + (curProfile === "extra-low-power" ? " (ativo)" : ""),
+                icon: "󰌪",
+                tablerIcon: "leaf",
+                color: root.cGreen
             }
         ]
     }

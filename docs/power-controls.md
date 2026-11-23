@@ -60,12 +60,14 @@ a separate 12px area outside the battery. Its minimal filled silhouette has six 
 in a 12×14px area; it stays independent of the percentage ink.
 
 Colors come from the active theme: charging is green; otherwise charge at or
-below 15% is red and normal operation uses neutral ink. The power profile does
-not affect the bar indicator: power-saver remains available in the popup, without
-a yellow color or plus badge on the pill. A full battery without active charging
-uses the neutral color. No warning ring surrounds the pill. Tooltip,
-popup controls, UPower integration and popup progress colors remain unchanged
-(the popup uses red through 15%, yellow through 35%, green above 35%).
+below 15% is red and normal operation uses neutral ink. The `extra-low-power`
+(`Ultra Eco`) profile shows a small leaf badge in the external slot beside the
+battery body when not charging, without moving or obscuring the percentage ink.
+Other power profiles (`power-saver`, `balanced`, `performance`) do not alter the
+bar indicator. A full battery without active charging uses the neutral color. No
+warning ring surrounds the pill. Tooltip, popup controls, UPower integration and
+popup progress colors remain unchanged (the popup uses red through 15%, yellow
+through 35%, green above 35%).
 
 Runtime reload and the live 77% power-saver state were inspected in
 `/tmp/battery-android.png`. Charging, low-charge, 100%, light theme and fractional
@@ -135,3 +137,16 @@ supply events. On AC it selects `balanced` and `s2idle`; on battery it selects
 it restores 75/80 automatically. It performs the same source selection at
 startup, so it also recovers when the machine boots on battery. A manually
 selected PPD profile stays in effect until the power source changes.
+
+### Ultra Eco (`extra-low-power`)
+
+`scripts/energy-profile.py` and `services/PowerProfileState.qml` add a fourth
+`Ultra Eco` (`extra-low-power`) profile below `Economia`. Selecting it sets the
+underlying `low-power` / `power-saver` profile, disables CPU boost, and caps
+`scaling_max_freq` at `1600000` kHz (`schedutil` when available) through the
+root-owned `/usr/lib/lumeshell/lumeshell-power-profile` helper and its Polkit
+rule. While discharging at or below `15%`, `PowerProfileState` automatically
+switches to `extra-low-power` (remembering the previous profile and boost
+preference) and restores the previous profile when external power is connected;
+manual changes while `<= 15%` are respected until external power is connected or
+charge rises above `18%`.

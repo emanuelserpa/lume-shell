@@ -2,7 +2,7 @@
 pkgname=lume-shell
 # Local source-build fallback; release workflow supplies the Git tag version.
 pkgver="${_release_pkgver:-0.1.5}"
-pkgrel=24
+pkgrel=25
 pkgdesc='Wayland desktop shell built with Quickshell'
 arch=('x86_64')
 url='https://github.com/emanuelserpa/lume-shell'
@@ -94,6 +94,8 @@ package() {
     "$pkgdir/usr/lib/systemd/user/lume-shell.service"
   install -Dm755 "$root/system/cpu-boost-privileged" \
     "$pkgdir/usr/lib/lumeshell/lumeshell-cpu-boost"
+  install -Dm755 "$root/system/power-profile-privileged" \
+    "$pkgdir/usr/lib/lumeshell/lumeshell-power-profile"
   install -Dm755 "$root/system/battery-charge-limit-privileged" \
     "$pkgdir/usr/lib/lumeshell/lumeshell-battery-charge-limit"
   install -Dm644 "$root/system/systemd/lumeshell-power-source-policy.service" \
@@ -102,6 +104,8 @@ package() {
     "$pkgdir/usr/lib/systemd/user/lumeshell-cpu-boost-restore.service"
   install -Dm644 "$root/system/polkit/50-lumeshell-cpu-boost.rules" \
     "$pkgdir/usr/share/polkit-1/rules.d/50-lumeshell-cpu-boost.rules"
+  install -Dm644 "$root/system/polkit/50-lumeshell-power-profile.rules" \
+    "$pkgdir/usr/share/polkit-1/rules.d/50-lumeshell-power-profile.rules"
   install -Dm644 "$root/system/polkit/50-lumeshell-battery-charge-limit.rules" \
     "$pkgdir/usr/share/polkit-1/rules.d/50-lumeshell-battery-charge-limit.rules"
   install -Dm644 "$root/packaging/pam/lumeshell-lock" \
