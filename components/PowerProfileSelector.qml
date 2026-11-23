@@ -36,15 +36,16 @@ Row {
             readonly property string itemId: String(modelData.id ?? "")
             readonly property string itemIcon: String(modelData.icon ?? "")
             readonly property bool selected: root.activeProfile === itemId
-            readonly property color selectedColor: itemId === "extra-low-power"
-                ? root.theme.green : root.theme.accent
+            readonly property color selectedColor: itemId === "extra-low-power" || itemId === "80"
+                ? root.theme.green
+                : (itemId === "performance" || itemId === "100" ? root.theme.yellow : root.theme.accent)
 
             width: (root.width - (root.spacing * (root.effectiveProfiles.length - 1))) / Math.max(1, root.effectiveProfiles.length)
-            height: 28
+            height: 32
             radius: root.theme.radiusSm
 
             color: selected
-                   ? root.theme.glassActiveSurface
+                   ? root.theme.withAlpha(btn.selectedColor, 0.16)
                    : (profileHover.hovered
                       ? root.theme.glassHoverSurface
                       : root.theme.glassCardSurface)
@@ -52,26 +53,40 @@ Row {
             border.width: 1
             border.color: selected
                           ? btn.selectedColor
-                          : root.theme.borderRegular
+                          : (profileHover.hovered ? root.theme.pillBorderHover : root.theme.borderRegular)
 
             opacity: root.available ? 1.0 : 0.48
 
+            Behavior on color {
+                enabled: root.theme.qmlAnimationsEnabled
+                ColorAnimation { duration: root.theme.motionFast; easing.type: root.theme.motionEasing }
+            }
+            Behavior on border.color {
+                enabled: root.theme.qmlAnimationsEnabled
+                ColorAnimation { duration: root.theme.motionFast; easing.type: root.theme.motionEasing }
+            }
+
+            // Do not bind Row.width to Text.width (causes circular layout collapse);
+            // size Text against btn.width so icon and label always sit side-by-side.
             Row {
                 anchors.centerIn: parent
-                width: Math.min(implicitWidth, parent.width - 8)
-                spacing: 3
+                spacing: root.theme.spacingTokens.xs
 
                 TablerIcon {
                     visible: btn.itemIcon.length > 0
-                    width: visible ? root.theme.iconTokens.sm : 0
-                    height: root.theme.iconTokens.sm
+                    width: root.theme.iconTokens.md
+                    height: root.theme.iconTokens.md
                     anchors.verticalCenter: parent.verticalCenter
                     iconName: btn.itemIcon
-                    iconColor: btn.selected ? btn.selectedColor : root.theme.green
+                    iconColor: btn.selected ? btn.selectedColor : root.theme.surfaceVariantForeground
                 }
 
                 Text {
-                    width: Math.min(implicitWidth, parent.width - (btn.itemIcon.length > 0 ? root.theme.iconTokens.sm + 3 : 0))
+                    readonly property real maxLabelWidth: Math.max(
+                        12,
+                        btn.width - 10 - (btn.itemIcon.length > 0 ? root.theme.iconTokens.md + root.theme.spacingTokens.xs : 0)
+                    )
+                    width: Math.min(implicitWidth, maxLabelWidth)
                     anchors.verticalCenter: parent.verticalCenter
                     text: String(btn.modelData.label ?? "")
                     color: btn.selected ? btn.selectedColor : root.theme.offWhite

@@ -34,6 +34,9 @@ PopupWindow {
     readonly property bool cpuBoostVisible: root.cpuBoostData?.available === true
     readonly property bool healthVisible:
         root.healthAvailable && Number.isFinite(root.healthPercentage) && root.healthPercentage > 0
+    readonly property string activeProfileId: String(root.profileData?.active ?? "")
+    readonly property bool isExtraLowPower: root.activeProfileId === "extra-low-power"
+    readonly property bool isEcoChargeLimit: Number(root.chargeLimitData?.limit) === 80
 
     // PopupAnchor metadata is incomplete in this qmllint version.
     // qmllint disable missing-property unqualified unresolved-type
@@ -46,18 +49,15 @@ PopupWindow {
     // qmllint enable missing-property unqualified unresolved-type
 
     implicitWidth: root.theme.popupWidths.medium
-    implicitHeight: (root.chargeLimitVisible ? 240 : 184)
-                   + (root.cpuBoostVisible ? 54 + (root.cpuBoostError.length > 0 ? 14 : 0) : 0)
-                   + (root.healthVisible ? 30 : 0)
+    implicitHeight: mainColumn.implicitHeight + root.theme.popupInsets.large * 2
     color: "transparent"
     surfaceFormat.opaque: false
     visible: false
     grabFocus: true
 
-
     function timeText(sec) {
         if (!sec || sec <= 0) {
-            return root.plugged ? "Completa" : "Calculando..."
+            return root.plugged ? "Completa" : "Calculando…"
         }
         const h = Math.floor(sec / 3600)
         const m = Math.floor((sec % 3600) / 60)
@@ -68,6 +68,10 @@ PopupWindow {
         percentage <= 15 ? theme.red
         : percentage <= 35 ? theme.yellow
         : theme.green
+
+    readonly property color headerAccent:
+        root.charging ? root.theme.green
+        : (root.isExtraLowPower && root.percentage > 15 ? root.theme.green : root.levelColor)
 
     onVisibleChanged: {
         if (visible)
@@ -82,25 +86,29 @@ PopupWindow {
         Keys.onEscapePressed: root.visible = false
 
         Column {
-            anchors.fill: parent
-            anchors.margins: root.theme.popupInsets.standard
+            id: mainColumn
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: root.theme.popupInsets.large
             spacing: root.theme.spacingTokens.md
 
             PopupHeader {
                 theme: root.theme
                 parentAnchored: false
-                headerHeight: 28
-                leadingTablerIcon: "battery"
-                leadingIconColor: root.levelColor
-                iconBoxSize: 28
+                headerHeight: 32
+                leadingTablerIcon: root.charging ? "bolt" : (root.isExtraLowPower ? "leaf" : "battery")
+                leadingIconColor: root.headerAccent
+                iconBoxSize: 32
                 iconBoxRadius: root.theme.radiusSm
-                iconBoxColor: root.theme.glassHoverSurface
+                iconBoxColor: root.theme.withAlpha(root.headerAccent, 0.14)
                 iconPixelSize: root.theme.iconTokens.lgPlus
                 title: "Bateria"
-                subtitle: root.stateText
-                subtitleColor: root.theme.surfaceVariantForeground
+                subtitle: root.stateText + (root.isExtraLowPower ? " · Ultra Eco" : "")
+                subtitleColor: root.isExtraLowPower && !root.charging
+                    ? root.theme.green : root.theme.surfaceVariantForeground
                 subtitlePixelSize: root.theme.typeTokens.meta
-                titlePixelSize: root.theme.typeTokens.subtitle
+                titlePixelSize: root.theme.typeTokens.title
                 titleWeight: Font.DemiBold
                 actionSpacing: 0
 
@@ -109,284 +117,407 @@ PopupWindow {
                     text: Math.round(root.percentage) + "%"
                     color: root.levelColor
                     font.family: root.theme.fontFamily
-                    font.pixelSize: root.theme.typeTokens.metricLarge
+                    font.pixelSize: root.theme.typeTokens.display
                     font.weight: Font.Bold
                 }
             }
 
-            // Barra fina de progresso
-            Rectangle {
+            // Barra de nível com marca sutil de 80% quando Eco 80% está ativo
+            Item {
                 width: parent.width
-                height: 4
-                radius: height / 2
-                color: root.theme.sliderTrack
-                clip: true
+                height: 8
 
                 Rectangle {
-                    width: parent.width * Math.max(0, Math.min(1, root.percentage / 100))
-                    height: parent.height
-                    radius: parent.radius
-                    color: root.levelColor
+                    id: chargeTrack
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width
+                    height: 6
+                    radius: height / 2
+                    color: root.theme.sliderTrack
+                    clip: true
+
+                    Rectangle {
+                        width: parent.width * Math.max(0, Math.min(1, root.percentage / 100))
+                        height: parent.height
+                        radius: parent.radius
+                        color: root.levelColor
+                    }
+                }
+
+                Rectangle {
+                    visible: root.chargeLimitVisible && root.isEcoChargeLimit
+                    x: Math.round(chargeTrack.width * 0.80) - 1
+                    anchors.verticalCenter: chargeTrack.verticalCenter
+                    width: 2
+                    height: 10
+                    radius: 1
+                    color: root.theme.surfaceForeground
+                    opacity: 0.65
                 }
             }
 
-            // Métricas: Tempo Restante | Consumo / Potência
+            // Métricas: Tempo | Consumo / Potência | Saúde (quando disponível)
             Row {
                 width: parent.width
                 spacing: root.theme.spacingTokens.sm
 
+                readonly property int cardCount: root.healthVisible ? 3 : 2
+                readonly property real cardWidth:
+                    (width - spacing * (cardCount - 1)) / cardCount
+
                 Rectangle {
-                    width: (parent.width - 6) / 2
-                    height: 46
+                    width: parent.cardWidth
+                    height: 54
                     radius: root.theme.radiusMd
                     color: root.theme.adaptiveCardSurface
                     border.width: 1
                     border.color: root.theme.adaptiveCardBorder
 
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: root.theme.spacingTokens.sm
+                    Column {
+                        anchors.fill: parent
+                        anchors.margins: root.theme.popupInsets.compact
+                        spacing: root.theme.spacingTokens.xs
 
-                        TablerIcon {
-                            width: root.theme.iconTokens.mdPlus
-                            height: root.theme.iconTokens.mdPlus
-                            iconName: "clock"
-                            iconColor: root.theme.primary
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
+                        Row {
+                            spacing: root.theme.spacingTokens.xs
 
-                        Column {
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: root.theme.spacingTokens.micro
+                            TablerIcon {
+                                width: root.theme.iconTokens.smPlus
+                                height: root.theme.iconTokens.smPlus
+                                iconName: "clock"
+                                iconColor: root.theme.primary
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
 
                             Text {
                                 text: root.charging ? "Até 100%" : "Restante"
                                 color: root.theme.surfaceVariantForeground
                                 font.family: root.theme.fontFamily
-                                font.pixelSize: root.theme.typeTokens.caption
+                                font.pixelSize: root.theme.typeTokens.meta
+                                anchors.verticalCenter: parent.verticalCenter
                             }
+                        }
 
-                            Text {
-                                text: root.timeText(root.secondsRemaining)
-                                color: root.theme.foreground
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: root.theme.typeTokens.subtitle
-                                font.weight: Font.DemiBold
-                            }
+                        Text {
+                            width: parent.width
+                            text: root.timeText(root.secondsRemaining)
+                            color: root.theme.foreground
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: root.theme.typeTokens.bodyEmphasis
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
                         }
                     }
                 }
 
                 Rectangle {
-                    width: (parent.width - 6) / 2
-                    height: 46
+                    width: parent.cardWidth
+                    height: 54
                     radius: root.theme.radiusMd
                     color: root.theme.adaptiveCardSurface
                     border.width: 1
                     border.color: root.theme.adaptiveCardBorder
 
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: root.theme.spacingTokens.sm
+                    Column {
+                        anchors.fill: parent
+                        anchors.margins: root.theme.popupInsets.compact
+                        spacing: root.theme.spacingTokens.xs
 
-                        TablerIcon {
-                            width: root.theme.iconTokens.mdPlus
-                            height: root.theme.iconTokens.mdPlus
-                            iconName: "bolt"
-                            iconColor: root.theme.cyan
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
+                        Row {
+                            spacing: root.theme.spacingTokens.xs
 
-                        Column {
-                            spacing: root.theme.spacingTokens.micro
-                            anchors.verticalCenter: parent.verticalCenter
+                            TablerIcon {
+                                width: root.theme.iconTokens.smPlus
+                                height: root.theme.iconTokens.smPlus
+                                iconName: "bolt"
+                                iconColor: root.theme.cyan
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
 
                             Text {
                                 text: root.charging ? "Potência" : "Consumo"
                                 color: root.theme.surfaceVariantForeground
                                 font.family: root.theme.fontFamily
-                                font.pixelSize: root.theme.typeTokens.caption
+                                font.pixelSize: root.theme.typeTokens.meta
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+
+                        Text {
+                            width: parent.width
+                            text: root.watts > 0 ? (root.watts.toFixed(1) + " W") : "0.0 W"
+                            color: root.theme.foreground
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: root.theme.typeTokens.bodyEmphasis
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+
+                Rectangle {
+                    visible: root.healthVisible
+                    width: visible ? parent.cardWidth : 0
+                    height: 54
+                    radius: root.theme.radiusMd
+                    color: root.theme.adaptiveCardSurface
+                    border.width: 1
+                    border.color: root.theme.adaptiveCardBorder
+
+                    Column {
+                        anchors.fill: parent
+                        anchors.margins: root.theme.popupInsets.compact
+                        spacing: root.theme.spacingTokens.xs
+
+                        Row {
+                            spacing: root.theme.spacingTokens.xs
+
+                            TablerIcon {
+                                width: root.theme.iconTokens.smPlus
+                                height: root.theme.iconTokens.smPlus
+                                iconName: "network-shield"
+                                iconColor: root.theme.green
+                                anchors.verticalCenter: parent.verticalCenter
                             }
 
                             Text {
-                                text: root.watts > 0 ? (root.watts.toFixed(1) + " W") : "0.0 W"
-                                color: root.theme.foreground
+                                text: "Saúde"
+                                color: root.theme.surfaceVariantForeground
                                 font.family: root.theme.fontFamily
-                                font.pixelSize: root.theme.typeTokens.subtitle
-                                font.weight: Font.DemiBold
+                                font.pixelSize: root.theme.typeTokens.meta
+                                anchors.verticalCenter: parent.verticalCenter
                             }
+                        }
+
+                        Text {
+                            width: parent.width
+                            text: Math.round(Math.max(0, Math.min(100, root.healthPercentage))) + "%"
+                            color: root.theme.foreground
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: root.theme.typeTokens.bodyEmphasis
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
                         }
                     }
                 }
             }
 
-            Item {
-                visible: root.healthVisible
+            // Card de controles de energia e carga
+            Rectangle {
                 width: parent.width
-                height: visible ? 18 : 0
+                height: controlsColumn.implicitHeight + root.theme.popupInsets.standard * 2
+                radius: root.theme.radiusLg
+                color: root.theme.adaptiveCardSurface
+                border.width: 1
+                border.color: root.theme.adaptiveCardBorder
 
-                Text {
-                    text: "Saúde estimada"
-                    color: root.theme.surfaceVariantForeground
-                    font.family: root.theme.fontFamily
-                    font.pixelSize: root.theme.typeTokens.caption
-                    anchors.verticalCenter: parent.verticalCenter
+                Column {
+                    id: controlsColumn
                     anchors.left: parent.left
-                }
-
-                Text {
-                    text: Math.round(Math.max(0, Math.min(100, root.healthPercentage))) + "% da capacidade original"
-                    color: root.theme.foreground
-                    font.family: root.theme.fontFamily
-                    font.pixelSize: root.theme.typeTokens.caption
-                    font.weight: Font.DemiBold
-                    anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
-                }
-            }
+                    anchors.top: parent.top
+                    anchors.margins: root.theme.popupInsets.standard
+                    spacing: root.theme.spacingTokens.md
 
-            // Perfil de energia (Ultra Eco | Economia | Equilibrado | Desempenho)
-            Column {
-                width: parent.width
-                spacing: root.theme.spacingTokens.xsPlus
+                    // Perfil de energia
+                    Column {
+                        width: parent.width
+                        spacing: root.theme.spacingTokens.sm
 
-                Row {
-                    width: parent.width
+                        Row {
+                            width: parent.width
 
-                    Text {
-                        id: profileHeading
-                        text: "Perfil de energia"
-                        color: root.theme.foreground
-                        font.family: root.theme.fontFamily
-                        font.pixelSize: root.theme.typeTokens.body
-                        font.weight: Font.DemiBold
-                        anchors.verticalCenter: parent.verticalCenter
+                            Text {
+                                id: profileHeading
+                                text: "Perfil de energia"
+                                color: root.theme.foreground
+                                font.family: root.theme.fontFamily
+                                font.pixelSize: root.theme.typeTokens.body
+                                font.weight: Font.DemiBold
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Item {
+                                width: Math.max(0, parent.width - profileHeading.implicitWidth - profileBadge.width)
+                                height: 1
+                            }
+
+                            Rectangle {
+                                id: profileBadge
+                                visible: profileBadgeText.text.length > 0
+                                width: profileBadgeText.implicitWidth + 12
+                                height: 18
+                                radius: height / 2
+                                color: root.isExtraLowPower
+                                       ? root.theme.withAlpha(root.theme.green, 0.16)
+                                       : root.theme.glassCardSurface
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Text {
+                                    id: profileBadgeText
+                                    anchors.centerIn: parent
+                                    text: root.isExtraLowPower
+                                          ? (Boolean(root.profileData?.auto_activated) ? "≤ 15% auto" : "1,6 GHz")
+                                          : String(root.profileData?.backend_label ?? "")
+                                    color: root.isExtraLowPower
+                                           ? root.theme.green : root.theme.surfaceVariantForeground
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: root.theme.typeTokens.caption
+                                    font.weight: root.isExtraLowPower ? Font.DemiBold : Font.Normal
+                                }
+                            }
+                        }
+
+                        PowerProfileSelector {
+                            theme: root.theme
+                            profiles: root.profileData?.profiles ?? []
+                            activeProfile: root.activeProfileId
+                            available: Boolean(root.profileData?.available ?? true)
+                            busy: root.profileBusy
+                            onProfileRequested: function(profileId) {
+                                root.profileRequested(profileId)
+                            }
+                        }
+
+                        Text {
+                            visible: root.isExtraLowPower
+                            width: parent.width
+                            text: "Teto 1,6 GHz · Turbo desligado · Volta a Equilibrado na tomada"
+                            color: root.theme.surfaceVariantForeground
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: root.theme.typeTokens.caption
+                            wrapMode: Text.WordWrap
+                        }
+
+                        Text {
+                            visible: root.profileError.length > 0
+                            width: parent.width
+                            text: root.profileError
+                            color: root.theme.red
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: root.theme.typeTokens.caption
+                            elide: Text.ElideRight
+                        }
                     }
 
-                    Item {
-                        width: Math.max(0, parent.width - profileHeading.implicitWidth - profileBackendLabel.implicitWidth)
+                    Rectangle {
+                        visible: root.cpuBoostVisible
+                        width: parent.width
                         height: 1
+                        color: root.theme.borderSubtle
                     }
 
-                    Text {
-                        id: profileBackendLabel
-                        text: String(root.profileData?.active ?? "") === "extra-low-power"
-                              ? (Boolean(root.profileData?.auto_activated) ? "Ultra Eco · ≤ 15% auto" : "Ultra Eco · 1.6 GHz")
-                              : String(root.profileData?.backend_label ?? "")
-                        color: String(root.profileData?.active ?? "") === "extra-low-power"
-                               ? root.theme.green : root.theme.surfaceVariantForeground
-                        font.family: root.theme.fontFamily
-                        font.pixelSize: root.theme.typeTokens.caption
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
+                    // Turbo do processador
+                    Column {
+                        visible: root.cpuBoostVisible
+                        width: parent.width
+                        spacing: root.theme.spacingTokens.xs
 
-                PowerProfileSelector {
-                    theme: root.theme
-                    profiles: root.profileData?.profiles ?? []
-                    activeProfile: String(root.profileData?.active ?? "")
-                    available: Boolean(root.profileData?.available ?? true)
-                    busy: root.profileBusy
-                    onProfileRequested: function(profileId) {
-                        root.profileRequested(profileId)
-                    }
-                }
+                        SettingToggleRow {
+                            theme: root.theme
+                            tablerIcon: "cpu"
+                            title: "Turbo do processador"
+                            description: root.isExtraLowPower && !Boolean(root.cpuBoostData?.enabled)
+                                ? "Desativado automaticamente em Ultra Eco"
+                                : "Permite frequências acima da base"
+                            checked: Boolean(root.cpuBoostData?.enabled)
+                            enabled: !root.cpuBoostBusy
+                            rowHeight: 46
+                            iconColor: root.theme.primary
+                            accessibleLabel: "Ativar turbo do processador"
+                            onToggleRequested: function(enabled) {
+                                root.cpuBoostRequested(enabled)
+                            }
+                        }
 
-                Text {
-                    visible: root.profileError.length > 0
-                    width: parent.width
-                    text: root.profileError
-                    color: root.theme.red
-                    font.family: root.theme.fontFamily
-                    font.pixelSize: root.theme.typeTokens.caption
-                    elide: Text.ElideRight
-                }
-            }
-
-            Column {
-                visible: root.cpuBoostVisible
-                width: parent.width
-                spacing: root.theme.spacingTokens.xsPlus
-
-                SettingToggleRow {
-                    theme: root.theme
-                    tablerIcon: "cpu"
-                    title: "Turbo do processador"
-                    description: "Permite frequências acima da base"
-                    checked: Boolean(root.cpuBoostData?.enabled)
-                    enabled: !root.cpuBoostBusy
-                    rowHeight: 48
-                    iconColor: root.theme.primary
-                    accessibleLabel: "Ativar turbo do processador"
-                    onToggleRequested: function(enabled) {
-                        root.cpuBoostRequested(enabled)
-                    }
-                }
-
-                Text {
-                    visible: root.cpuBoostError.length > 0
-                    width: parent.width
-                    text: root.cpuBoostError
-                    color: root.theme.red
-                    font.family: root.theme.fontFamily
-                    font.pixelSize: root.theme.typeTokens.caption
-                    elide: Text.ElideRight
-                }
-            }
-
-            // Limite de carga (Eco 80% | Viagem 100%)
-            Column {
-                visible: root.chargeLimitVisible
-                width: parent.width
-                spacing: root.theme.spacingTokens.xsPlus
-
-                Row {
-                    width: parent.width
-
-                    Text {
-                        id: chargeLimitHeading
-                        text: "Limite de carga"
-                        color: root.theme.foreground
-                        font.family: root.theme.fontFamily
-                        font.pixelSize: root.theme.typeTokens.body
-                        font.weight: Font.DemiBold
-                        anchors.verticalCenter: parent.verticalCenter
+                        Text {
+                            visible: root.cpuBoostError.length > 0
+                            width: parent.width
+                            text: root.cpuBoostError
+                            color: root.theme.red
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: root.theme.typeTokens.caption
+                            elide: Text.ElideRight
+                        }
                     }
 
-                    Item {
-                        width: Math.max(0, parent.width - chargeLimitHeading.implicitWidth - chargeLimitLabel.implicitWidth)
+                    Rectangle {
+                        visible: root.chargeLimitVisible
+                        width: parent.width
                         height: 1
+                        color: root.theme.borderSubtle
                     }
 
-                    Text {
-                        id: chargeLimitLabel
-                        text: Number(root.chargeLimitData?.limit) === 100 ? "Viagem 100%" : "Eco 80%"
-                        color: root.theme.surfaceVariantForeground
-                        font.family: root.theme.fontFamily
-                        font.pixelSize: root.theme.typeTokens.caption
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
+                    // Limite de carga (Eco 80% | Viagem 100%)
+                    Column {
+                        visible: root.chargeLimitVisible
+                        width: parent.width
+                        spacing: root.theme.spacingTokens.sm
 
-                PowerProfileSelector {
-                    theme: root.theme
-                    profiles: [{ id: "80", label: "Eco 80%" }, { id: "100", label: "Viagem 100%" }]
-                    activeProfile: String(root.chargeLimitData?.limit ?? "")
-                    available: Boolean(root.chargeLimitData?.available ?? true)
-                    busy: root.chargeLimitBusy
-                    onProfileRequested: function(mode) {
-                        root.chargeLimitRequested(mode)
-                    }
-                }
+                        Row {
+                            width: parent.width
 
-                Text {
-                    visible: root.chargeLimitError.length > 0
-                    width: parent.width
-                    text: root.chargeLimitError
-                    color: root.theme.red
-                    font.family: root.theme.fontFamily
-                    font.pixelSize: root.theme.typeTokens.caption
-                    elide: Text.ElideRight
+                            Text {
+                                id: chargeLimitHeading
+                                text: "Limite de carga"
+                                color: root.theme.foreground
+                                font.family: root.theme.fontFamily
+                                font.pixelSize: root.theme.typeTokens.body
+                                font.weight: Font.DemiBold
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Item {
+                                width: Math.max(0, parent.width - chargeLimitHeading.implicitWidth - chargeLimitBadge.width)
+                                height: 1
+                            }
+
+                            Rectangle {
+                                id: chargeLimitBadge
+                                width: chargeLimitLabel.implicitWidth + 12
+                                height: 18
+                                radius: height / 2
+                                color: root.isEcoChargeLimit
+                                       ? root.theme.withAlpha(root.theme.green, 0.14)
+                                       : root.theme.withAlpha(root.theme.yellow, 0.14)
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Text {
+                                    id: chargeLimitLabel
+                                    anchors.centerIn: parent
+                                    text: root.isEcoChargeLimit ? "Eco 80%" : "Viagem 100%"
+                                    color: root.isEcoChargeLimit ? root.theme.green : root.theme.yellow
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: root.theme.typeTokens.caption
+                                    font.weight: Font.DemiBold
+                                }
+                            }
+                        }
+
+                        PowerProfileSelector {
+                            theme: root.theme
+                            profiles: [
+                                { id: "80", label: "Eco 80%", icon: "network-shield" },
+                                { id: "100", label: "Viagem 100%", icon: "bolt" }
+                            ]
+                            activeProfile: String(root.chargeLimitData?.limit ?? "")
+                            available: Boolean(root.chargeLimitData?.available ?? true)
+                            busy: root.chargeLimitBusy
+                            onProfileRequested: function(mode) {
+                                root.chargeLimitRequested(mode)
+                            }
+                        }
+
+                        Text {
+                            visible: root.chargeLimitError.length > 0
+                            width: parent.width
+                            text: root.chargeLimitError
+                            color: root.theme.red
+                            font.family: root.theme.fontFamily
+                            font.pixelSize: root.theme.typeTokens.caption
+                            elide: Text.ElideRight
+                        }
+                    }
                 }
             }
         }
