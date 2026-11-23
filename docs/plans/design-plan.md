@@ -4,7 +4,7 @@
 
 Este é o plano ativo e prioritário do projeto, conforme instrução do usuário.
 Sua leitura é obrigatória antes de escolher ou implementar mudanças no shell;
-o contrato de execução está em [AGENTS.md](../AGENTS.md#active-plan-priority).
+o contrato de execução está em [AGENTS.md](../../AGENTS.md#active-plan-priority).
 Pedidos explícitos do usuário definem o escopo. Dentro dele, atender primeiro
 à fase aplicável mais antiga ainda pendente. Em melhorias abertas, este plano
 precede roadmaps antigos, polimento opcional e refatorações propostas pelo agente.
@@ -13,11 +13,11 @@ não equivale a fase concluída. Preservar os contratos estáveis.
 
 ## Estado de referência
 
-O [guia de design](design-guidelines.md) define os contratos visuais; o
-[checklist](visual-regression-checklist.md) define como registrar verificações.
-Para localizar componentes, use [estado atual](current-state.md). O histórico
+O [guia de design](../design-guidelines.md) define os contratos visuais; o
+[checklist](../visual-regression-checklist.md) define como registrar verificações.
+Para localizar componentes, use [estado atual](../current-state.md). O histórico
 da auditoria, decisões antigas e notas de refinamento está em
-[history/design-plan-log.md](history/design-plan-log.md).
+[history/design-plan-log.md](../history/design-plan-log.md).
 
 O [plano de cores do wallpaper](wallpaper-color-plan.md) é específico do Theme
 Studio. Consulte-o para mudanças nessa experiência; a matriz completa de
@@ -54,7 +54,7 @@ o popup cabe com lista expandida durante execução e erro; ainda faltam a abert
 pela barra instalada, interação e persistência após reabertura, além da retomada
 real após suspensão, antes de encerrar a fase. O indicador se oculta quando não
 há pendências nem execução; o resultado anterior permanece no histórico. A
-cobertura QML e os limites estão no [checklist visual](visual-regression-checklist.md).
+cobertura QML e os limites estão no [checklist visual](../visual-regression-checklist.md).
 
 Aceitação: conferir virada de dia/mês/ano e retomada da suspensão com o
 calendário aberto; abrir pela barra instalada e verificar cliques, foco, lista

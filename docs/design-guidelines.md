@@ -15,7 +15,7 @@ observada, sem declarar que toda a interface já passou por auditoria visual.
   cores para implementar um componente.
 - Este guia: intenção visual, composição e critérios para novas mudanças.
 - [Checklist visual](visual-regression-checklist.md): verificação da entrega.
-- [Plano de design](design-plan.md): ordem visual ativa e critérios das fases.
+- [Plano de design](plans/design-plan.md): ordem visual ativa e critérios das fases.
 
 Se código e documentação divergirem, registrar a diferença com o arquivo de
 origem. Descrever o comportamento atual não transforma automaticamente um
@@ -266,7 +266,7 @@ Casos concretos:
 
 - Clipboard do Spotlight carrega e exibe até 200 itens; retenção do banco é
   outra política (500 não fixados). Enter restaura ao clipboard; o helper não
-  injeta automaticamente Ctrl+V no aplicativo. Ver [clipboard](clipboard.md).
+  injeta automaticamente Ctrl+V no aplicativo. Ver [clipboard](guides/clipboard.md).
 - Impressora com trabalhos no CUPS permanece acessível mesmo com falha na
   sondagem de rede. Não esconder a fila que permite diagnóstico/cancelamento.
 - Calendário usa data atual reativa para destaque, progresso anual e feriados.

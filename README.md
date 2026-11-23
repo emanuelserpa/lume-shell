@@ -32,8 +32,8 @@ You’ll need Quickshell, PipeWire, Python, Kitty and the interface fonts.
 Individual features use tools such as NetworkManager, `wl-clipboard`,
 `brightnessctl` and `upower`. The package recipe lists the dependencies.
 
-Compositor setup is covered in the [Hyprland](docs/hyprland-install.md),
-[labwc](docs/labwc-install.md) and [Wayland](docs/wayland-install.md) guides.
+Compositor setup is covered in the [Hyprland](docs/setup/hyprland-install.md),
+[labwc](docs/setup/labwc-install.md) and [Wayland](docs/setup/wayland-install.md) guides.
 
 ## Running from source
 
@@ -54,7 +54,7 @@ To check a change locally:
 
 The [docs](docs/README.md) cover the individual features and how the code is
 organized. See [build and validation](docs/deploy-and-validation.md) for more
-about the checks.
+about the checks, and [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## License
 

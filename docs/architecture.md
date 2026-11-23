@@ -2,7 +2,7 @@
 
 Lume uses Quickshell/QML for surfaces and small Python/shell helpers for system
 integration. See [current-state](current-state.md) for owners and
-[shell-uml](shell-uml.md) for diagrams.
+[shell-uml](uml/README.md) for diagrams.
 
 ## Boundaries
 
@@ -110,7 +110,7 @@ Legacy result fields remain for existing activation/preview paths.
 navigation/grouping/actions. `SpotlightActionExecutor` executes operations and
 signals launcher work such as closing, navigation, confirmation, and usage
 ranking. Focus and ranking-process ownership remain with `Spotlight.qml`.
-See the [Spotlight plan](spotlight-raycast-plan.md) and [clipboard guide](clipboard.md).
+See the [Spotlight guide](guides/spotlight.md), [Spotlight plan](plans/spotlight-raycast-plan.md), and [clipboard guide](guides/clipboard.md).
 
 ## Compositor Boundary & Agnosticism
 
@@ -124,7 +124,7 @@ An empty model is `unreported`, not proof of missing protocol support. Doctor
 can inspect compositor announcements separately through optional `wayland-info`.
 Mango keeps one `mmsg` stream in `auto` for focused-output state and workspace
 fallback. Native CLI dispatch lives in `scripts/compositor-dispatch.sh`.
-See [compositor integration](compositor-integration.md) for capabilities,
+See [compositor integration](setup/compositor-integration.md) for capabilities,
 version limits, focused-output fallback, and projection restrictions.
 
 ## Theme System & Multi-Theme Architecture
@@ -139,7 +139,7 @@ explicit selections, and persists wallpaper/color preferences. Chameleon has
 dark, light, and OLED variants. Shared tokens handle opacity/readability for
 compositors with or without blur. Gallery navigation lives in `GalleryNav.js`.
 
-See [theme management](theme-management.md) for commands, adapters, state paths,
+See [theme management](guides/theme-management.md) for commands, adapters, state paths,
 thumbnail conversion, picker behavior, and wallpaper restoration. Generated
 adapter files are replaced on subsequent syncs; use the documented customization
 points. Visual constraints belong in the [design guide](design-guidelines.md).

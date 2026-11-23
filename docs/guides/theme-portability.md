@@ -10,7 +10,7 @@ máquina original. É um plano de implementação e validação: as etapas abaix
 não representam funcionalidades já disponíveis.
 
 O contrato atual dos adaptadores está em [theme-management.md](theme-management.md).
-As configurações externas ao shell estão em [system-setup.md](system-setup.md).
+As configurações externas ao shell estão em [system-setup.md](../setup/system-setup.md).
 
 ## Diagnóstico do projeto de destino
 
@@ -105,7 +105,7 @@ Para o Zen distribuído pela imagem, consultar também
 [Tema do Zen Browser](zen-theme.md): investigação do editor nativo e
 remoção do adaptador experimental. O shell não gerencia os temas do Zen.
 
-Usar as permissões descritas em [system-setup.md](system-setup.md#flatpak-theming)
+Usar as permissões descritas em [system-setup.md](../setup/system-setup.md#flatpak-theming)
 como referência e verificar os overrides efetivos na máquina de destino.
 Preferir configurar primeiro um aplicativo de teste, antes de aplicar uma
 política a todos os Flatpaks do usuário.

@@ -1,9 +1,9 @@
 # Cores do wallpaper — plano para o Theme Studio
 
 Status: implementação com revisão de composição em 22/10/2026; estados recolhido e expandido inspecionados no shell. Matriz de contraste/variantes ainda pendente.
-Segue o [guia de design](design-guidelines.md), o
+Segue o [guia de design](../design-guidelines.md), o
 [plano prioritário](design-plan.md) e os contratos de
-[temas](theme-management.md). A inspiração é escolher a identidade cromática
+[temas](../guides/theme-management.md). A inspiração é escolher a identidade cromática
 pessoal a partir do wallpaper, aproveitando o Chameleon existente.
 
 ## Revisão de estilo — 23/10/2026

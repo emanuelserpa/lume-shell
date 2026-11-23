@@ -18,9 +18,9 @@ feita por opções e perfis compreensíveis, não por uma tela de edição livre
 permita combinações difíceis de manter.
 
 As próximas etapas descrevem trabalho futuro. A composição de referência está
-em [`current-state.md`](current-state.md), e a implementação explícita em
+em [`current-state.md`](../current-state.md), e a implementação explícita em
 `bar/Bar.qml` permanece protegida pelo
-[contrato de estabilidade](stability-contract.md).
+[contrato de estabilidade](../stability-contract.md).
 
 ## Decisão sobre atualizações na ilha central
 

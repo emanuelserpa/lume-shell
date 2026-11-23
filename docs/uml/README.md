@@ -16,9 +16,9 @@ legível e útil numa revisão de arquitetura:
 Renderize os diagramas localmente com:
 
 ```sh
-plantuml -tpng docs/shell-uml.puml docs/shell-uml-runtime.puml \
-  docs/shell-uml-bar.puml docs/shell-uml-state.puml \
-  docs/shell-uml-integrations.puml
+plantuml -tpng docs/uml/shell-uml.puml docs/uml/shell-uml-runtime.puml \
+  docs/uml/shell-uml-bar.puml docs/uml/shell-uml-state.puml \
+  docs/uml/shell-uml-integrations.puml
 ```
 
 ## Notação e escopo
@@ -31,5 +31,5 @@ plantuml -tpng docs/shell-uml.puml docs/shell-uml-runtime.puml \
 - Os diagramas descrevem o código montado e os limites arquiteturais; não são
   inventário de todas as classes, subprocessos ou componentes não montados.
 
-Para o mapa de arquivos ativos, consulte [`current-state.md`](current-state.md).
-As regras e decisões arquiteturais estão em [`architecture.md`](architecture.md).
+Para o mapa de arquivos ativos, consulte [`current-state.md`](../current-state.md).
+As regras e decisões arquiteturais estão em [`architecture.md`](../architecture.md).

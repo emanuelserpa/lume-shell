@@ -6,7 +6,7 @@ previews Dark/Light/OLED locally, and applies only after confirmation. The
 preference is stored by wallpaper content hash in
 `$XDG_STATE_HOME/quickshell/wallpaper-color-preferences.json`; choosing Automatic
 removes the manual override. Preview generation does not write active palette
-files or synchronize adapters. See [Cores do wallpaper](wallpaper-color-plan.md)
+files or synchronize adapters. See [Cores do wallpaper](../plans/wallpaper-color-plan.md)
 for the interaction and acceptance details.
 
 Theme Studio uses compact horizontal tabs for Themes, Wallpaper and Appearance,

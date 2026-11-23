@@ -377,7 +377,7 @@ PY
         warn "Nenhuma preferência de boost salva ainda"
     fi
 else
-    warn "Persistência de boost não instalada (opcional); consulte docs/power-controls.md"
+    warn "Persistência de boost não instalada (opcional); consulte docs/guides/power-controls.md"
 fi
 
 # User systemd can be inaccessible in containers/sandboxed diagnostics. Report
