@@ -146,7 +146,8 @@ underlying `low-power` / `power-saver` profile, disables CPU boost, and caps
 `scaling_max_freq` at `1600000` kHz (`schedutil` when available) through the
 root-owned `/usr/lib/lumeshell/lumeshell-power-profile` helper and its Polkit
 rule. While discharging at or below `15%`, `PowerProfileState` automatically
-switches to `extra-low-power` (remembering the previous profile and boost
-preference) and restores the previous profile when external power is connected;
-manual changes while `<= 15%` are respected until external power is connected or
-charge rises above `18%`.
+switches to `extra-low-power` (remembering the boost preference) and switches
+to `balanced` while restoring CPU ceiling/boost when external power is
+connected (aligned with `lumeshell-power-source-policy.service`, which also
+uncaps `scaling_max_freq` on AC). Manual changes while `<= 15%` are respected
+until external power is connected or charge rises above `18%`.

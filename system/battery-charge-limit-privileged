@@ -63,6 +63,15 @@ def set_power_source_policy(ac_power):
     except (OSError, subprocess.SubprocessError) as error:
         logging.warning("Could not select %s profile: %s", profile, error)
 
+    if ac_power and os.access("/usr/lib/lumeshell/lumeshell-power-profile", os.X_OK):
+        try:
+            subprocess.run(
+                ["/usr/lib/lumeshell/lumeshell-power-profile", "apply", "skip", "max", "keep"],
+                check=True, timeout=10, capture_output=True, text=True,
+            )
+        except (OSError, subprocess.SubprocessError) as error:
+            logging.warning("Could not restore CPU frequency ceiling on AC: %s", error)
+
     sleep_path = SYSFS / "power/mem_sleep"
     try:
         supported = sleep_path.read_text().split()

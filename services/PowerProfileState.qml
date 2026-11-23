@@ -31,6 +31,7 @@ Item {
     property var policyState: ({
         autoApplied: false,
         manualOverride: false,
+        wasPlugged: false,
         previousProfile: "balanced"
     })
     readonly property var battery: UPower.displayDevice
@@ -93,12 +94,14 @@ Item {
             root.policyState = ({
                 autoApplied: Boolean(data.auto_activated) || Boolean(root.policyState.autoApplied),
                 manualOverride: Boolean(root.policyState.manualOverride),
+                wasPlugged: Boolean(root.policyState.wasPlugged),
                 previousProfile: String(data.previous_profile || root.policyState.previousProfile || "balanced")
             })
         } else {
             root.policyState = ({
                 autoApplied: false,
                 manualOverride: Boolean(root.policyState.manualOverride),
+                wasPlugged: Boolean(root.policyState.wasPlugged),
                 previousProfile: String(root.policyState.previousProfile || "balanced")
             })
         }
@@ -160,6 +163,7 @@ Item {
         root.policyState = ({
             autoApplied: decision.autoApplied,
             manualOverride: decision.manualOverride,
+            wasPlugged: decision.wasPlugged,
             previousProfile: decision.previousProfile
         })
         if (decision.action === "activate" && decision.targetProfile) {
@@ -182,8 +186,14 @@ Item {
             if (root.statusData.backend !== "power-profiles-daemon")
                 return
             const active = root.profileId(PowerProfiles.profile)
-            if (root.statusData?.extra_low_power && active === "power-saver")
+            if (root.statusData?.extra_low_power) {
+                if (active === "power-saver")
+                    return
+                // System policy switched PPD away from power-saver (e.g. AC plugged):
+                // ensure the CPU frequency cap and saved boost are also restored.
+                root.applyProfile(active, false)
                 return
+            }
             root.activeProfile = active
             const match = root.profiles.find(profile => profile.id === active)
             root.activeLabel = match ? match.label : active

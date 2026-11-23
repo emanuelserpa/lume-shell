@@ -4,9 +4,12 @@ const LOW_BATTERY_THRESHOLD = 15
 const HYSTERESIS_THRESHOLD = 18
 
 function evaluateBatteryTransition(state, percentage, isDischarging, isPlugged, activeProfile) {
+    const prevAuto = Boolean(state?.autoApplied)
+    const prevWasPlugged = Boolean(state?.wasPlugged)
     const next = {
-        autoApplied: Boolean(state?.autoApplied),
+        autoApplied: prevAuto,
         manualOverride: Boolean(state?.manualOverride),
+        wasPlugged: Boolean(isPlugged),
         previousProfile: String(state?.previousProfile || "balanced"),
         action: "none",
         targetProfile: ""
@@ -14,12 +17,11 @@ function evaluateBatteryTransition(state, percentage, isDischarging, isPlugged, 
 
     if (isPlugged) {
         next.manualOverride = false
-        if (next.autoApplied && activeProfile === "extra-low-power") {
-            next.action = "restore"
-            next.targetProfile = next.previousProfile !== "extra-low-power"
-                ? next.previousProfile : "balanced"
-        }
         next.autoApplied = false
+        if (activeProfile === "extra-low-power" && (prevAuto || !prevWasPlugged)) {
+            next.action = "restore"
+            next.targetProfile = "balanced"
+        }
         return next
     }
 
@@ -49,6 +51,7 @@ function noteManualSelection(state, selectedProfile, percentage, isPlugged) {
     const next = {
         autoApplied: false,
         manualOverride: Boolean(state?.manualOverride),
+        wasPlugged: Boolean(isPlugged),
         previousProfile: String(state?.previousProfile || "balanced")
     }
     if (selectedProfile === "extra-low-power") {
