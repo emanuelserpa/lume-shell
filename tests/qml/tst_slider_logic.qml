@@ -32,4 +32,55 @@ TestCase {
         verify(SliderLogic.isBoosted(1.05, 0, 1.5, 1.0))
         verify(!SliderLogic.isBoosted(1.0, 0, 1.0, -1))
     }
+
+    function test_scrollDetentRequiresExtraTicksAtReference() {
+        let barrier = { barrierTicks: 0, lastTickMs: 0 }
+        // Arriving at 1.0 from below stops at 1.0 without consuming boost barrier ticks yet.
+        let res = SliderLogic.stepWithDetent(barrier, 0.96, true, 0.05, 0, 1.5, 1.0, 1000, 4, 750)
+        fuzzyCompare(res.value, 1.0, 0.0001)
+        compare(res.state.barrierTicks, 0)
+        barrier = res.state
+
+        // First 3 consecutive upward ticks at 1.0 hold at 1.0.
+        for (let i = 1; i <= 3; i++) {
+            res = SliderLogic.stepWithDetent(barrier, res.value, true, 0.05, 0, 1.5, 1.0, 1000 + i * 100, 4, 750)
+            fuzzyCompare(res.value, 1.0, 0.0001)
+            compare(res.state.barrierTicks, i)
+            barrier = res.state
+        }
+
+        // 4th upward tick within the window unlocks the boost zone.
+        res = SliderLogic.stepWithDetent(barrier, res.value, true, 0.05, 0, 1.5, 1.0, 1400, 4, 750)
+        fuzzyCompare(res.value, 1.05, 0.0001)
+        compare(res.state.barrierTicks, 0)
+
+        // Scrolling back down snaps cleanly at 1.0 and resets barrier state.
+        res = SliderLogic.stepWithDetent(res.state, 1.03, false, 0.05, 0, 1.5, 1.0, 1500, 4, 750)
+        fuzzyCompare(res.value, 1.0, 0.0001)
+        compare(res.state.barrierTicks, 0)
+    }
+
+    function test_scrollDetentResetsAfterWindowTimeout() {
+        let barrier = { barrierTicks: 3, lastTickMs: 1000 }
+        // Pausing longer than 750ms resets the upward tick counter back to 1.
+        const res = SliderLogic.stepWithDetent(barrier, 1.0, true, 0.05, 0, 1.5, 1.0, 2000, 4, 750)
+        fuzzyCompare(res.value, 1.0, 0.0001)
+        compare(res.state.barrierTicks, 1)
+    }
+
+    function test_consumeWheelDeltaMouseAndTouchpad() {
+        let accum = { angle: 0, pixel: 0 }
+        // Hi-res mouse events (< 120) accumulate until reaching 120.
+        let r = SliderLogic.consumeWheelDelta(accum, 60, 0)
+        compare(r.steps.length, 0)
+        r = SliderLogic.consumeWheelDelta(r.state, 60, 0)
+        compare(r.steps.length, 1)
+        verify(r.steps[0])
+
+        // Touchpad pixelDelta emits one step per 24px.
+        r = SliderLogic.consumeWheelDelta(r.state, 0, -48)
+        compare(r.steps.length, 2)
+        verify(!r.steps[0])
+        verify(!r.steps[1])
+    }
 }

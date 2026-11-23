@@ -44,8 +44,17 @@ PanelWindow {
     property string osdIcon: "󰕾"
     property int osdValue: 0
     property int osdMaximum: 100
+    property int osdReferenceValue: 0
     property int osdDuration: 1250
     property bool osdMuted: false
+    readonly property bool hasBoostZone: root.osdReferenceValue > 0 && root.osdReferenceValue < root.osdMaximum
+    readonly property real referenceRatio: root.hasBoostZone
+        ? Math.max(0, Math.min(1, root.osdReferenceValue / Math.max(1, root.osdMaximum)))
+        : 0
+    readonly property bool isBoosted: root.hasBoostZone && root.osdValue > root.osdReferenceValue && !root.osdMuted
+    readonly property color accentColor: root.osdMuted
+        ? osdTheme.red
+        : (root.isBoosted ? osdTheme.yellow : osdTheme.primary)
 
     readonly property var hyprMonitor:
         CompositorState.hyprlandNativeEnabled ? Hyprland.monitorFor(root.screen) : null
@@ -62,11 +71,12 @@ PanelWindow {
         return Quickshell.screens.length === 0 || root.screen === Quickshell.screens[0]
     }
 
-    function showGeneric(kind, label, icon, newValue, maximum, duration, isMuted) {
+    function showGeneric(kind, label, icon, newValue, maximum, duration, isMuted, referenceValue) {
         root.osdKind = String(kind)
         root.osdLabel = String(label)
         root.osdIcon = String(icon)
         root.osdMaximum = Math.max(1, Math.round(maximum))
+        root.osdReferenceValue = referenceValue !== undefined ? Math.max(0, Math.round(referenceValue)) : 0
         root.osdValue = Math.max(0, Math.min(root.osdMaximum, Math.round(newValue)))
         root.osdDuration = Math.max(250, Math.round(duration))
         root.osdMuted = Boolean(isMuted)
@@ -101,7 +111,8 @@ PanelWindow {
             v,
             150,
             1250,
-            isMuted
+            isMuted,
+            100
         )
     }
 
@@ -113,7 +124,8 @@ PanelWindow {
             v,
             150,
             1250,
-            isMuted
+            isMuted,
+            100
         )
     }
 
@@ -125,7 +137,8 @@ PanelWindow {
             v,
             100,
             1250,
-            false
+            false,
+            0
         )
     }
 
@@ -327,7 +340,7 @@ PanelWindow {
                 Text {
                     anchors.centerIn: parent
                     text: root.osdIcon
-                    color: osdTheme.primary
+                    color: root.accentColor
                     font.family: osdTheme.nerdFontFamily
                     font.pixelSize: osdTheme.typeTokens.metric
                 }
@@ -358,30 +371,66 @@ PanelWindow {
                     Text {
                         id: osdValue
                         text: root.osdValue + "%"
-                        color: osdTheme.primary
+                        color: root.accentColor
                         font.family: osdTheme.fontFamily
                         font.pixelSize: osdTheme.typeTokens.body
                         font.weight: Font.Bold
                     }
                 }
 
-                Rectangle {
+                Item {
                     width: parent.width
-                    height: 7
-                    radius: height / 2
-                    color: osdTheme.sliderTrack
+                    height: 11
 
                     Rectangle {
-                        width: parent.width * Math.max(
-                            0,
-                            Math.min(
-                                1,
-                                root.osdValue / root.osdMaximum
+                        id: osdTrack
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width
+                        height: 7
+                        radius: height / 2
+                        color: osdTheme.sliderTrack
+                        clip: true
+
+                        Rectangle {
+                            visible: root.hasBoostZone
+                            x: osdTrack.width * root.referenceRatio
+                            width: Math.max(0, osdTrack.width - x)
+                            height: parent.height
+                            color: osdTheme.withAlpha(osdTheme.yellow, 0.14)
+                        }
+
+                        Rectangle {
+                            id: osdFill
+                            width: parent.width * Math.max(
+                                0,
+                                Math.min(
+                                    1,
+                                    root.osdValue / root.osdMaximum
+                                )
                             )
-                        )
-                        height: parent.height
-                        radius: parent.radius
-                        color: osdTheme.primary
+                            height: parent.height
+                            radius: parent.radius
+                            color: root.osdMuted ? osdTheme.red : osdTheme.primary
+                        }
+
+                        Rectangle {
+                            visible: root.isBoosted
+                            x: osdTrack.width * root.referenceRatio
+                            width: Math.max(0, osdFill.width - x)
+                            height: parent.height
+                            color: osdTheme.yellow
+                        }
+                    }
+
+                    Rectangle {
+                        visible: root.hasBoostZone
+                        x: Math.max(0, Math.min(osdTrack.width - width, osdTrack.width * root.referenceRatio - width / 2))
+                        anchors.verticalCenter: osdTrack.verticalCenter
+                        width: 2
+                        height: osdTrack.height + 4
+                        radius: 1
+                        color: osdTheme.surfaceForeground
+                        opacity: 0.85
                     }
                 }
             }

@@ -31,8 +31,8 @@ Item {
     property int trackRadius: trackHeight / 2
     property int thumbSize: root.theme.sliderTokens.thumbSize
 
-    property real _wheelAngleAccum: 0
-    property real _wheelPixelAccum: 0
+    property var _wheelAccum: ({ angle: 0, pixel: 0 })
+    property var _boostBarrier: ({ barrierTicks: 0, lastTickMs: 0 })
 
     signal valueRequested(real value)
     signal iconActivated()
@@ -48,8 +48,11 @@ Item {
 
     function stepDelta(up) {
         if (!root.available || !root.wheelEnabled) return
-        root.valueRequested(SliderLogic.stepValue(
-            root.value, up, root.step, root.minimum, root.maximum, root.referenceValue))
+        const res = SliderLogic.stepWithDetent(
+            root._boostBarrier, root.value, up, root.step, root.minimum, root.maximum,
+            root.referenceValue, Date.now())
+        root._boostBarrier = res.state
+        root.valueRequested(res.value)
     }
 
     WheelHandler {
@@ -57,22 +60,11 @@ Item {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         onWheel: function(event) {
             event.accepted = true
-            if (event.pixelDelta.y !== 0) {
-                root._wheelPixelAccum += event.pixelDelta.y
-                const threshold = 24
-                while (Math.abs(root._wheelPixelAccum) >= threshold) {
-                    const up = root._wheelPixelAccum > 0
-                    root._wheelPixelAccum -= up ? threshold : -threshold
-                    root.stepDelta(up)
-                }
-            } else if (event.angleDelta.y !== 0) {
-                root._wheelAngleAccum += event.angleDelta.y
-                const threshold = 120
-                while (Math.abs(root._wheelAngleAccum) >= threshold) {
-                    const up = root._wheelAngleAccum > 0
-                    root._wheelAngleAccum -= up ? threshold : -threshold
-                    root.stepDelta(up)
-                }
+            const consumed = SliderLogic.consumeWheelDelta(
+                root._wheelAccum, event.angleDelta.y, event.pixelDelta.y)
+            root._wheelAccum = consumed.state
+            for (let i = 0; i < consumed.steps.length; i++) {
+                root.stepDelta(consumed.steps[i])
             }
         }
     }

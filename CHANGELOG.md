@@ -5,6 +5,9 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+- Mark the 100% limit and 100–150% boost zone on the volume/microphone OSD, and
+  add a 4-tick scroll detent at 100% across the Quick Settings sliders, bar audio
+  pill, and lockscreen island before entering volume amplification.
 - Add an `Ultra Eco` (`extra-low-power`) battery profile below `Economia` that
   combines `low-power` / `power-saver`, boost off, and a 1.6 GHz `schedutil`
   CPU frequency cap via a passwordless Polkit helper, automatically activates

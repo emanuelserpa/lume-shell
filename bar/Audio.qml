@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
 import qs.components
+import "../services/SliderLogic.js" as SliderLogic
 
 Item {
     id: root
@@ -25,6 +26,22 @@ Item {
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
+    property var _wheelAccum: ({ angle: 0, pixel: 0 })
+    property var _boostBarrier: ({ barrierTicks: 0, lastTickMs: 0 })
+
+    function stepVolumeByWheel(angleDeltaY, pixelDeltaY) {
+        if (!root.sink?.audio || root.sink.audio.muted) return
+        const consumed = SliderLogic.consumeWheelDelta(root._wheelAccum, angleDeltaY, pixelDeltaY)
+        root._wheelAccum = consumed.state
+        let current = root.sink.audio.volume
+        for (let i = 0; i < consumed.steps.length; i++) {
+            const res = SliderLogic.stepWithDetent(
+                root._boostBarrier, current, consumed.steps[i], 0.02, 0, 1.5, 1.0, Date.now())
+            root._boostBarrier = res.state
+            current = res.value
+        }
+        root.sink.audio.volume = current
+    }
 
     function openPopup() {
         audioPopup.visible = true
@@ -170,9 +187,7 @@ Item {
 
         mouseArea.onWheel: function(wheel) {
             wheel.accepted = true
-            if (!root.sink?.audio || root.sink.audio.muted) return
-            const delta = wheel.angleDelta.y > 0 ? 0.02 : -0.02
-            root.sink.audio.volume = Math.max(0, Math.min(1.5, root.sink.audio.volume + delta))
+            root.stepVolumeByWheel(wheel.angleDelta.y, wheel.pixelDelta.y)
         }
     }
 

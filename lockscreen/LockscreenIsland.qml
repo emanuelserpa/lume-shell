@@ -96,11 +96,7 @@ Item {
 
                     onWheel: function(wheel) {
                         wheel.accepted = true
-                        if (!audioPill.sink?.audio || audioPill.sink.audio.muted)
-                            return
-                        const delta = wheel.angleDelta.y > 0 ? 0.02 : -0.02
-                        audioPill.sink.audio.volume = Math.max(0, Math.min(1.5,
-                            audioPill.sink.audio.volume + delta))
+                        audioPill.stepVolumeByWheel(wheel.angleDelta.y, wheel.pixelDelta.y)
                     }
                 }
             }
