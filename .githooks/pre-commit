@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+mapfile -t STAGED_FILES < <(git diff --cached --name-only --diff-filter=ACM)
+[ "${#STAGED_FILES[@]}" -eq 0 ] && exit 0
+
+STAGED_QML=()
+RUN_QML_TESTS=false
+for path in "${STAGED_FILES[@]}"; do
+    case "$path" in
+        *.qml)
+            STAGED_QML+=("$path")
+            RUN_QML_TESTS=true
+            ;;
+        services/*.js|tests/qml/*)
+            RUN_QML_TESTS=true
+            ;;
+    esac
+done
+
+if [ "${#STAGED_QML[@]}" -gt 0 ]; then
+    qmllint_bin=""
+    for cand in /usr/lib/qt6/bin/qmllint "$(command -v qmllint 2>/dev/null || true)"; do
+        [ -n "$cand" ] && [ -x "$cand" ] && { qmllint_bin="$cand"; break; }
+    done
+
+    if [ -n "$qmllint_bin" ]; then
+        qml_import_args=(-I "$REPO_ROOT" -I /usr/lib/qt6/qml)
+        while IFS= read -r qmldir; do
+            qml_import_args+=(-i "$REPO_ROOT/${qmldir#./}")
+        done < <(find . -not -path './.*' -name qmldir | sort)
+
+        "$qmllint_bin" "${qml_import_args[@]}" \
+            -W 0 \
+            --only-explicit-categories \
+            --assignment-in-condition error \
+            --comma error \
+            --confusing-expression-statement error \
+            --deprecated error \
+            --duplicate-import error \
+            --eval error \
+            --read-only-property error \
+            --redundant-optional-chaining error \
+            --stale-property-read error \
+            --unreachable-code error \
+            --unqualified error \
+            --var-used-before-declaration error \
+            --with error \
+            "${STAGED_QML[@]}"
+    fi
+
+    for path in "${STAGED_QML[@]}"; do
+        case "$path" in
+            Theme.qml|*/Theme.qml|*/ThemeState.qml|tests/*) continue ;;
+        esac
+        if grep -nE '(#[[:xdigit:]]{3,8}\b|Qt\.(rgba|rgb|hsla|hsva)\s*\(\s*[0-9])' "$path"; then
+            echo "[pre-commit] Hardcoded color found in $path; use Theme tokens." >&2
+            exit 1
+        fi
+    done
+fi
+
+if [ "$RUN_QML_TESTS" = true ]; then
+    testrunner_bin=""
+    for cand in /usr/lib/qt6/bin/qmltestrunner "$(command -v qmltestrunner 2>/dev/null || true)"; do
+        [ -n "$cand" ] && [ -x "$cand" ] && { testrunner_bin="$cand"; break; }
+    done
+    if [ -n "$testrunner_bin" ] && [ -d "$REPO_ROOT/tests/qml" ]; then
+        QT_QPA_PLATFORM=offscreen "$testrunner_bin" -input "$REPO_ROOT/tests/qml" >/dev/null
+    fi
+fi

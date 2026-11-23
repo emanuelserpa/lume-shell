@@ -3,7 +3,7 @@
 The numbered entries below record functional milestones; they are not the
 package version. Public package releases are defined by Git tags.
 
-## Unreleased
+## 0.1.5
 
 - Mark the 100% limit and 100–150% boost zone on the volume/microphone OSD, and
   add a 4-tick scroll detent at 100% across the Quick Settings sliders, bar audio
