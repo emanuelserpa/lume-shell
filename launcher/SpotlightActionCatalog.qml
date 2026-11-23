@@ -1,6 +1,6 @@
 import QtQuick
 
-// Etapa 0 do plano Raycast (docs/spotlight-raycast-plan.md): catálogo puro
+// Etapa 0 do plano Raycast (docs/plans/spotlight-raycast-plan.md): catálogo puro
 // que declara, por kind de resultado, as ações disponíveis com primária
 // explícita. Sem execuções, sem acesso a sistema: só dados. O activate()
 // existente continua sendo o caminho compatível da ação primária.

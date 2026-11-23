@@ -1,8 +1,8 @@
 # Compositor integration contract
 
 The shared workspace path and compositor-safe Hyprland dispatch have an initial
-implementation. See the [migration plan](wayland-backend-plan.md) for remaining
-work and the [upstream protocol research](wayland-compositor-research.md) for
+implementation. See the [migration plan](../plans/wayland-backend-plan.md) for remaining
+work and the [upstream protocol research](../plans/wayland-compositor-research.md) for
 version and capability evidence.
 
 The shell keeps presentation and compositor transport on separate sides of a

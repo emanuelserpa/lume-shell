@@ -2,7 +2,7 @@
 pkgname=lume-shell
 # Local source-build fallback; release workflow supplies the Git tag version.
 pkgver="${_release_pkgver:-0.1.5}"
-pkgrel=28
+pkgrel=29
 pkgdesc='Wayland desktop shell built with Quickshell'
 arch=('x86_64')
 url='https://github.com/emanuelserpa/lume-shell'
@@ -113,11 +113,16 @@ package() {
   install -Dm644 "$root/packaging/pam/lumeshell-lock-password" \
     "$pkgdir/etc/pam.d/lumeshell-lock-password"
   install -Dm644 "$root/README.md" "$pkgdir/usr/share/doc/lume-shell/README.md"
-  for doc in arch-packaging-plan dependency-inventory compositor-integration \
-    lockscreen-prototype wayland-install wayland-compositor-research greetd-regreet; do
-    if [[ -f "$root/docs/$doc.md" ]]; then
-      install -Dm644 "$root/docs/$doc.md" \
-        "$pkgdir/usr/share/doc/lume-shell/$doc.md"
+  install -Dm644 "$root/CHANGELOG.md" "$pkgdir/usr/share/doc/lume-shell/CHANGELOG.md"
+  for doc in \
+    setup/compositor-integration.md \
+    guides/lockscreen-prototype.md \
+    setup/wayland-install.md \
+    plans/wayland-compositor-research.md \
+    setup/greetd-regreet.md; do
+    if [[ -f "$root/docs/$doc" ]]; then
+      install -Dm644 "$root/docs/$doc" \
+        "$pkgdir/usr/share/doc/lume-shell/${doc##*/}"
     fi
   done
   install -Dm644 "$root/workspaces.json.example" \

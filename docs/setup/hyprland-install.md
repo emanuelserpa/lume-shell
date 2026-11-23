@@ -7,7 +7,7 @@ Arch Linux.
 ## Install
 
 Build or install the Arch package described in
-[`../packaging/arch/README.md`](../packaging/arch/README.md). The package
+[`../../packaging/arch/README.md`](../../packaging/arch/README.md). The package
 installs the shell under `/usr/share/lume-shell` and provides
 `lume-shell.service`.
 

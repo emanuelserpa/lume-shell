@@ -236,6 +236,36 @@ else
     record_fail "Docs/code drift in shared components:"$'\n'"$(printf '%s\n' "${docs_drift_findings[@]}")"
 fi
 
+# Verify local Markdown links resolve cleanly inside the repository.
+broken_md_links="$(python3 -B - "$REPO_ROOT" <<'PY'
+import pathlib, re, sys
+
+root = pathlib.Path(sys.argv[1])
+link_re = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+broken = []
+for md in sorted(root.rglob("*.md")):
+    if ".git" in md.parts:
+        continue
+    for lineno, line in enumerate(md.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+        for target in link_re.findall(line):
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            path_part = target.split("#", 1)[0]
+            if not path_part:
+                continue
+            if not (md.parent / path_part).resolve().exists():
+                broken.append(f"{md.relative_to(root)}:{lineno} -> {target}")
+if broken:
+    print("\n".join(broken))
+    sys.exit(1)
+PY
+)"
+if [ $? -eq 0 ]; then
+    record_ok "Markdown local link integrity"
+else
+    record_fail "Broken local Markdown links:"$'\n'"$broken_md_links"
+fi
+
 # Keep component colors bound to the active theme. Hex palette values,
 # numeric Qt.rgba/Qt.rgb/Qt.hsla literals belong in Theme.qml and ThemeState.qml,
 # the centralized theme definitions.

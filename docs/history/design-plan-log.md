@@ -1,6 +1,6 @@
 # Histórico do plano visual
 
-Este arquivo preserva a auditoria documental e os registros datados de implementação. Use [design-plan.md](../design-plan.md) para prioridades ativas.
+Este arquivo preserva a auditoria documental e os registros datados de implementação. Use [design-plan.md](../plans/design-plan.md) para prioridades ativas.
 
 ## Base da revisão
 
@@ -8,14 +8,14 @@ Este arquivo preserva a auditoria documental e os registros datados de implement
 
 A configuração externa aproxima o campo de senha das ilhas de vidro do shell,
 com tokens exportados pelo adaptador de tema, tipografia Noto Sans e recuos
-revisados. Detalhes em [system-setup.md](../system-setup.md#hyprlock-appearance).
+revisados. Detalhes em [system-setup.md](../setup/system-setup.md#hyprlock-appearance).
 A avaliação visual no próximo bloqueio permanece pendente.
 
 
 ### Extensão: Cores do wallpaper (implementada; composição revisada)
 
 O usuário solicitou o planejamento da escolha de cor principal a partir do
-wallpaper. O [plano do Theme Studio](../wallpaper-color-plan.md) define a experiência,
+wallpaper. O [plano do Theme Studio](../plans/wallpaper-color-plan.md) define a experiência,
 integração e critérios de aceitação. A extração, prévia isolada, persistência por
 imagem, aplicação explícita e controles de teclado já foram implementados; os
 composição recolhida/expandida foi revisada no shell após feedback do usuário;
@@ -321,7 +321,7 @@ Pedido específico, relacionado às fases 2 e 4: corpo retangular arredondado,
 percentual maior com baseline única e símbolo de estado externo. O preenchimento usa verde durante carga; o raio usa o primeiro plano do
 tema. Após feedback, o perfil Economia fica apenas no popup, sem alterar a
 cor ou acrescentar “+” à pill. Detalhes e
-referências em [power-controls](../power-controls.md#bar-indicator).
+referências em [power-controls](../guides/power-controls.md#bar-indicator).
 Recarga confirmada e estado real de 77% em Economia inspecionado em
 `/tmp/battery-android.png`. Carga, 100%, bateria baixa, tema claro e escala
 fracionária permanecem pendentes; esta entrega não conclui a matriz geral.

@@ -6,7 +6,7 @@ changes within the user's request.
 ## Start here
 
 1. Read [current-state](docs/current-state.md) for mounted surfaces and owners.
-2. Read the [active design plan](docs/design-plan.md) and
+2. Read the [active design plan](docs/plans/design-plan.md) and
    [stability contract](docs/stability-contract.md).
 3. Consult [architecture](docs/architecture.md) and only the relevant feature
    guide from the [documentation index](docs/README.md).
@@ -17,13 +17,13 @@ Use [project status](docs/status.md) for the recommended next task. Keep that
 summary current when priorities change; put detailed progress and evidence in
 the relevant plan or feature guide.
 
-Spotlight work also uses [its plan](docs/spotlight-raycast-plan.md); themes and
-wallpapers use the [wallpaper color plan](docs/wallpaper-color-plan.md).
+Spotlight work also uses [its plan](docs/plans/spotlight-raycast-plan.md); themes and
+wallpapers use the [wallpaper color plan](docs/plans/wallpaper-color-plan.md).
 Older roadmaps are background, not additional mandatory reading.
 
 ## Active plan priority
 
-The user designated `docs/design-plan.md` as the active priority. Explicit user
+The user designated `docs/plans/design-plan.md` as the active priority. Explicit user
 requests define scope. Within that scope, prefer the earliest unfinished
 applicable phase: state/diagnostics, legibility/keyboard, components/motion,
 then geometry/regression. Do not expand a targeted task into unrelated phases.
