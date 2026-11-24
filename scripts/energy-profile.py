@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 
 from command_utils import run_command
+from lume_paths import config_dir, migrate_file
 
 VERSION = 1
 EXTRA_LOW_POWER_ID = "extra-low-power"
@@ -54,13 +55,11 @@ def run(args, timeout=3.0):
 
 
 def state_file_path():
-    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return config_home / "lumeshell" / "power" / "power-profile.json"
+    return migrate_file(config_dir() / "power" / "power-profile.json")
 
 
 def boost_preference_path():
-    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return config_home / "lumeshell" / "power" / "cpu-boost.json"
+    return migrate_file(config_dir() / "power" / "cpu-boost.json")
 
 
 def read_boost_preference(path=None):

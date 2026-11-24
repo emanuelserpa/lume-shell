@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Theme Manager for Quickshell Desktop Shell.
-Manages theme definitions and persistence in ~/.local/state/quickshell/theme.json.
+Theme Manager for Lume Shell.
+Manages theme definitions and persistence in ~/.local/state/lume-shell/theme.json.
 Output envelope adheres strictly to {"ok": bool, "error": str | None, ...}.
 """
 
@@ -26,6 +26,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+from lume_paths import ensure_compat_symlink, legacy_siblings, migrate_file, state_dir
 from theme_colors import (
     brighten_hex,
     darken_hex,
@@ -41,7 +42,7 @@ from theme_colors import (
 )
 from theme_catalog import DEFAULT_THEME, GHOSTTY_THEME_MAP, THEMES
 
-STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "quickshell"
+STATE_DIR = state_dir()
 STATE_FILE = STATE_DIR / "theme.json"
 CHAMELEON_PALETTE_FILE = STATE_DIR / "chameleon-palette.json"
 WALLPAPER_COLOR_PREFS_FILE = STATE_DIR / "wallpaper-color-preferences.json"
@@ -297,7 +298,7 @@ def extract_chameleon_palette(wallpaper_path=None, target_variant="chameleon", s
     """
     Escolhe uma cor do wallpaper e gera três esquemas Material Tonal Spot:
     normal, claro e OLED. Salva os tokens em
-    ~/.local/state/quickshell/chameleon-palette.json.
+    ~/.local/state/lume-shell/chameleon-palette.json.
     """
     target = str(target_variant or "chameleon").strip().lower()
     detected = wallpaper_path or detect_current_wallpaper()
@@ -747,7 +748,7 @@ def verify_adapter(name: str, theme_id: str, theme_dict: dict | None = None) -> 
             }
             return bool(content) and all(value in content.lower() for value in expected)
         if name == "gtk":
-            theme_name = "chameleon" if tid.startswith("chameleon") else f"quickshell-{tid}"
+            theme_name = "chameleon" if tid.startswith("chameleon") else f"lume-shell-{tid}"
             ini = _read_text_safe(cfg_home / "gtk-3.0" / "settings.ini")
             if f"gtk-theme-name = {theme_name}" not in ini \
                     and f"gtk-theme-name={theme_name}" not in ini:
@@ -827,7 +828,7 @@ def cmd_get(theme_id=None):
         "theme": theme_info,
         "variants": get_cached_variants(),
         "adapters": {
-            "quickshell": True,
+            "lume-shell": True,
             "kitty": adapter_in_sync("kitty", target_id, theme_info),
             "ghostty": adapter_in_sync("ghostty", target_id, theme_info),
             "hyprland": adapter_in_sync("hyprland", target_id, theme_info),
@@ -938,8 +939,8 @@ def kitty_theme_contents(palette: dict) -> str:
 
 
 def _kitty_theme_include(theme_file: Path) -> str:
-    include = "${HOME}/.local/state/quickshell/kitty-theme.conf"
-    default_state_file = Path.home() / ".local/state/quickshell/kitty-theme.conf"
+    include = "${HOME}/.local/state/lume-shell/kitty-theme.conf"
+    default_state_file = Path.home() / ".local/state/lume-shell/kitty-theme.conf"
     if theme_file != default_state_file:
         include = str(theme_file)
     return include
@@ -948,17 +949,26 @@ def _kitty_theme_include(theme_file: Path) -> str:
 def _kitty_managed_config(config_path: Path, theme_file: Path) -> str:
     """Keep kitty's theme include and private runtime socket configured once."""
     content = _read_text_safe(config_path)
-    start = "# BEGIN Quickshell theme integration"
-    end = "# END Quickshell theme integration"
+    start = "# BEGIN Lume Shell theme integration"
+    end = "# END Lume Shell theme integration"
+    legacy_start = "# BEGIN Quickshell theme integration"
+    legacy_end = "# END Quickshell theme integration"
     include = _kitty_theme_include(theme_file)
     block = "\n".join((
         start,
         "allow_remote_control socket-only",
-        "listen_on unix:${XDG_RUNTIME_DIR}/quickshell-kitty-{kitty_pid}",
+        "listen_on unix:${XDG_RUNTIME_DIR}/lume-shell-kitty-{kitty_pid}",
         f"include {include}",
         end,
     ))
-    pattern = re.compile(re.escape(start) + r".*?" + re.escape(end), re.DOTALL)
+    pattern = re.compile(
+        r"(?:"
+        + re.escape(start) + r".*?" + re.escape(end)
+        + r"|"
+        + re.escape(legacy_start) + r".*?" + re.escape(legacy_end)
+        + r")",
+        re.DOTALL,
+    )
     if pattern.search(content):
         updated = pattern.sub(block, content, count=1)
     else:
@@ -1011,7 +1021,10 @@ def sync_kitty_theme(theme_id: str, config_path: Path | None = None,
             temp_config.write_text(new_config, encoding="utf-8")
             temp_config.replace(config)
 
-        sockets = sorted(KITTY_RUNTIME_DIR.glob("quickshell-kitty-*"))
+        sockets = sorted({
+            *KITTY_RUNTIME_DIR.glob("lume-shell-kitty-*"),
+            *KITTY_RUNTIME_DIR.glob("quickshell-kitty-*"),
+        })
         updated_live_windows = False
         if sockets:
             executable = shutil.which("kitten") or shutil.which("kitty")
@@ -1216,8 +1229,8 @@ def to_hyprland_hex_rgba(hex_str: str, alpha_hex: str = "ee") -> str:
 
 def export_canonical_palette(theme_data: dict) -> Path:
     """
-    Salva a paleta canônica central em ~/.local/state/quickshell/current_palette.json.
-    Essa paleta serve como Single Source of Truth para todas as integrações.
+    Salva a paleta canônica central em ~/.local/state/lume-shell/current_palette.json.
+    Mantém symlink de compatibilidade em ~/.local/state/quickshell/current_palette.json.
     """
     try:
         STATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -1230,6 +1243,9 @@ def export_canonical_palette(theme_data: dict) -> Path:
         temp = CANONICAL_PALETTE_FILE.with_suffix(".tmp")
         temp.write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         temp.replace(CANONICAL_PALETTE_FILE)
+        for legacy in legacy_siblings(CANONICAL_PALETTE_FILE):
+            ensure_compat_symlink(legacy, CANONICAL_PALETTE_FILE)
+            break
     except Exception:
         pass
     return CANONICAL_PALETTE_FILE
@@ -2380,7 +2396,7 @@ def sync_gtk_theme(theme_id: str, theme_dict: dict | None = None,
     else:
         # Temas estáticos também ganham CSS da própria paleta em vez de
         # herdar um Catppuccin fixo que não os representa.
-        gtk_theme = f"quickshell-{tid}"
+        gtk_theme = f"lume-shell-{tid}"
         try:
             active = info if info.get("colors") else None
             generate_gtk_chameleon_theme(palette=active, themes_dir=themes_dir,
@@ -2478,7 +2494,7 @@ def apply_all_adapters(
         "regreet": lambda: sync_regreet_theme(theme_id, theme_dict),
     }
     results = {name: _run_adapter(sync) for name, sync in adapters.items()}
-    return {"quickshell": True, **results}
+    return {"lume-shell": True, **results}
 
 
 def _run_adapter(sync) -> bool:
@@ -2550,7 +2566,7 @@ def cmd_update_wallpaper(wallpaper_path=None):
                     "kitty_synced": adapter_in_sync("kitty", current, theme_info),
                     "ghostty_synced": False,
                     "adapters": {
-                        "quickshell": True,
+                        "lume-shell": True,
                         "kitty": adapter_in_sync("kitty", current, theme_info),
                         "ghostty": adapter_in_sync("ghostty", current, theme_info),
                         "hyprland": adapter_in_sync("hyprland", current, theme_info),
@@ -2585,7 +2601,7 @@ def cmd_update_wallpaper(wallpaper_path=None):
         export_canonical_palette(active_theme)
         # Tema estático: paleta não mudou, só relata estado verificado.
         adapters = {
-            "quickshell": True,
+            "lume-shell": True,
             "kitty": adapter_in_sync("kitty", current, active_theme),
             "ghostty": adapter_in_sync("ghostty", current, active_theme),
             "hyprland": adapter_in_sync("hyprland", current, active_theme),
@@ -2654,8 +2670,21 @@ def cmd_set_wallpaper_color(wallpaper_path, color, variant):
     return cmd_set(variant)
 
 
+def _migrate_theme_state_files() -> None:
+    for target, compat in (
+        (STATE_FILE, False),
+        (CHAMELEON_PALETTE_FILE, False),
+        (WALLPAPER_COLOR_PREFS_FILE, False),
+        (CANONICAL_PALETTE_FILE, True),
+        (ADAPTERS_FILE, False),
+        (KITTY_THEME_FILE, True),
+        (STATE_DIR / "theme-manager.lock", False),
+    ):
+        migrate_file(target, compat_symlink=compat)
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Gerenciador de Temas do Quickshell")
+    parser = argparse.ArgumentParser(description="Gerenciador de Temas do Lume Shell")
     parser.add_argument("action", nargs="?", default="get", choices=["get", "list", "set", "next", "update-wallpaper", "wallpaper-colors", "preview-wallpaper-color", "set-wallpaper-color", "sync-hyprlock", "sync-regreet"], help="Ação a executar")
     parser.add_argument("theme", nargs="?", default=None, help="ID do tema ou caminho do wallpaper")
     parser.add_argument("color", nargs="?", default=None)
@@ -2664,6 +2693,7 @@ def main():
 
     try:
         # Include reads: palette discovery can also update caches/adapters.
+        _migrate_theme_state_files()
         STATE_DIR.mkdir(parents=True, exist_ok=True)
         with (STATE_DIR / "theme-manager.lock").open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)

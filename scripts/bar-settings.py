@@ -2,17 +2,23 @@
 """Read and persist the bar's visual surface preference."""
 
 import json
-import os
 import sys
 from pathlib import Path
 
-CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "quickshell"
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from lume_paths import config_dir, migrate_file
+
+CONFIG_DIR = config_dir()
 CONFIG_FILE = CONFIG_DIR / "bar.json"
 MODES = {"islands", "continuous"}
 DEFAULT_MODE = "islands"
 
 
 def read_mode():
+    migrate_file(CONFIG_FILE)
     try:
         data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
         mode = data.get("surface", DEFAULT_MODE)
@@ -24,6 +30,7 @@ def read_mode():
 def write_mode(mode):
     if mode not in MODES:
         raise ValueError("modo deve ser 'islands' ou 'continuous'")
+    migrate_file(CONFIG_FILE)
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     temporary = CONFIG_FILE.with_suffix(".json.tmp")
     temporary.write_text(json.dumps({"version": 1, "surface": mode}) + "\n", encoding="utf-8")

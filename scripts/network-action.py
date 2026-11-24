@@ -6,6 +6,12 @@ import subprocess
 import sys
 import tempfile
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from lume_paths import private_runtime_dir
+
 
 class WifiQrError(Exception):
     """An actionable failure while reading the active Wi-Fi profile."""
@@ -296,8 +302,7 @@ def main():
             return result(False, action, "Não foi possível executar o qrencode.")
         if p.returncode == 0:
             try:
-                runtime_dir = Path(os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir())
-                private_dir = runtime_dir / f"quickshell-{os.getuid()}"
+                private_dir = private_runtime_dir()
                 private_dir.mkdir(mode=0o700, exist_ok=True)
                 if private_dir.stat().st_uid != os.getuid():
                     raise OSError("private runtime directory has another owner")

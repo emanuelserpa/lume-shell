@@ -3,6 +3,19 @@
 The numbered entries below record functional milestones; they are not the
 package version. Public package releases are defined by Git tags.
 
+## Unreleased
+
+- Standardize all Lume-owned XDG config, state, data, cache, and private runtime
+  paths on `lume-shell` (replacing legacy `quickshell` and `lumeshell`
+  directories), centralized in `services/ShellPaths.qml` and
+  `scripts/lume_paths.py`.
+- Add automatic, idempotent startup migration (`scripts/migrate-paths.py` and
+  `lume_paths.migrate_all()`) that preserves Quickshell's own runtime caches,
+  updates archived notification image paths in SQLite, upgrades legacy Kitty
+  theme blocks in place, and maintains a compatibility symlink at
+  `~/.local/state/quickshell/current_palette.json` for downstream design-system
+  consumers.
+
 ## 0.2.1
 
 - Simplify `docs/architecture.md` in Portuguese with a Mermaid overview diagram

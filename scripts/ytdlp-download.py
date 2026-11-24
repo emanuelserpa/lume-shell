@@ -25,6 +25,12 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from lume_paths import migrate_dir, state_dir as lume_state_dir
+
 VERSION = 1
 YTDLP = "yt-dlp"
 INFO_TIMEOUT = 30
@@ -49,9 +55,7 @@ def succeed(data):
 
 
 def state_dir():
-    base = os.environ.get("XDG_STATE_HOME") or os.path.join(
-        os.path.expanduser("~"), ".local", "state")
-    return Path(base) / "quickshell" / "ytdlp"
+    return migrate_dir(lume_state_dir() / "ytdlp")
 
 
 def jobs_dir():

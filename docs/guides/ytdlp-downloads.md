@@ -31,7 +31,7 @@ cancel).
 `scripts/ytdlp-download.py info|start|status|cancel|recent|prefs` prints
 `{"ok", "version": 1, "data": {...}, "error": ...}`. URLs travel as single
 argv items; no shell is used. Job state lives under
-`$XDG_STATE_HOME/quickshell/ytdlp/jobs/<id>/` (`job.json`, `download.log`).
+`$XDG_STATE_HOME/lume-shell/ytdlp/jobs/<id>/` (`job.json`, `download.log`).
 Unexpected helper exceptions are returned through that JSON envelope so the
 panel can show a useful failure instead of a JSON parse error.
 

@@ -34,7 +34,7 @@ results area.
 
 Persistent file:
 
-`~/.local/state/quickshell/weather.json`
+`~/.local/state/lume-shell/weather.json`
 
 Example:
 
@@ -88,7 +88,7 @@ v0.19.1 explicitly checks selected city id against cached city id.
 
 Automatic mode is retained as a fallback using HTTPS IP geolocation providers
 with coordinate range validation. Automatic geolocation can be disabled via
-`"auto_location": false` in `~/.local/state/quickshell/weather.json` (or
+`"auto_location": false` in `~/.local/state/lume-shell/weather.json` (or
 `scripts/weather-cities.py auto-geo off`) or by setting
 `LUME_WEATHER_DISABLE_AUTO_GEO=1`. Saved city IDs, coordinates, and malformed
 state files are validated and recovered gracefully, and tooltip markup values

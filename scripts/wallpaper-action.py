@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Wallpaper Action Helper for Quickshell Desktop Shell.
+Wallpaper Action Helper for Lume Shell.
 Handles picking, randomizing, and applying wallpapers using awww/swww
 and updating the dynamic Chameleon theme.
 Output envelope adheres strictly to {"ok": bool, "action": str, "error": str | None, ...}.
@@ -18,13 +18,19 @@ import time
 
 sys.dont_write_bytecode = True
 
-STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "quickshell"
-CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from lume_paths import cache_dir, cache_home, migrate_dir, migrate_file, state_dir
+
+STATE_DIR = state_dir()
+CACHE_DIR = cache_home()
 CURRENT_WALLPAPER = CACHE_DIR / "current_wallpaper"
 SHELL_DIR = Path(__file__).resolve().parent.parent
 THEME_MANAGER = SHELL_DIR / "scripts" / "theme-manager.py"
 WALLPAPER_STATE = STATE_DIR / "wallpaper.json"
-PREVIEW_DIR = CACHE_DIR / "quickshell" / "wallpaper-previews"
+PREVIEW_DIR = cache_dir() / "wallpaper-previews"
 
 VALID_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".avif", ".jxl", ".bmp"}
 
@@ -67,6 +73,7 @@ def detect_current_wallpaper_path() -> str | None:
             pass
 
     if CURRENT_WALLPAPER.is_file():
+        migrate_file(WALLPAPER_STATE)
         try:
             saved = json.loads(WALLPAPER_STATE.read_text()).get("wallpaper")
             if saved and Path(saved).is_file():
@@ -109,6 +116,7 @@ def apply_wallpaper(image_path: Path | str) -> tuple[bool, str | None]:
         CURRENT_WALLPAPER.parent.mkdir(parents=True, exist_ok=True)
         if p != CURRENT_WALLPAPER:
             shutil.copy2(p, CURRENT_WALLPAPER)
+        migrate_file(WALLPAPER_STATE)
         STATE_DIR.mkdir(parents=True, exist_ok=True)
         saved = json.loads(WALLPAPER_STATE.read_text()) if WALLPAPER_STATE.exists() else {}
         folder = Path(saved.get("folder", "")).expanduser()
@@ -277,6 +285,7 @@ def cmd_list():
 
 def create_preview(image_path: Path | str) -> Path:
     """Return a cached JPEG preview for formats Qt Quick may not decode."""
+    migrate_dir(PREVIEW_DIR)
     path = Path(image_path).expanduser().resolve()
     stat = path.stat()
     key = hashlib.sha256(

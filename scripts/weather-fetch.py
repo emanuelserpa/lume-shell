@@ -4,10 +4,16 @@ import html
 import json
 import math
 import os
+import sys
 import tempfile
 import subprocess
 from pathlib import Path
 
+_SCRIPT_DIR = str(Path(__file__).resolve().parent)
+if _SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPT_DIR)
+
+from lume_paths import cache_dir as lume_cache_dir, state_dir as lume_state_dir
 from network_utils import prefer_ipv4_resolution
 from weather_state_utils import (
     fetch_https_geolocation,
@@ -81,10 +87,10 @@ WEATHER_CODES = {
     "260": "󰖑",
 }
 
-CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "lume-shell"
+CACHE_DIR = lume_cache_dir()
 CACHE_FILE = CACHE_DIR / "weather.json"
 
-STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "quickshell"
+STATE_DIR = lume_state_dir()
 STATE_FILE = STATE_DIR / "weather.json"
 
 
@@ -178,7 +184,7 @@ def get_auto_location(state: dict | None = None) -> tuple[str, str]:
 
     resolved = fetch_https_geolocation(
         timeout=5.0,
-        user_agent="Quickshell Weather",
+        user_agent="lume-shell Weather",
     )
     if resolved is not None:
         resolved_city, lat, lon = resolved

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.bar
 import qs.osd
 import qs.launcher
@@ -12,6 +13,12 @@ ShellRoot {
     Component.onCompleted: {
         BatteryAlertState.start()
         NightLightState.syncSession()
+    }
+
+    Process {
+        id: pathMigrationProc
+        running: true
+        command: ["python3", "-B", Quickshell.shellDir + "/scripts/migrate-paths.py"]
     }
 
     ClipboardService {

@@ -118,7 +118,7 @@ Item {
             if (!node.isSink && !mediaClass.includes("Output") && !mediaClass.includes("Stream/Output/Audio"))
                 continue
             const name = String(node.name || "")
-            if (name.includes("quickshell") || name.includes("speaker_tuning"))
+            if (name.includes("quickshell") || name.includes("lume-shell") || name.includes("speaker_tuning"))
                 continue
             result.push(node)
         }

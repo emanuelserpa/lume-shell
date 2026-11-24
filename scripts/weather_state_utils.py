@@ -4,7 +4,14 @@ import json
 import math
 import os
 import re
+import sys
 from pathlib import Path
+
+_SCRIPT_DIR = str(Path(__file__).resolve().parent)
+if _SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPT_DIR)
+
+from lume_paths import migrate_file
 
 CITY_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 HTTPS_GEO_PROVIDERS = (
@@ -119,6 +126,7 @@ def sanitize_weather_state(raw) -> dict:
 
 def load_sanitized_weather_state(state_file: Path) -> dict:
     """Load and validate weather.json, recovering cleanly on malformed JSON or schemas."""
+    migrate_file(state_file)
     try:
         with state_file.open(encoding="utf-8") as handle:
             raw = json.load(handle)
@@ -152,7 +160,7 @@ def _default_https_get(url: str, timeout: float, user_agent: str):
 
 def fetch_https_geolocation(
     timeout: float = 5.0,
-    user_agent: str = "Quickshell Weather",
+    user_agent: str = "lume-shell Weather",
     get_fn=None,
 ) -> tuple[str, float, float] | None:
     """Query HTTPS IP-geolocation providers and return (city, lat, lon) with validated coords."""

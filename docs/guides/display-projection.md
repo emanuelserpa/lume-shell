@@ -24,8 +24,8 @@ inactive outputs from `hyprctl -j monitors all` and applies monitor rules via
 Hyprland's Lua `hl.monitor()` API. It never writes the tracked monitor config.
 
 The first status read captures the active layout under
-`$XDG_STATE_HOME/quickshell/display-projection.json` (or
-`~/.local/state/quickshell/display-projection.json`) with the active
+`$XDG_STATE_HOME/lume-shell/display-projection.json` (or
+`~/.local/state/lume-shell/display-projection.json`) with the active
 `HYPRLAND_INSTANCE_SIGNATURE`. Choosing **Estender** restores that snapshot;
 starting a new Hyprland instance captures a fresh baseline. A newly connected
 output is added to the baseline on its first status read.

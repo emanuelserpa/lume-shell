@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared bluetoothctl runner for the quickshell Bluetooth helpers.
+"""Shared bluetoothctl runner for the Lume Shell Bluetooth helpers.
 
 Why this exists: bluetoothctl 5.87 aborts with SIGABRT inside
 ``dbus_connection_get_object_path_data`` on simple read-only commands
@@ -20,7 +20,7 @@ import tempfile
 import time
 from pathlib import Path
 
-LOCK_PATH = Path(tempfile.gettempdir()) / "quickshell-bluetoothctl.lock"
+LOCK_PATH = Path(tempfile.gettempdir()) / "lume-shell-bluetoothctl.lock"
 ACQUIRE_STEP = 0.05
 
 

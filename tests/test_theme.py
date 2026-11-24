@@ -120,7 +120,7 @@ class TestThemeManager(unittest.TestCase):
     def test_no_side_effects_on_real_user_state(self):
         from PIL import Image
 
-        real_state = Path.home() / ".local" / "state" / "quickshell"
+        real_state = Path.home() / ".local" / "state" / "lume-shell"
         watched = [
             real_state / "theme.json",
             real_state / "chameleon-palette.json",
@@ -439,7 +439,7 @@ class TestThemeManager(unittest.TestCase):
             # Ramo estático: relata todos os adapters com estado verificado.
             self.assertEqual(
                 set(res["adapters"]),
-                {"quickshell", "kitty", "ghostty", "hyprland", "hyprlock",
+                {"lume-shell", "kitty", "ghostty", "hyprland", "hyprlock",
                 "gtk", "btop", "qt", "labwc", "mango", "fastfetch",
                 "regreet"})
 
@@ -603,7 +603,7 @@ class TestThemeManager(unittest.TestCase):
                     qt_config_home=Path(self._tmpdir.name) / "home" / ".config",
                     qt_kvantum_dir=Path(self._tmpdir.name) / "home" / ".config" / "Kvantum",
                 )
-            self.assertTrue(adapters["quickshell"])
+            self.assertTrue(adapters["lume-shell"])
             self.assertTrue(adapters["kitty"])
             self.assertTrue(adapters["ghostty"])
             self.assertTrue(adapters["hyprland"])
@@ -627,7 +627,7 @@ class TestThemeManager(unittest.TestCase):
         config = config_path.read_text(encoding="utf-8")
         colors = theme_file.read_text(encoding="utf-8")
         self.assertIn("allow_remote_control socket-only", config)
-        self.assertIn("listen_on unix:${XDG_RUNTIME_DIR}/quickshell-kitty-{kitty_pid}", config)
+        self.assertIn("listen_on unix:${XDG_RUNTIME_DIR}/lume-shell-kitty-{kitty_pid}", config)
         self.assertIn("include " + str(theme_file), config)
         self.assertIn("foreground #c0caf5", colors)
         self.assertIn("background #1a1b26", colors)
@@ -640,7 +640,7 @@ class TestThemeManager(unittest.TestCase):
 
         runtime_dir = tm.KITTY_RUNTIME_DIR
         runtime_dir.mkdir(parents=True)
-        (runtime_dir / "quickshell-kitty-1234").touch()
+        (runtime_dir / "lume-shell-kitty-1234").touch()
         from subprocess import CompletedProcess
         completed = CompletedProcess(args=[], returncode=0)
         with patch.object(tm.shutil, "which", return_value="/usr/bin/kitten"), \
@@ -706,7 +706,7 @@ class TestThemeManager(unittest.TestCase):
         self.assertTrue(ini.is_file())
         content = ini.read_text(encoding="utf-8")
         self.assertIn("gtk-theme-name", content)
-        self.assertIn("quickshell-catppuccin-mocha", content)
+        self.assertIn("lume-shell-catppuccin-mocha", content)
         self.assertTrue(tm.adapter_in_sync(
             "gtk", "catppuccin-mocha", tm.THEMES["catppuccin-mocha"]))
         # light pede esquema claro sem quebrar quando nada instalado
@@ -850,10 +850,10 @@ class TestThemeManager(unittest.TestCase):
                 "$accent = rgba(189, 147, 249, 0.60)\n", encoding="utf-8")
             (t / ".config" / "gtk-3.0").mkdir(parents=True)
             (t / ".config" / "gtk-3.0" / "settings.ini").write_text(
-                "[Settings]\ngtk-theme-name = quickshell-dracula\n",
+                "[Settings]\ngtk-theme-name = lume-shell-dracula\n",
                 encoding="utf-8")
-            (t / ".themes" / "quickshell-dracula" / "gtk-3.0").mkdir(parents=True)
-            (t / ".themes" / "quickshell-dracula" / "gtk-3.0" / "gtk.css").write_text(
+            (t / ".themes" / "lume-shell-dracula" / "gtk-3.0").mkdir(parents=True)
+            (t / ".themes" / "lume-shell-dracula" / "gtk-3.0" / "gtk.css").write_text(
                 "button:active { background: #bd93f9; }\n", encoding="utf-8")
             (t / ".config" / "btop").mkdir(parents=True)
             (t / ".config" / "btop" / "btop.conf").write_text(
@@ -942,8 +942,8 @@ class TestThemeManager(unittest.TestCase):
             with _patch.object(tm, "_find_gtk_template", return_value=tpl):
                 with _patch.object(tm, "GTK_THEMES_DIR", t / "out"):
                     out = tm.generate_gtk_chameleon_theme(
-                        palette=tm.THEMES["dracula"], name="quickshell-dracula")
-            self.assertEqual(out.name, "quickshell-dracula")
+                        palette=tm.THEMES["dracula"], name="lume-shell-dracula")
+            self.assertEqual(out.name, "lume-shell-dracula")
             svg = (out / "gtk-3.0" / "assets" / "check.svg").read_text(encoding="utf-8")
             self.assertNotIn("#f5c2e7", svg)
             self.assertIn("#bd93f9", svg)

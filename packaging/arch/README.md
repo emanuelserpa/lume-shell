@@ -43,7 +43,7 @@ lume-shell lock
 ```
 
 Para uma instância de desenvolvimento, defina
-`LUME_SHELL_CONFIG="$HOME/.config/quickshell"`.
+`LUME_SHELL_CONFIG="$HOME/.config/lume-shell"`.
 
 ## Releases
 

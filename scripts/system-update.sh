@@ -5,8 +5,8 @@ set -u
 MODE="${1:-all}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="$(python3 -B "$SCRIPT_DIR/update-log.py" prepare 2>/dev/null)" \
-  || LOG_FILE="/tmp/quickshell-update-${UID:-unknown}.log"
-[[ -n "$LOG_FILE" ]] || LOG_FILE="/tmp/quickshell-update-${UID:-unknown}.log"
+  || LOG_FILE="/tmp/lume-shell-update-${UID:-unknown}.log"
+[[ -n "$LOG_FILE" ]] || LOG_FILE="/tmp/lume-shell-update-${UID:-unknown}.log"
 
 FAILED=()
 STEP=0

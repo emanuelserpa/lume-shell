@@ -67,7 +67,7 @@ case "$1" in
       exit 1
     fi
 
-    if /usr/bin/flock -n -E 75 "$XDG_RUNTIME_DIR/lumeshell-lock.lock" \
+    if /usr/bin/flock -n -E 75 "$XDG_RUNTIME_DIR/lume-shell-lock.lock" \
       /usr/bin/quickshell --path "$lockscreen_path"; then
       exit 0
     else

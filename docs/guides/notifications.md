@@ -13,7 +13,7 @@ The system is organized into modular QML components connected through a reactive
 - **`services/NotificationState.qml`**: Central state engine registered via `qs.services`.
   - Connects to Quickshell's native `NotificationServer`.
   - Combines live server notifications, project-owned internal notifications, and persisted snapshots in newest-first order. A separate in-memory queue of the 20 latest notifications restores dismissed toasts; that queue resets with the shell session.
-  - Sends compact snapshots to `scripts/notification_store.py`, a long-lived background SQLite writer using WAL. The database retains up to 2,000 notifications under `$XDG_DATA_HOME/quickshell/notifications/`; the latest 500 load into the history view. Dismissed items remain as archived history without live D-Bus action callbacks. Clear All clears both the live list and stored history.
+  - Sends compact snapshots to `scripts/notification_store.py`, a long-lived background SQLite writer using WAL. The database retains up to 2,000 notifications under `$XDG_DATA_HOME/lume-shell/notifications/`; the latest 500 load into the history view. Dismissed items remain as archived history without live D-Bus action callbacks. Clear All clears both the live list and stored history.
   - If the writer exits or fails to start, requests queue until its initial
     `loaded` response. Restarts use exponential backoff from 1 to 60 seconds,
     with a 2-second start watchdog. The in-memory queue is capped at 500: an

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Persistent snapshots of Quickshell notification history (SQLite/WAL)."""
+"""Persistent snapshots of Lume Shell notification history (SQLite/WAL)."""
 
 import hashlib
 import json
@@ -11,7 +11,13 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True
 
-BASE_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "quickshell" / "notifications"
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from lume_paths import _rewrite_notification_image_prefixes, data_dir, migrate_dir
+
+BASE_DIR = data_dir() / "notifications"
 DB_PATH = BASE_DIR / "notifications.db"
 IMAGE_DIR = BASE_DIR / "images"
 MAX_HISTORY = 2000
@@ -32,6 +38,8 @@ def is_excluded_from_history(app_name):
 
 
 def get_db():
+    migrate_dir(BASE_DIR)
+    _rewrite_notification_image_prefixes(BASE_DIR)
     BASE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
     IMAGE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
     try:

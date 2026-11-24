@@ -27,8 +27,8 @@ def is_hyprland():
 
 
 def runtime_dir():
-    base = Path(os.environ.get("XDG_RUNTIME_DIR") or f"/tmp/quickshell-{os.getuid()}")
-    path = base / "quickshell-recording"
+    base = Path(os.environ.get("XDG_RUNTIME_DIR") or f"/tmp/lume-shell-{os.getuid()}")
+    path = base / "lume-shell-recording"
     path.mkdir(mode=0o700, parents=True, exist_ok=True)
     return path
 

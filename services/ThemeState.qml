@@ -520,7 +520,7 @@ Item {
 
     property var dynamicVariants: ({})
     property var dynamicChameleon: null
-    property var syncedAdapters: ({ "quickshell": true, "kitty": false, "ghostty": false, "hyprland": false, "hyprlock": false, "gtk": false, "btop": false, "qt": false, "labwc": false, "mango": false, "regreet": false })
+    property var syncedAdapters: ({ "lume-shell": true, "kitty": false, "ghostty": false, "hyprland": false, "hyprlock": false, "gtk": false, "btop": false, "qt": false, "labwc": false, "mango": false, "regreet": false })
 
     readonly property var currentPalette: palettes[currentTheme] ?? palettes["catppuccin-mocha"]
 
@@ -602,9 +602,7 @@ Item {
 
     FileView {
         id: paletteWatcher
-        path: (Quickshell.env("XDG_STATE_HOME") && Quickshell.env("XDG_STATE_HOME").length > 0)
-              ? (Quickshell.env("XDG_STATE_HOME") + "/quickshell/chameleon-palette.json")
-              : (Quickshell.env("HOME") + "/.local/state/quickshell/chameleon-palette.json")
+        path: ShellPaths.stateFile("chameleon-palette.json")
         watchChanges: true
         printErrors: false
 

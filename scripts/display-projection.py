@@ -11,6 +11,12 @@ import ast
 import sys
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from lume_paths import migrate_file, state_dir
+
 VERSION = 1
 MODES = ("computer", "duplicate", "extend", "external")
 INTERNAL_NAME = re.compile(r"^(?:eDP|LVDS|DSI)", re.IGNORECASE)
@@ -306,8 +312,8 @@ def run_json_command(args: list[str]) -> list[dict]:
 
 
 def state_file() -> Path:
-    state_home = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state"))
-    return state_home / "quickshell" / "display-projection.json"
+    path = state_dir() / "display-projection.json"
+    return migrate_file(path)
 
 
 def instance_signature() -> str:

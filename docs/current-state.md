@@ -10,7 +10,7 @@ The bar defaults to three main islands and can optionally merge their surfaces
 into one continuous bar. Conditional Submap, media, and status surfaces remain
 in the same explicit layout in `bar/Bar.qml`; geometry comes from `Theme.qml`.
 The surface preference is edited in Spotlight's appearance studio and stored in
-`$XDG_CONFIG_HOME/quickshell/bar.json` (defaults to islands).
+`$XDG_CONFIG_HOME/lume-shell/bar.json` (defaults to islands; migrates legacy `quickshell/bar.json`).
 
 | Area | Mounted content |
 | --- | --- |
