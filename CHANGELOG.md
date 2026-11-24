@@ -5,6 +5,10 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+- Simplify `docs/architecture.md` in Portuguese with a Mermaid overview diagram
+  and replace the 5 separate PlantUML files under `docs/uml/` that duplicated
+  component inventories.
+
 - Harden compositor dispatching, geolocation, and weather state handling (#21):
   - Validate Hyprland workspace selectors and window addresses in
     `scripts/compositor-dispatch.sh` before building Lua/fallback `hyprctl` calls.
