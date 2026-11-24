@@ -12,7 +12,7 @@ package "Consumidores montados" {
   component "NotificationPopup" as NotificationPopup
   component "StatusIsland / Bar" as StatusIsland
   component "Weather / Clock\nCenterDashboardPopup" as WeatherUI
-  component "MediaIsland / QuickMediaPlayer" as MediaUI
+  component "MediaIsland / MediaPopup" as MediaUI
   component "AudioPopup" as AudioPopup
   component "BatteryPopup" as BatteryPopup
   component "UpdateControl / SystemUpdatePopup" as UpdateUI

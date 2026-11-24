@@ -44,7 +44,7 @@ component "DisplayProjectionPopup" as DisplayProjection
 component "Spotlight" as Spotlight
 component "TrayMenu" as TrayMenu
 component "WeatherCard · CalendarCard\nHolidayPill" as DashboardCards
-component "QuickMediaPlayer\nQuickTile (2×2) · SliderRow" as QuickControls
+component "QuickTile (2×2) · SliderRow" as QuickControls
 component "SessionActionsPopup" as SessionActions
 
 Bar *-- StartButton
