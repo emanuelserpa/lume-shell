@@ -244,4 +244,54 @@ TestCase {
             2
         ))
     }
+
+    function test_formatTextFastPathAndEntityOrdering() {
+        compare(NotificationContent.formatText("  Plain ASCII text  "), "Plain ASCII text")
+        compare(NotificationContent.formatText("&lt;b&gt;Escaped&lt;/b&gt;"), "<b>Escaped</b>")
+        compare(NotificationContent.formatText("  <b>Tag</b> only  "), "Tag only")
+        compare(NotificationContent.formatText("One &amp; Two"), "One & Two")
+    }
+
+    function test_trackedMetadataSinglePassAndMutationInvalidation() {
+        const item = {
+            appName: "  Telegram Desktop  ",
+            appIcon: "telegram",
+            image: "",
+            summary: "<b>Canal</b>",
+            body: "Oferta &amp; cupom",
+            actions: []
+        }
+        const meta = NotificationContent.trackedMetadata(item)
+        verify(meta.useful)
+        verify(!meta.battery)
+        verify(!meta.excluded)
+        compare(meta.baseFingerprint, "Telegram Desktop\nCanal\nOferta & cupom\n")
+
+        // Mutating a payload field invalidates the WeakMap cache entry.
+        item.summary = "Bateria"
+        item.body = "Bateria fraca"
+        const updated = NotificationContent.trackedMetadata(item)
+        verify(updated.battery)
+        verify(updated.excluded)
+        compare(updated.baseFingerprint, "Telegram Desktop\nBateria\nBateria fraca\n")
+
+        // Repeated evaluation across 500 items should stay sub-second with cache hits.
+        const history = []
+        for (let i = 0; i < 500; i++) {
+            history.push({
+                id: i + 1,
+                appName: "Telegram Desktop",
+                desktopEntry: "org.telegram.desktop",
+                summary: "Chat " + (i % 10),
+                body: "Mensagem " + i
+            })
+        }
+        const startMs = Date.now()
+        for (let round = 0; round < 20; round++) {
+            for (let i = 0; i < history.length; i++)
+                NotificationContent.trackedMetadata(history[i])
+        }
+        const elapsedMs = Date.now() - startMs
+        verify(elapsedMs < 1000, "Expected cached 10k evaluations under 1000ms, got " + elapsedMs)
+    }
 }

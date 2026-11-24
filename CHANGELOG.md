@@ -3,6 +3,15 @@
 The numbered entries below record functional milestones; they are not the
 package version. Public package releases are defined by Git tags.
 
+## Unreleased
+
+- Fix UI-thread freezes during rapid notification bursts by adding a
+  no-HTML/entity fast-path to `NotificationContent.formatText()`, unifying
+  per-notification filtering/battery/fingerprint computation into a
+  bounded Map-cached `trackedMetadata()` pass in `services/NotificationContent.js`
+  and `services/NotificationState.qml`, and coercing action-row visibility to a
+  strict boolean in `components/NotificationCardContent.qml`.
+
 ## 0.2.2
 
 - Standardize all Lume-owned XDG config, state, data, cache, and private runtime

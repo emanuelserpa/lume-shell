@@ -1,24 +1,38 @@
+const _MAX_META_CACHE = 1500
+const _metaCache = new Map()
+
 function formatText(str) {
     if (!str) return ""
     const text = typeof str === "string" ? str : String(str)
-    return text
-        .replace(/<br\s*[\/]?>/gi, '\n')
-        .replace(/<[^>]+>/g, '')
-        .replace(/&quot;/g, '"')
-        .replace(/&apos;/g, "'")
-        .replace(/&#39;/g, "'")
-        .replace(/&#x27;/g, "'")
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&#(\d+);/g, function(_, decimal) {
-            return String.fromCharCode(Number(decimal))
-        })
-        .replace(/&#x([0-9a-fA-F]+);/g, function(_, hex) {
-            return String.fromCharCode(parseInt(hex, 16))
-        })
-        .trim()
+    const hasTag = text.indexOf("<") !== -1
+    const hasEntity = text.indexOf("&") !== -1
+    if (!hasTag && !hasEntity)
+        return text.trim()
+
+    let result = text
+    if (hasTag) {
+        result = result
+            .replace(/<br\s*[\/]?>/gi, '\n')
+            .replace(/<[^>]+>/g, '')
+    }
+    if (hasEntity) {
+        result = result
+            .replace(/&quot;/g, '"')
+            .replace(/&apos;/g, "'")
+            .replace(/&#39;/g, "'")
+            .replace(/&#x27;/g, "'")
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&#(\d+);/g, function(_, decimal) {
+                return String.fromCharCode(Number(decimal))
+            })
+            .replace(/&#x([0-9a-fA-F]+);/g, function(_, hex) {
+                return String.fromCharCode(parseInt(hex, 16))
+            })
+    }
+    return result.trim()
 }
 
 function storageSnapshot(notification, receivedAt) {
@@ -71,30 +85,95 @@ function hasUsefulAction(actions) {
     return false
 }
 
+function _computeStaticMetadata(n, appNameRaw, appIconRaw, imageRaw, summaryRaw, bodyRaw) {
+    const summary = formatText(summaryRaw)
+    const body = formatText(bodyRaw)
+    const appTrimmed = String(appNameRaw ?? "").trim()
+    const iconLower = String(appIconRaw ?? "").toLowerCase()
+    const appLower = appTrimmed.toLowerCase()
+    const textOrImageUseful = Boolean(
+        (summary && !isPlaceholderLabel(summary))
+        || (body && !isPlaceholderLabel(body))
+        || hasRealImage(n)
+    )
+    let battery = false
+    if (iconLower.indexOf("battery") !== -1
+            || appLower === "battery" || appLower === "bateria" || appLower === "upower") {
+        battery = true
+    } else {
+        const hay = (String(appNameRaw ?? "") + "\n" + summary + "\n" + body).toLowerCase()
+        battery = hay.indexOf("bateria") !== -1 || hay.indexOf("battery") !== -1
+    }
+    const baseFingerprint = appTrimmed + "\n" + summary + "\n" + body + "\n"
+    return {
+        appName: appNameRaw,
+        appIcon: appIconRaw,
+        image: imageRaw,
+        summary: summaryRaw,
+        body: bodyRaw,
+        summaryFormatted: summary,
+        bodyFormatted: body,
+        textOrImageUseful: textOrImageUseful,
+        battery: battery,
+        excluded: battery,
+        baseFingerprint: baseFingerprint
+    }
+}
+
+function trackedMetadata(n) {
+    if (!n) {
+        return {
+            useful: false,
+            battery: false,
+            excluded: false,
+            baseFingerprint: "\n\n\n"
+        }
+    }
+    const appNameRaw = n.appName
+    const appIconRaw = n.appIcon
+    const imageRaw = n.image
+    const summaryRaw = n.summary
+    const bodyRaw = n.body
+    const hasCacheId = n.id !== undefined && n.id !== null && n.id !== ""
+    const cacheKey = hasCacheId
+        ? ((n.archived ? "a:" : "l:") + String(n.id))
+        : ""
+    let entry = hasCacheId ? _metaCache.get(cacheKey) : null
+    if (!entry
+            || entry.appName !== appNameRaw
+            || entry.appIcon !== appIconRaw
+            || entry.image !== imageRaw
+            || entry.summary !== summaryRaw
+            || entry.body !== bodyRaw) {
+        entry = _computeStaticMetadata(n, appNameRaw, appIconRaw, imageRaw, summaryRaw, bodyRaw)
+        if (hasCacheId) {
+            if (_metaCache.size >= _MAX_META_CACHE)
+                _metaCache.delete(_metaCache.keys().next().value)
+            _metaCache.set(cacheKey, entry)
+        }
+    }
+    return {
+        useful: entry.textOrImageUseful || hasUsefulAction(n.actions),
+        battery: entry.battery,
+        excluded: entry.excluded,
+        baseFingerprint: entry.baseFingerprint
+    }
+}
+
 function hasUsefulContent(notification) {
-    if (!notification) return false
-    const summary = formatText(notification.summary)
-    const body = formatText(notification.body)
-    if ((summary && !isPlaceholderLabel(summary)) || (body && !isPlaceholderLabel(body)))
-        return true
-    if (hasRealImage(notification)) return true
-    return hasUsefulAction(notification.actions)
+    return trackedMetadata(notification).useful
 }
 
 function isBattery(n) {
-    if (!n) return false
-    const iconName = String(n.appIcon ?? "").toLowerCase()
-    if (iconName.indexOf("battery") !== -1) return true
-    const app = String(n.appName ?? "").toLowerCase()
-    if (app === "battery" || app === "bateria" || app === "upower") return true
-    const hay = (String(n.appName ?? "") + "\n"
-        + formatText(n.summary) + "\n"
-        + formatText(n.body)).toLowerCase()
-    return hay.indexOf("bateria") !== -1 || hay.indexOf("battery") !== -1
+    return trackedMetadata(n).battery
 }
 
 function isExcludedFromHistory(n) {
-    return isBattery(n)
+    return trackedMetadata(n).excluded
+}
+
+function baseFingerprint(n) {
+    return trackedMetadata(n).baseFingerprint
 }
 
 function isChargingNotification(n) {

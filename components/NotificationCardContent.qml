@@ -249,7 +249,7 @@ Column {
     Row {
         width: parent.width
         spacing: root.theme.spacingTokens.xs
-        visible: root.notification && root.notification.actions && root.notification.actions.length > 0 && root.expanded
+        visible: Boolean(root.notification && root.notification.actions && root.notification.actions.length > 0 && root.expanded)
 
         Repeater {
             model: root.notification ? root.notification.actions : []
