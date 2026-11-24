@@ -23,6 +23,14 @@ Item {
     signal activateRequested(int index)
     signal systemInfoPopupRequested()
 
+    function launchDesktopEntry(entry) {
+        // A detached process still inherits the shell's systemd cgroup.
+        Quickshell.execDetached([
+            "systemd-run", "--user", "--scope", "--slice=app.slice", "--",
+            "gtk-launch", "--", String(entry.id)
+        ])
+    }
+
     function markEmojiUsed(value) {
         const char = String(value ?? "")
         if (char.length > 0)
@@ -86,7 +94,7 @@ Item {
             return true
         case "execute-entry":
             closeRequested()
-            data.entry.execute()
+            root.launchDesktopEntry(data.entry)
             return true
         case "open-directory":
             closeRequested()
@@ -162,7 +170,7 @@ Item {
             const appName = String(data.title ?? data.entry.name ?? "")
             closeRequested()
             usageBumpRequested(appName)
-            data.entry.execute()
+            root.launchDesktopEntry(data.entry)
             return
         }
         if (item.kind === "file" && data.path) {
