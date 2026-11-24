@@ -270,6 +270,26 @@ function notificationGroupKey(notification) {
     return desktop ? "desktop:" + desktop : (name ? "name:" + name : "id:" + notification.id)
 }
 
+function capByGroup(notifications, maxPerGroup) {
+    const list = notifications || []
+    const cap = Number(maxPerGroup)
+    if (!cap || cap < 1) return list.slice()
+    const counts = Object.create(null)
+    const kept = []
+    for (let i = 0; i < list.length; i++) {
+        const n = list[i]
+        if (!n) continue
+        const key = notificationGroupKey(n)
+        if (key && !key.startsWith("id:")) {
+            const count = counts[key] || 0
+            if (count >= cap) continue
+            counts[key] = count + 1
+        }
+        kept.push(n)
+    }
+    return kept
+}
+
 // Input is newest-first. Keep QObject references so actions/dismissal stay native.
 function historyRows(notifications, expandedKeys) {
     const groups = []

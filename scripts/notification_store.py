@@ -21,6 +21,7 @@ BASE_DIR = data_dir() / "notifications"
 DB_PATH = BASE_DIR / "notifications.db"
 IMAGE_DIR = BASE_DIR / "images"
 MAX_HISTORY = 2000
+MAX_PER_APP = 20
 LOAD_LIMIT = 500
 MAX_TEXT_LENGTH = 32768
 EXCLUDED_HISTORY_APPS = ("battery", "bateria", "upower")
@@ -35,6 +36,56 @@ _image_cleanup_calls = 0
 
 def is_excluded_from_history(app_name):
     return str(app_name or "").strip().lower() in EXCLUDED_HISTORY_APPS
+
+
+def prune_per_app_history(conn, limit=None):
+    """Retain at most `limit` newest notifications for each app group."""
+    cap = max(1, int(MAX_PER_APP if limit is None else limit))
+    cur = conn.execute("""
+        DELETE FROM notifications
+        WHERE id IN (
+            SELECT id FROM (
+                SELECT id,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY CASE
+                               WHEN TRIM(desktop_entry) != '' THEN 'd:' || TRIM(desktop_entry)
+                               ELSE 'n:' || TRIM(app_name)
+                           END
+                           ORDER BY received_at DESC, id DESC
+                       ) AS rn
+                FROM notifications
+                WHERE TRIM(desktop_entry) != '' OR TRIM(app_name) != ''
+            )
+            WHERE rn > ?
+        )
+    """, (cap,))
+    return cur.rowcount
+
+
+def _enforce_per_app_limit(conn, desktop_entry, app_name, limit=None):
+    cap = max(1, int(MAX_PER_APP if limit is None else limit))
+    desktop = desktop_entry.strip()
+    app = app_name.strip()
+    if desktop:
+        conn.execute("""
+            DELETE FROM notifications
+            WHERE id IN (
+                SELECT id FROM notifications
+                WHERE TRIM(desktop_entry) = ?
+                ORDER BY received_at DESC, id DESC
+                LIMIT -1 OFFSET ?
+            )
+        """, (desktop, cap))
+    elif app:
+        conn.execute("""
+            DELETE FROM notifications
+            WHERE id IN (
+                SELECT id FROM notifications
+                WHERE TRIM(desktop_entry) = '' AND TRIM(app_name) = ?
+                ORDER BY received_at DESC, id DESC
+                LIMIT -1 OFFSET ?
+            )
+        """, (app, cap))
 
 
 def get_db():
@@ -84,6 +135,11 @@ def init_db(conn=None):
                 "CREATE INDEX IF NOT EXISTS idx_notifications_fingerprint "
                 "ON notifications(fingerprint, received_at DESC)"
             )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_notifications_group "
+                "ON notifications(desktop_entry, app_name, received_at DESC, id DESC)"
+            )
+            prune_per_app_history(conn)
             rows = conn.execute("""
                 SELECT id, fingerprint, app_name, summary, body, image
                 FROM notifications
@@ -285,6 +341,7 @@ def record_notification(payload, conn=None):
         """, (received_at, fingerprint, app_name, desktop_entry, app_icon,
               image, summary, body, urgency, hints_json))
         row_id = cur.lastrowid
+        _enforce_per_app_limit(conn, desktop_entry, app_name)
         conn.execute("""
             DELETE FROM notifications
             WHERE id IN (

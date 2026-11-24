@@ -18,6 +18,7 @@ class NotificationStoreTests(unittest.TestCase):
         self.orig_db = notification_store.DB_PATH
         self.orig_image_dir = notification_store.IMAGE_DIR
         self.orig_max_history = notification_store.MAX_HISTORY
+        self.orig_max_per_app = notification_store.MAX_PER_APP
         self.orig_image_budget = notification_store.MAX_IMAGE_CACHE_BYTES
         self.orig_image_count = notification_store.MAX_CACHED_NOTIFICATION_IMAGES
         self.orig_cleanup_time = notification_store._last_image_cleanup
@@ -26,6 +27,7 @@ class NotificationStoreTests(unittest.TestCase):
         notification_store.DB_PATH = notification_store.BASE_DIR / "notifications.db"
         notification_store.IMAGE_DIR = notification_store.BASE_DIR / "images"
         notification_store.MAX_HISTORY = 2000
+        notification_store.MAX_PER_APP = 20
         notification_store.MAX_IMAGE_CACHE_BYTES = 256 * 1024 * 1024
         notification_store.MAX_CACHED_NOTIFICATION_IMAGES = 2000
         notification_store._last_image_cleanup = 0
@@ -37,6 +39,7 @@ class NotificationStoreTests(unittest.TestCase):
         notification_store.DB_PATH = self.orig_db
         notification_store.IMAGE_DIR = self.orig_image_dir
         notification_store.MAX_HISTORY = self.orig_max_history
+        notification_store.MAX_PER_APP = self.orig_max_per_app
         notification_store.MAX_IMAGE_CACHE_BYTES = self.orig_image_budget
         notification_store.MAX_CACHED_NOTIFICATION_IMAGES = self.orig_image_count
         notification_store._last_image_cleanup = self.orig_cleanup_time
@@ -183,6 +186,53 @@ class NotificationStoreTests(unittest.TestCase):
         self.assertFalse(link.exists())
         self.assertEqual(notification_store.get_history(1)[0]["image"], "")
 
+    def test_enforces_per_app_cap_without_evicting_other_apps(self):
+        # Other app sent older messages before a burst from Telegram.
+        for i in range(3):
+            other = self.notification(10000 + i * 3000, f"Email {i}")
+            other["appName"] = "Thunderbird"
+            other["desktopEntry"] = "thunderbird"
+            notification_store.record_notification(other)
+
+        for i in range(25):
+            chat = self.notification(50000 + i * 3000, f"Chat {i}")
+            chat["appName"] = "Telegram Desktop"
+            chat["desktopEntry"] = "org.telegram.desktop"
+            notification_store.record_notification(chat)
+
+        items = notification_store.get_history(100)
+        telegram = [item for item in items if item["desktopEntry"] == "org.telegram.desktop"]
+        thunderbird = [item for item in items if item["desktopEntry"] == "thunderbird"]
+
+        self.assertEqual(len(telegram), 20)
+        self.assertEqual(telegram[0]["summary"], "Chat 24")
+        self.assertEqual(telegram[-1]["summary"], "Chat 5")
+        self.assertEqual([item["summary"] for item in thunderbird],
+                         ["Email 2", "Email 1", "Email 0"])
+
+    def test_init_db_prunes_existing_overflow_per_app(self):
+        conn = notification_store.get_db()
+        try:
+            for i in range(25):
+                payload = self.notification(200000 + i * 3000, f"Legacy {i}")
+                payload["desktopEntry"] = ""
+                payload["appName"] = "NoisyBot"
+                conn.execute("""
+                    INSERT INTO notifications (
+                        received_at, fingerprint, app_name, desktop_entry,
+                        app_icon, image, summary, body, urgency, hints_json
+                    ) VALUES (?, ?, ?, ?, '', '', ?, '', 1, '{}')
+                """, (payload["receivedAt"], f"fp-{i}", payload["appName"], "",
+                      payload["summary"]))
+            conn.commit()
+        finally:
+            conn.close()
+
+        notification_store.init_db()
+        items = notification_store.get_history(50)
+        self.assertEqual(len(items), 20)
+        self.assertEqual(items[0]["summary"], "Legacy 24")
+        self.assertEqual(items[-1]["summary"], "Legacy 5")
 
 
 if __name__ == "__main__":

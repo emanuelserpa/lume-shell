@@ -5,6 +5,11 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+- Cap notification history and active `NotificationServer` tracking at 20 items
+  per app group (`MAX_PER_APP = 20` in `scripts/notification_store.py`,
+  `NotificationContent.capByGroup()`, and `NotificationState.qml`) so noisy chat
+  apps cannot evict other apps' alerts or bloat long-running sessions.
+
 - Fix UI-thread freezes during rapid notification bursts by adding a
   no-HTML/entity fast-path to `NotificationContent.formatText()`, unifying
   per-notification filtering/battery/fingerprint computation into a
