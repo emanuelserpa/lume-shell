@@ -35,14 +35,13 @@ PopupWindow {
     anchor.margins.top: root.theme.popupInsets.small
     // qmllint enable missing-property unqualified unresolved-type
 
-    implicitWidth: 380
+    implicitWidth: root.theme.popupWidths.large
     implicitHeight: Math.min(820, maxAllowedHeight,
-                             contentColumn.implicitHeight + root.theme.popupInsets.large * 2)
+                             audioContentList.contentHeight + root.theme.popupInsets.large * 2)
     color: "transparent"
     surfaceFormat.opaque: false
     visible: false
     grabFocus: true
-
 
     onVisibleChanged: {
         EasyEffectsState.popupOpen = visible
@@ -61,6 +60,11 @@ PopupWindow {
         EasyEffectsState.loadPreset(pipeline, presets[index])
     }
 
+    function rawNodeLabel(node) {
+        if (!node) return ""
+        return String(node.description || node.nickname || node.name || "").trim()
+    }
+
     function nodeName(node, fallback) {
         if (!node) return fallback
         const properties = node.properties || {}
@@ -74,14 +78,21 @@ PopupWindow {
         if (normalizedProfile.includes("digital microphone")) return "Microfone digital"
         if (normalizedProfile.includes("stereo microphone")) return "Microfone estéreo"
 
-        return node.description || node.nickname || node.name || fallback
+        return rawNodeLabel(node) || fallback
+    }
+
+    function nodeDetail(node, primaryTitle) {
+        const raw = rawNodeLabel(node)
+        if (!raw || raw.toLowerCase() === String(primaryTitle || "").trim().toLowerCase())
+            return ""
+        return raw
     }
 
     function streamName(node) {
         if (!node) return "Aplicativo"
         const p = (node.ready && node.properties) ? node.properties : (node.properties || {})
         const app = p["application.name"] || node.description || p["node.name"] || node.name || p["media.name"]
-        if (app && app.length > 0) return String(app)
+        if (app && String(app).length > 0) return String(app)
         return "Aplicativo"
     }
 
@@ -108,6 +119,322 @@ PopupWindow {
         return "󰓃"
     }
 
+    function outputIconName(node) {
+        if (!node?.audio || node.audio.muted) return "bar-volume-off"
+        if (node.audio.volume <= 0) return "bar-volume-zero"
+        if (node.audio.volume < 0.5) return "bar-volume-low"
+        return "bar-volume"
+    }
+
+    function isNodeMuted(node) {
+        return Boolean(node?.audio?.muted)
+    }
+
+    function isNodeBoosted(node) {
+        return Boolean(node?.audio && !node.audio.muted && node.audio.volume > 1.001)
+    }
+
+    function volumeText(node) {
+        return node?.audio ? Math.round(node.audio.volume * 100) + "%" : "--%"
+    }
+
+    component AudioEndpointCard: Rectangle {
+        id: endpointCard
+        required property var cardTheme
+        required property var endpointNode
+        required property string roleTitle
+        required property string emptyTitle
+        required property string primaryIcon
+        required property string mutedIcon
+        required property color accentColor
+        required property string deviceTitle
+        property string deviceDetail: ""
+
+        readonly property bool available: Boolean(endpointNode?.audio)
+        readonly property bool muted: Boolean(endpointNode?.audio?.muted)
+        readonly property bool boosted: Boolean(endpointNode?.audio && !muted && endpointNode.audio.volume > 1.001)
+        readonly property real volumeValue: endpointNode?.audio ? endpointNode.audio.volume : 0
+        readonly property string percentLabel: endpointNode?.audio ? Math.round(endpointNode.audio.volume * 100) + "%" : "--%"
+
+        width: parent ? parent.width : 0
+        implicitHeight: endpointColumn.implicitHeight + cardTheme.popupInsets.standard * 2
+        radius: cardTheme.radiusXl
+        color: cardTheme.adaptiveCardSurface
+        border.width: 1
+        border.color: muted
+            ? cardTheme.withAlpha(cardTheme.red, 0.42)
+            : (boosted ? cardTheme.withAlpha(cardTheme.yellow, 0.42) : cardTheme.adaptiveCardBorder)
+
+        Column {
+            id: endpointColumn
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: endpointCard.cardTheme.popupInsets.standard
+            spacing: endpointCard.cardTheme.spacingTokens.md
+
+            Row {
+                width: parent.width
+                spacing: endpointCard.cardTheme.spacingTokens.mdPlus
+
+                Rectangle {
+                    width: 32
+                    height: 32
+                    anchors.verticalCenter: parent.verticalCenter
+                    radius: endpointCard.cardTheme.radiusButton
+                    color: endpointCard.muted
+                        ? endpointCard.cardTheme.withAlpha(endpointCard.cardTheme.red, muteHover.hovered ? 0.24 : 0.14)
+                        : (muteHover.hovered
+                            ? endpointCard.cardTheme.glassActiveSurface
+                            : endpointCard.cardTheme.glassHoverSurface)
+
+                    TablerIcon {
+                        anchors.centerIn: parent
+                        width: endpointCard.cardTheme.iconTokens.lgPlus
+                        height: endpointCard.cardTheme.iconTokens.lgPlus
+                        iconName: endpointCard.muted ? endpointCard.mutedIcon : endpointCard.primaryIcon
+                        iconColor: endpointCard.muted
+                            ? endpointCard.cardTheme.red
+                            : (endpointCard.boosted ? endpointCard.cardTheme.yellow : endpointCard.accentColor)
+                    }
+
+                    HoverHandler { id: muteHover }
+                    TapHandler {
+                        enabled: endpointCard.available
+                        onTapped: {
+                            if (endpointCard.endpointNode?.audio)
+                                endpointCard.endpointNode.audio.muted = !endpointCard.endpointNode.audio.muted
+                        }
+                    }
+                }
+
+                Column {
+                    width: Math.max(0, parent.width - 32 - endpointCard.cardTheme.spacingTokens.mdPlus)
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: endpointCard.cardTheme.spacingTokens.micro
+
+                    Text {
+                        width: parent.width
+                        text: endpointCard.muted
+                            ? endpointCard.roleTitle + " · mutado"
+                            : (endpointCard.boosted ? endpointCard.roleTitle + " · amplificado" : endpointCard.roleTitle)
+                        color: endpointCard.muted
+                            ? endpointCard.cardTheme.red
+                            : (endpointCard.boosted ? endpointCard.cardTheme.yellow : endpointCard.cardTheme.surfaceVariantForeground)
+                        font.family: endpointCard.cardTheme.fontFamily
+                        font.pixelSize: endpointCard.cardTheme.typeTokens.meta
+                        font.weight: (endpointCard.muted || endpointCard.boosted) ? Font.DemiBold : Font.Normal
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: endpointCard.available ? endpointCard.deviceTitle : endpointCard.emptyTitle
+                        color: endpointCard.cardTheme.surfaceForeground
+                        font.family: endpointCard.cardTheme.fontFamily
+                        font.pixelSize: endpointCard.cardTheme.typeTokens.subtitle
+                        font.weight: Font.DemiBold
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        visible: endpointCard.available && endpointCard.deviceDetail.length > 0
+                        width: parent.width
+                        text: endpointCard.deviceDetail
+                        color: endpointCard.cardTheme.surfaceVariantForeground
+                        font.family: endpointCard.cardTheme.fontFamily
+                        font.pixelSize: endpointCard.cardTheme.typeTokens.meta
+                        elide: Text.ElideRight
+                    }
+                }
+            }
+
+            Row {
+                width: parent.width
+                spacing: endpointCard.cardTheme.spacingTokens.sm
+
+                Item {
+                    width: Math.max(0, parent.width - 52 - endpointCard.cardTheme.spacingTokens.sm)
+                    height: 24
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    SliderRow {
+                        anchors.fill: parent
+                        theme: endpointCard.cardTheme
+                        showIcon: false
+                        showValue: false
+                        wheelEnabled: true
+                        thumbAlwaysVisible: true
+                        value: endpointCard.volumeValue
+                        maximum: 1.5
+                        dragMaximum: 1.0
+                        referenceValue: 1.0
+                        accent: endpointCard.muted ? endpointCard.cardTheme.red : endpointCard.accentColor
+                        boostAccent: endpointCard.muted ? endpointCard.cardTheme.red : endpointCard.cardTheme.yellow
+                        available: endpointCard.available
+                        onValueRequested: function(nextValue) {
+                            if (endpointCard.endpointNode?.audio)
+                                endpointCard.endpointNode.audio.volume = nextValue
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: 52
+                    height: 22
+                    anchors.verticalCenter: parent.verticalCenter
+                    radius: endpointCard.cardTheme.radiusSm
+                    color: endpointCard.boosted
+                        ? endpointCard.cardTheme.withAlpha(endpointCard.cardTheme.yellow, resetHover.containsMouse ? 0.28 : 0.16)
+                        : "transparent"
+                    border.width: endpointCard.boosted ? 1 : 0
+                    border.color: endpointCard.boosted
+                        ? endpointCard.cardTheme.withAlpha(endpointCard.cardTheme.yellow, 0.45)
+                        : "transparent"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: endpointCard.percentLabel
+                        color: endpointCard.muted
+                            ? endpointCard.cardTheme.red
+                            : (endpointCard.boosted ? endpointCard.cardTheme.yellow : endpointCard.cardTheme.surfaceForeground)
+                        font.family: endpointCard.cardTheme.fontFamily
+                        font.pixelSize: endpointCard.cardTheme.typeTokens.body
+                        font.weight: endpointCard.boosted ? Font.DemiBold : Font.Medium
+                    }
+
+                    MouseArea {
+                        id: resetHover
+                        anchors.fill: parent
+                        enabled: endpointCard.boosted
+                        hoverEnabled: endpointCard.boosted
+                        cursorShape: endpointCard.boosted ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: {
+                            if (endpointCard.endpointNode?.audio)
+                                endpointCard.endpointNode.audio.volume = 1.0
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    component AudioDeviceSelector: Column {
+        id: selector
+        required property var selectorTheme
+        required property string sectionTitle
+        required property var devices
+        required property var activeDevice
+        required property string defaultTitle
+        required property string itemIcon
+        required property color activeAccent
+        required property var nameFn
+        required property var detailFn
+        signal deviceSelected(var node)
+
+        width: parent ? parent.width : 0
+        spacing: selectorTheme.spacingTokens.xs
+        visible: Array.isArray(devices) && devices.length > 0
+
+        Text {
+            text: selector.sectionTitle + " · " + selector.devices.length
+            color: selector.selectorTheme.surfaceVariantForeground
+            font.family: selector.selectorTheme.fontFamily
+            font.pixelSize: selector.selectorTheme.typeTokens.meta
+            font.weight: Font.DemiBold
+            font.letterSpacing: 0.5
+        }
+
+        Column {
+            width: parent.width
+            spacing: selector.selectorTheme.spacingTokens.tight
+
+            Repeater {
+                model: selector.devices
+
+                delegate: PopupListRow {
+                    id: deviceDelegate
+                    required property var modelData
+
+                    readonly property string titleLabel: selector.nameFn(modelData, selector.defaultTitle)
+                    readonly property string detailLabel: selector.detailFn(modelData, titleLabel)
+
+                    theme: selector.selectorTheme
+                    rowHeight: 38
+                    cornerRadius: selector.selectorTheme.radiusMd
+                    active: modelData === selector.activeDevice
+                    idleColor: "transparent"
+                    idleBorderWidth: 0
+                    activeBorderWidth: 1
+                    activeBorderColor: selector.selectorTheme.withAlpha(selector.activeAccent, 0.38)
+                    leadingTablerIcon: active ? "dashboard-check" : selector.itemIcon
+                    leadingIconColor: active ? selector.activeAccent : selector.selectorTheme.surfaceForeground
+                    leadingIconPixelSize: selector.selectorTheme.iconTokens.md
+                    title: titleLabel
+                    titleColor: active ? selector.activeAccent : selector.selectorTheme.surfaceForeground
+                    subtitle: active
+                        ? (detailLabel.length > 0 ? "Em uso · " + detailLabel : "Em uso")
+                        : detailLabel
+                    subtitleColor: active ? selector.activeAccent : selector.selectorTheme.surfaceVariantForeground
+
+            interactionHandlers: TapHandler {
+                        onTapped: selector.deviceSelected(deviceDelegate.modelData)
+                    }
+                }
+            }
+        }
+    }
+
+    component EffectsPresetRow: PopupListRow {
+        id: presetRow
+        required property var rowTheme
+        required property string pipelineName
+        required property string pipelineLabel
+        required property string leadingIcon
+        required property color iconAccent
+        required property string activePreset
+        required property string emptyPresetText
+        required property var presetList
+        signal cycleRequested(string pipeline, int direction)
+
+        theme: rowTheme
+        width: parent ? parent.width : 0
+        rowHeight: 38
+        leadingTablerIcon: leadingIcon
+        title: activePreset || emptyPresetText
+        subtitle: pipelineLabel + " · " + presetList.length + " presets"
+        titleColor: rowTheme.surfaceForeground
+        leadingIconColor: iconAccent
+        idleColor: "transparent"
+        idleBorderWidth: 0
+        trailing: Component {
+            Row {
+                spacing: presetRow.rowTheme.spacingTokens.xs
+                PopupIconButton {
+                    theme: presetRow.rowTheme
+                    width: 24
+                    height: 24
+                    tablerIcon: "dashboard-chevron-left"
+                    iconPixelSize: presetRow.rowTheme.iconTokens.smPlus
+                    enabled: EasyEffectsState.available && !EasyEffectsState.busy && presetRow.presetList.length > 1
+                    onClicked: presetRow.cycleRequested(presetRow.pipelineName, -1)
+                }
+                PopupIconButton {
+                    theme: presetRow.rowTheme
+                    width: 24
+                    height: 24
+                    tablerIcon: "dashboard-chevron-right"
+                    iconPixelSize: presetRow.rowTheme.iconTokens.smPlus
+                    enabled: EasyEffectsState.available && !EasyEffectsState.busy && presetRow.presetList.length > 1
+                    onClicked: presetRow.cycleRequested(presetRow.pipelineName, 1)
+                }
+            }
+        }
+        interactionHandlers: TapHandler {
+            onTapped: EasyEffectsState.openWindow()
+        }
+    }
+
     PopupCard {
         id: card
         theme: root.theme
@@ -116,25 +443,20 @@ PopupWindow {
 
         Keys.onEscapePressed: root.visible = false
 
-        Flickable {
-            id: audioContentFlick
+        ScrollableList {
+            id: audioContentList
             anchors.fill: parent
             anchors.margins: root.theme.popupInsets.large
-            contentWidth: width
-            contentHeight: contentColumn.implicitHeight
-            clip: true
-
-            WheelKinetic { scrollTarget: audioContentFlick }
-
-            Column {
-                id: contentColumn
-                width: audioContentFlick.width
-                spacing: root.theme.spacingTokens.mdPlus
+            theme: root.theme
+            contentSpacing: root.theme.spacingTokens.md
+            showScrollBar: true
+            reserveScrollBarSpace: false
+            scrollBarThumbColor: root.theme.primary
 
             PopupHeader {
                 theme: root.theme
                 parentAnchored: false
-                headerHeight: 30
+                headerHeight: 32
                 horizontalInset: 0
                 topInset: 0
                 leadingTablerIcon: "bar-volume"
@@ -145,6 +467,12 @@ PopupWindow {
                 contentGap: root.theme.spacingTokens.smPlus
                 title: "Mixer de áudio"
                 titleWeight: Font.Bold
+                subtitle: root.isNodeMuted(root.sink)
+                    ? "Saída mutada"
+                    : (root.isNodeBoosted(root.sink) ? "Amplificação > 100%" : root.volumeText(root.sink))
+                subtitleColor: root.isNodeMuted(root.sink)
+                    ? root.theme.red
+                    : (root.isNodeBoosted(root.sink) ? root.theme.yellow : root.theme.surfaceVariantForeground)
 
                 PopupSettingsButton {
                     visible: root.settingsAvailable
@@ -155,17 +483,18 @@ PopupWindow {
                 }
 
                 Rectangle {
-                    height: 18
-                    width: 58
+                    height: 20
+                    width: pipewireLabel.implicitWidth + root.theme.spacingTokens.md
                     radius: root.theme.radiusSm
                     color: root.theme.glassCardSurface
                     border.width: 1
                     border.color: root.theme.withAlpha(root.theme.border, 0.40)
 
                     Text {
+                        id: pipewireLabel
                         anchors.centerIn: parent
                         text: "PipeWire"
-                        color: root.theme.foreground
+                        color: root.theme.surfaceVariantForeground
                         font.family: root.theme.fontFamily
                         font.pixelSize: root.theme.typeTokens.meta
                         font.weight: Font.DemiBold
@@ -179,23 +508,261 @@ PopupWindow {
                 color: root.theme.borderSubtle
             }
 
-            // EASYEFFECTS -------------------------------------------------
+            // 1. OUTPUT ---------------------------------------------------
+            AudioEndpointCard {
+                readonly property string sinkTitle: root.nodeName(root.sink, "Nenhuma saída")
+                cardTheme: root.theme
+                endpointNode: root.sink
+                roleTitle: "Saída"
+                emptyTitle: "Nenhuma saída"
+                primaryIcon: root.outputIconName(root.sink)
+                mutedIcon: "bar-volume-off"
+                accentColor: root.theme.primary
+                deviceTitle: sinkTitle
+                deviceDetail: root.nodeDetail(root.sink, sinkTitle)
+            }
+
+            AudioDeviceSelector {
+                selectorTheme: root.theme
+                sectionTitle: "SAÍDAS"
+                devices: root.outputs
+                activeDevice: root.sink
+                defaultTitle: "Saída"
+                itemIcon: "bar-volume"
+                activeAccent: root.theme.primary
+                nameFn: root.nodeName
+                detailFn: root.nodeDetail
+                onDeviceSelected: function(node) {
+                    Pipewire.preferredDefaultAudioSink = node
+                }
+            }
+
+            // 2. APLICATIVOS (Per-App Streams) ----------------------------
+            Column {
+                visible: root.streams.length > 0
+                width: parent.width
+                spacing: root.theme.spacingTokens.xs
+
+                Text {
+                    text: "APLICATIVOS · " + root.streams.length
+                    color: root.theme.surfaceVariantForeground
+                    font.family: root.theme.fontFamily
+                    font.pixelSize: root.theme.typeTokens.meta
+                    font.weight: Font.DemiBold
+                    font.letterSpacing: 0.5
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: root.theme.spacingTokens.xs
+
+                    Repeater {
+                        model: root.streams
+
+                        delegate: PopupListRow {
+                            id: streamDelegate
+                            required property var modelData
+
+                            readonly property bool streamMuted: root.isNodeMuted(modelData)
+                            readonly property bool streamBoosted: root.isNodeBoosted(modelData)
+                            readonly property string detailText: root.streamDetail(modelData)
+
+                            theme: root.theme
+                            rowHeight: detailText.length > 0 ? 66 : 54
+                            active: false
+                            activeBorderWidth: streamMuted || streamBoosted ? 1 : 0
+                            idleBorderWidth: streamMuted || streamBoosted ? 1 : 1
+                            idleBorderColor: streamMuted
+                                ? root.theme.withAlpha(root.theme.red, 0.34)
+                                : (streamBoosted ? root.theme.withAlpha(root.theme.yellow, 0.36) : root.theme.adaptiveCardBorder)
+
+                            Column {
+                                anchors.fill: parent
+                                anchors.margins: root.theme.popupInsets.smallPlus
+                                spacing: streamDelegate.detailText.length > 0 ? 2 : 4
+
+                                Row {
+                                    width: parent.width
+                                    height: 18
+                                    spacing: root.theme.spacingTokens.sm
+
+                                    Text {
+                                        text: root.streamIcon(streamDelegate.modelData)
+                                        color: streamDelegate.streamMuted ? root.theme.red : root.theme.primary
+                                        font.family: root.theme.nerdFontFamily
+                                        font.pixelSize: root.theme.iconTokens.md
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    Text {
+                                        width: Math.max(0, parent.width - 102)
+                                        text: root.streamName(streamDelegate.modelData)
+                                        color: streamDelegate.streamMuted ? root.theme.surfaceVariantForeground : root.theme.surfaceForeground
+                                        font.family: root.theme.fontFamily
+                                        font.pixelSize: root.theme.typeTokens.body
+                                        font.weight: Font.DemiBold
+                                        elide: Text.ElideRight
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    Rectangle {
+                                        width: 20
+                                        height: 20
+                                        radius: root.theme.radiusSm
+                                        color: streamDelegate.streamMuted
+                                            ? root.theme.withAlpha(root.theme.red, 0.22)
+                                            : (streamMuteHover.hovered ? root.theme.glassHoverSurface : "transparent")
+                                        anchors.verticalCenter: parent.verticalCenter
+
+                                        TablerIcon {
+                                            anchors.centerIn: parent
+                                            width: root.theme.iconTokens.sm
+                                            height: root.theme.iconTokens.sm
+                                            iconName: streamDelegate.streamMuted ? "bar-volume-off" : "bar-volume"
+                                            iconColor: streamDelegate.streamMuted ? root.theme.red : root.theme.surfaceForeground
+                                        }
+
+                                        HoverHandler { id: streamMuteHover }
+                                        TapHandler {
+                                            onTapped: {
+                                                if (streamDelegate.modelData.audio)
+                                                    streamDelegate.modelData.audio.muted = !streamDelegate.modelData.audio.muted
+                                            }
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        width: 46
+                                        height: 18
+                                        radius: root.theme.radiusSm
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        color: streamDelegate.streamBoosted
+                                            ? root.theme.withAlpha(root.theme.yellow, streamResetHover.containsMouse ? 0.28 : 0.16)
+                                            : "transparent"
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: root.volumeText(streamDelegate.modelData)
+                                            color: streamDelegate.streamMuted
+                                                ? root.theme.red
+                                                : (streamDelegate.streamBoosted ? root.theme.yellow : root.theme.surfaceForeground)
+                                            font.family: root.theme.fontFamily
+                                            font.pixelSize: root.theme.typeTokens.meta
+                                            font.weight: streamDelegate.streamBoosted ? Font.DemiBold : Font.Medium
+                                        }
+
+                                        MouseArea {
+                                            id: streamResetHover
+                                            anchors.fill: parent
+                                            enabled: streamDelegate.streamBoosted
+                                            hoverEnabled: streamDelegate.streamBoosted
+                                            cursorShape: streamDelegate.streamBoosted ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                            onClicked: {
+                                                if (streamDelegate.modelData.audio)
+                                                    streamDelegate.modelData.audio.volume = 1.0
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    visible: streamDelegate.detailText.length > 0
+                                    width: parent.width
+                                    text: streamDelegate.detailText
+                                    color: root.theme.surfaceVariantForeground
+                                    font.family: root.theme.fontFamily
+                                    font.pixelSize: root.theme.typeTokens.meta
+                                    elide: Text.ElideRight
+                                }
+
+                                Item {
+                                    width: parent.width
+                                    height: 24
+                                    opacity: streamDelegate.streamMuted ? 0.65 : 1.0
+
+                                    SliderRow {
+                                        anchors.fill: parent
+                                        theme: root.theme
+                                        showIcon: false
+                                        showValue: false
+                                        wheelEnabled: true
+                                        thumbAlwaysVisible: true
+                                        value: streamDelegate.modelData.audio ? streamDelegate.modelData.audio.volume : 0
+                                        maximum: 1.5
+                                        dragMaximum: 1.0
+                                        referenceValue: 1.0
+                                        accent: streamDelegate.streamMuted ? root.theme.red : root.theme.primary
+                                        boostAccent: streamDelegate.streamMuted ? root.theme.red : root.theme.yellow
+                                        available: Boolean(streamDelegate.modelData.audio)
+                                        onValueRequested: function(value) {
+                                            if (streamDelegate.modelData.audio)
+                                                streamDelegate.modelData.audio.volume = value
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: root.theme.borderSubtle
+            }
+
+            // 3. INPUT ----------------------------------------------------
+            AudioEndpointCard {
+                readonly property string sourceTitle: root.nodeName(root.source, "Nenhuma entrada")
+                cardTheme: root.theme
+                endpointNode: root.source
+                roleTitle: "Microfone"
+                emptyTitle: "Nenhuma entrada"
+                primaryIcon: "microphone"
+                mutedIcon: "microphone-off"
+                accentColor: root.theme.pink
+                deviceTitle: sourceTitle
+                deviceDetail: root.nodeDetail(root.source, sourceTitle)
+            }
+
+            AudioDeviceSelector {
+                selectorTheme: root.theme
+                sectionTitle: "ENTRADAS"
+                devices: root.inputs
+                activeDevice: root.source
+                defaultTitle: "Entrada"
+                itemIcon: "microphone"
+                activeAccent: root.theme.pink
+                nameFn: root.nodeName
+                detailFn: root.nodeDetail
+                onDeviceSelected: function(node) {
+                    Pipewire.preferredDefaultAudioSource = node
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: root.theme.borderSubtle
+            }
+
+            // 4. EASYEFFECTS ----------------------------------------------
             Column {
                 width: parent.width
                 spacing: root.theme.spacingTokens.xs
 
                 Row {
+                    visible: EasyEffectsState.available
                     width: parent.width
                     height: 32
                     spacing: root.theme.spacingTokens.sm
 
                     Text {
-                        width: parent.width - 58
+                        width: Math.max(0, parent.width - 58)
                         anchors.verticalCenter: parent.verticalCenter
-                        text: EasyEffectsState.available
-                              ? (EasyEffectsState.bypassed ? "Efeitos desativados" : "Efeitos ativos")
-                              : "EasyEffects indisponível"
-                        color: EasyEffectsState.available ? root.theme.foreground : root.theme.surfaceVariantForeground
+                        text: EasyEffectsState.bypassed ? "EasyEffects · desativado" : "EasyEffects · ativo"
+                        color: root.theme.surfaceForeground
                         font.family: root.theme.fontFamily
                         font.pixelSize: root.theme.typeTokens.bodyEmphasis
                         font.weight: Font.DemiBold
@@ -214,38 +781,25 @@ PopupWindow {
                 }
 
                 PopupListRow {
-                    id: outputPresetRow
+                    visible: !EasyEffectsState.available
                     theme: root.theme
                     width: parent.width
                     rowHeight: 38
-                    leadingTablerIcon: "bar-volume"
-                    title: EasyEffectsState.outputPreset || "Nenhum preset"
-                    subtitle: "Saída · " + EasyEffectsState.outputPresets.length + " presets"
-                    titleColor: root.theme.foreground
-                    leadingIconColor: root.theme.primary
+                    leadingTablerIcon: "bar-controls"
+                    leadingIconColor: root.theme.surfaceVariantForeground
+                    leadingIconPixelSize: root.theme.iconTokens.md
+                    title: "EasyEffects indisponível"
+                    titleColor: root.theme.surfaceVariantForeground
+                    subtitle: "Toque para abrir o aplicativo"
+                    subtitleColor: root.theme.surfaceVariantForeground
                     idleColor: "transparent"
                     idleBorderWidth: 0
                     trailing: Component {
-                        Row {
-                            spacing: root.theme.spacingTokens.xs
-                            PopupIconButton {
-                                theme: root.theme
-                                width: 24
-                                height: 24
-                                tablerIcon: "dashboard-chevron-left"
-                                iconPixelSize: root.theme.iconTokens.smPlus
-                                enabled: EasyEffectsState.available && !EasyEffectsState.busy && EasyEffectsState.outputPresets.length > 1
-                                onClicked: root.cycleEffectsPreset("output", -1)
-                            }
-                            PopupIconButton {
-                                theme: root.theme
-                                width: 24
-                                height: 24
-                                tablerIcon: "dashboard-chevron-right"
-                                iconPixelSize: root.theme.iconTokens.smPlus
-                                enabled: EasyEffectsState.available && !EasyEffectsState.busy && EasyEffectsState.outputPresets.length > 1
-                                onClicked: root.cycleEffectsPreset("output", 1)
-                            }
+                        TablerIcon {
+                            width: root.theme.iconTokens.md
+                            height: root.theme.iconTokens.md
+                            iconName: "dashboard-chevron-right"
+                            iconColor: root.theme.surfaceVariantForeground
                         }
                     }
                     interactionHandlers: TapHandler {
@@ -253,42 +807,34 @@ PopupWindow {
                     }
                 }
 
-                PopupListRow {
-                    theme: root.theme
-                    width: parent.width
-                    rowHeight: 38
-                    leadingTablerIcon: "microphone"
-                    title: EasyEffectsState.inputPreset || "Padrão do microfone"
-                    subtitle: "Entrada · " + EasyEffectsState.inputPresets.length + " presets"
-                    titleColor: root.theme.foreground
-                    leadingIconColor: root.theme.pink
-                    idleColor: "transparent"
-                    idleBorderWidth: 0
-                    trailing: Component {
-                        Row {
-                            spacing: root.theme.spacingTokens.xs
-                            PopupIconButton {
-                                theme: root.theme
-                                width: 24
-                                height: 24
-                                tablerIcon: "dashboard-chevron-left"
-                                iconPixelSize: root.theme.iconTokens.smPlus
-                                enabled: EasyEffectsState.available && !EasyEffectsState.busy && EasyEffectsState.inputPresets.length > 1
-                                onClicked: root.cycleEffectsPreset("input", -1)
-                            }
-                            PopupIconButton {
-                                theme: root.theme
-                                width: 24
-                                height: 24
-                                tablerIcon: "dashboard-chevron-right"
-                                iconPixelSize: root.theme.iconTokens.smPlus
-                                enabled: EasyEffectsState.available && !EasyEffectsState.busy && EasyEffectsState.inputPresets.length > 1
-                                onClicked: root.cycleEffectsPreset("input", 1)
-                            }
-                        }
+                EffectsPresetRow {
+                    id: outputPresetRow
+                    visible: EasyEffectsState.available
+                    rowTheme: root.theme
+                    pipelineName: "output"
+                    pipelineLabel: "Saída"
+                    leadingIcon: "bar-volume"
+                    iconAccent: root.theme.primary
+                    activePreset: EasyEffectsState.outputPreset
+                    emptyPresetText: "Nenhum preset"
+                    presetList: EasyEffectsState.outputPresets
+                    onCycleRequested: function(pipeline, direction) {
+                        root.cycleEffectsPreset(pipeline, direction)
                     }
-                    interactionHandlers: TapHandler {
-                        onTapped: EasyEffectsState.openWindow()
+                }
+
+                EffectsPresetRow {
+                    visible: EasyEffectsState.available
+                    rowTheme: root.theme
+                    pipelineName: "input"
+                    pipelineLabel: "Entrada"
+                    leadingIcon: "microphone"
+                    iconAccent: root.theme.pink
+                    activePreset: EasyEffectsState.inputPreset
+                    emptyPresetText: "Padrão do microfone"
+                    presetList: EasyEffectsState.inputPresets
+                    onCycleRequested: function(pipeline, direction) {
+                        root.cycleEffectsPreset(pipeline, direction)
                     }
                 }
 
@@ -301,506 +847,6 @@ PopupWindow {
                     font.pixelSize: root.theme.typeTokens.meta
                     elide: Text.ElideRight
                 }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: root.theme.borderSubtle
-            }
-
-            // OUTPUT ------------------------------------------------------
-            Rectangle {
-                width: parent.width
-                height: 88
-                radius: root.theme.radiusXl
-                color: root.theme.adaptiveCardSurface
-                border.width: 1
-                border.color: root.theme.adaptiveCardBorder
-
-                Column {
-                    anchors.fill: parent
-                    anchors.margins: root.theme.popupInsets.standard
-                    spacing: root.theme.spacingTokens.mdPlus
-
-                    Row {
-                        width: parent.width
-                        height: 34
-                        spacing: root.theme.spacingTokens.mdPlus
-
-                        Rectangle {
-                            id: sinkMuteButton
-                            width: 32
-                            height: 32
-                            radius: root.theme.radiusButton
-                            color: sinkMuteHover.hovered
-                                   ? root.theme.glassActiveSurface
-                                   : root.theme.glassHoverSurface
-
-                            TablerIcon {
-                                anchors.centerIn: parent
-                                width: root.theme.iconTokens.lgPlus
-                                height: root.theme.iconTokens.lgPlus
-                                iconName: root.sink?.audio?.muted ? "bar-volume-off" : "bar-volume"
-                                iconColor: root.sink?.audio?.muted ? root.theme.red : root.theme.primary
-                            }
-
-                            HoverHandler { id: sinkMuteHover }
-                            TapHandler {
-                                onTapped: {
-                                    if (root.sink?.audio)
-                                        root.sink.audio.muted = !root.sink.audio.muted
-                                }
-                            }
-                        }
-
-                        Column {
-                            width: parent.width - 41
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: root.theme.spacingTokens.micro
-
-                            Text {
-                                text: root.sink?.audio?.muted ? "Saída · mutada" : "Saída"
-                                color: root.sink?.audio?.muted ? root.theme.red : root.theme.foreground
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: root.theme.typeTokens.meta
-                            }
-
-                            Text {
-                                width: parent.width
-                                text: root.nodeName(root.sink, "Nenhuma saída")
-                                color: root.theme.foreground
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: root.theme.typeTokens.subtitle
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
-                            }
-                        }
-                    }
-
-                    Row {
-                        width: parent.width
-                        spacing: root.theme.spacingTokens.md
-
-                        Item {
-                            width: parent.width - 50
-                            height: 24
-
-                            SliderRow {
-                                anchors.fill: parent
-                                theme: root.theme
-                                showIcon: false
-                                showValue: false
-                                wheelEnabled: true
-                                thumbAlwaysVisible: true
-                                value: root.sink?.audio ? root.sink.audio.volume : 0
-                                maximum: 1.5
-                                dragMaximum: 1.0
-                                referenceValue: 1.0
-                                accent: root.sink?.audio?.muted ? root.theme.red : root.theme.primary
-                                boostAccent: root.sink?.audio?.muted ? root.theme.red : root.theme.yellow
-                                available: Boolean(root.sink?.audio)
-                                onValueRequested: function(value) {
-                                    if (root.sink?.audio)
-                                        root.sink.audio.volume = value
-                                }
-                            }
-                        }
-
-                        Text {
-                            width: 42
-                            text: root.sink?.audio
-                                  ? Math.round(root.sink.audio.volume * 100) + "%"
-                                  : "--%"
-                            color: root.sink?.audio?.muted
-                                   ? root.theme.red
-                                   : (root.sink?.audio && root.sink.audio.volume > 1.001 ? root.theme.yellow : root.theme.offWhite)
-                            font.family: root.theme.fontFamily
-                            font.pixelSize: root.theme.typeTokens.body
-                            font.weight: root.sink?.audio && root.sink.audio.volume > 1.001 ? Font.DemiBold : Font.Normal
-                            horizontalAlignment: Text.AlignRight
-                        }
-                    }
-                }
-            }
-
-            // APLICATIVOS (Per-App Streams) --------------------------------
-            Column {
-                visible: root.streams.length > 0
-                width: parent.width
-                spacing: root.theme.spacingTokens.xsPlus
-
-                Text {
-                    text: "APLICATIVOS"
-                    color: root.theme.foreground
-                    font.family: root.theme.fontFamily
-                    font.pixelSize: root.theme.typeTokens.meta
-                    font.weight: Font.DemiBold
-                    font.letterSpacing: 0.5
-                }
-
-                Flickable {
-                    id: streamFlick
-                    width: parent.width
-                    height: Math.min(130, streamList.implicitHeight)
-                    contentWidth: width
-                    contentHeight: streamList.implicitHeight
-                    clip: true
-
-                    WheelKinetic { scrollTarget: streamFlick }
-
-                    Column {
-                        id: streamList
-                        width: parent.width
-                        spacing: root.theme.spacingTokens.xs
-
-                        Repeater {
-                            model: root.streams
-
-                            delegate: PopupListRow {
-                                id: streamDelegate
-                                theme: root.theme
-                                required property var modelData
-
-                                rowHeight: root.streamDetail(modelData) ? 64 : 52
-
-                                Column {
-                                    anchors.fill: parent
-                                    anchors.margins: root.theme.popupInsets.smallPlus
-                                    spacing: root.streamDetail(streamDelegate.modelData) ? 2 : 4
-
-                                    Row {
-                                        width: parent.width
-                                        height: 16
-                                        spacing: root.theme.spacingTokens.sm
-
-                                        Text {
-                                            text: root.streamIcon(streamDelegate.modelData)
-                                            color: root.theme.primary
-                                            font.family: root.theme.nerdFontFamily
-                                            font.pixelSize: root.theme.iconTokens.md
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-
-                                        Text {
-                                            width: parent.width - 95
-                                            text: root.streamName(streamDelegate.modelData)
-                                            color: root.theme.foreground
-                                            font.family: root.theme.fontFamily
-                                            font.pixelSize: root.theme.typeTokens.body
-                                            font.weight: Font.DemiBold
-                                            elide: Text.ElideRight
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-
-                                        // Mute toggle
-                                        Rectangle {
-                                            width: 18
-                                            height: 18
-                                            radius: root.theme.radiusSm
-                                            color: streamDelegate.modelData.audio?.muted ? root.theme.withAlpha(root.theme.red, 0.25) : "transparent"
-                                            anchors.verticalCenter: parent.verticalCenter
-
-                                            TablerIcon {
-                                                anchors.centerIn: parent
-                                                width: root.theme.iconTokens.sm
-                                                height: root.theme.iconTokens.sm
-                                                iconName: streamDelegate.modelData.audio?.muted ? "bar-volume-off" : "bar-volume"
-                                                iconColor: streamDelegate.modelData.audio?.muted ? root.theme.red : root.theme.foreground
-                                            }
-
-                                            TapHandler {
-                                                onTapped: {
-                                                    if (streamDelegate.modelData.audio)
-                                                        streamDelegate.modelData.audio.muted = !streamDelegate.modelData.audio.muted
-                                                }
-                                            }
-                                        }
-
-                                        Text {
-                                            width: 42
-                                            text: streamDelegate.modelData.audio ? Math.round(streamDelegate.modelData.audio.volume * 100) + "%" : "--%"
-                                            color: streamDelegate.modelData.audio?.muted
-                                                   ? root.theme.red
-                                                   : (streamDelegate.modelData.audio && streamDelegate.modelData.audio.volume > 1.001 ? root.theme.yellow : root.theme.offWhite)
-                                            font.family: root.theme.fontFamily
-                                            font.pixelSize: root.theme.typeTokens.meta
-                                            font.weight: streamDelegate.modelData.audio && streamDelegate.modelData.audio.volume > 1.001 ? Font.DemiBold : Font.Normal
-                                            horizontalAlignment: Text.AlignRight
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-
-                                    Text {
-                                        visible: root.streamDetail(streamDelegate.modelData).length > 0
-                                        width: parent.width
-                                        text: root.streamDetail(streamDelegate.modelData)
-                                        color: root.theme.foreground
-                                        font.family: root.theme.fontFamily
-                                        font.pixelSize: root.theme.typeTokens.meta
-                                        elide: Text.ElideRight
-                                    }
-
-                                    // Mini volume slider
-                                    Item {
-                                        width: parent.width
-                                        height: 24
-
-                                        SliderRow {
-                                            anchors.fill: parent
-                                            theme: root.theme
-                                            showIcon: false
-                                            showValue: false
-                                            wheelEnabled: true
-                                            thumbAlwaysVisible: true
-                                            value: streamDelegate.modelData.audio ? streamDelegate.modelData.audio.volume : 0
-                                            maximum: 1.5
-                                            dragMaximum: 1.0
-                                            referenceValue: 1.0
-                                            accent: streamDelegate.modelData.audio?.muted ? root.theme.red : root.theme.primary
-                                            boostAccent: streamDelegate.modelData.audio?.muted ? root.theme.red : root.theme.yellow
-                                            available: Boolean(streamDelegate.modelData.audio)
-                                            onValueRequested: function(value) {
-                                                if (streamDelegate.modelData.audio)
-                                                    streamDelegate.modelData.audio.volume = value
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Text {
-                text: "SAÍDAS"
-                color: root.theme.foreground
-                font.family: root.theme.fontFamily
-                font.pixelSize: root.theme.typeTokens.meta
-                font.weight: Font.DemiBold
-                font.letterSpacing: 0.5
-            }
-
-            Flickable {
-                id: outputFlick
-                width: parent.width
-                height: 76
-                contentWidth: width
-                contentHeight: outputList.implicitHeight
-                clip: true
-
-                WheelKinetic { scrollTarget: outputFlick }
-
-                Column {
-                    id: outputList
-                    width: parent.width
-                    spacing: root.theme.spacingTokens.tight
-
-                    Repeater {
-                        model: root.outputs
-
-                        delegate: PopupListRow {
-                            id: outputDelegate
-                            theme: root.theme
-                            required property var modelData
-                            rowHeight: 36
-                            cornerRadius: root.theme.radiusMd
-                            active: modelData === root.sink
-                            idleColor: "transparent"
-                            idleBorderWidth: 0
-                            leadingTablerIcon: active ? "dashboard-check" : "bar-volume"
-                            leadingIconColor: modelData === root.sink ? root.theme.primary : root.theme.foreground
-                            leadingIconPixelSize: root.theme.iconTokens.md
-                            title: root.nodeName(outputDelegate.modelData, "Output")
-                            titleColor: active ? root.theme.primary : root.theme.foreground
-                            subtitle: active ? "Em uso" : ""
-                            subtitleColor: root.theme.primary
-                            activeBorderWidth: 1
-                            activeBorderColor: root.theme.withAlpha(root.theme.primary, 0.35)
-
-                            interactionHandlers: TapHandler {
-                                onTapped: Pipewire.preferredDefaultAudioSink = outputDelegate.modelData
-                            }
-                        }
-                    }
-                }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: root.theme.borderSubtle
-            }
-
-            // INPUT -------------------------------------------------------
-            Rectangle {
-                width: parent.width
-                height: 88
-                radius: root.theme.radiusXl
-                color: root.theme.adaptiveCardSurface
-                border.width: 1
-                border.color: root.theme.adaptiveCardBorder
-
-                Column {
-                    anchors.fill: parent
-                    anchors.margins: root.theme.popupInsets.compactPlus
-                    spacing: root.theme.spacingTokens.md
-
-                    Row {
-                        width: parent.width
-                        height: 34
-                        spacing: root.theme.spacingTokens.mdPlus
-
-                        Rectangle {
-                            id: micMuteButton
-                            width: 32
-                            height: 32
-                            radius: root.theme.radiusButton
-                            color: micMuteHover.hovered
-                                   ? root.theme.glassActiveSurface
-                                   : root.theme.glassHoverSurface
-
-                            TablerIcon {
-                                anchors.centerIn: parent
-                                width: root.theme.iconTokens.lgPlus
-                                height: root.theme.iconTokens.lgPlus
-                                iconName: root.source?.audio?.muted ? "microphone-off" : "microphone"
-                                iconColor: root.source?.audio?.muted ? root.theme.red : root.theme.pink
-                            }
-
-                            HoverHandler { id: micMuteHover }
-                            TapHandler {
-                                onTapped: {
-                                    if (root.source?.audio)
-                                        root.source.audio.muted = !root.source.audio.muted
-                                }
-                            }
-                        }
-
-                        Column {
-                            width: parent.width - 41
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: root.theme.spacingTokens.micro
-
-                            Text {
-                                text: root.source?.audio?.muted ? "Microfone · mutado" : "Microfone"
-                                color: root.source?.audio?.muted ? root.theme.red : root.theme.foreground
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: root.theme.typeTokens.meta
-                            }
-
-                            Text {
-                                width: parent.width
-                                text: root.nodeName(root.source, "Nenhuma entrada")
-                                color: root.theme.foreground
-                                font.family: root.theme.fontFamily
-                                font.pixelSize: root.theme.typeTokens.subtitle
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
-                            }
-                        }
-                    }
-
-                    Row {
-                        width: parent.width
-                        spacing: root.theme.spacingTokens.md
-
-                        Item {
-                            width: parent.width - 50
-                            height: 24
-
-                            SliderRow {
-                                anchors.fill: parent
-                                theme: root.theme
-                                showIcon: false
-                                showValue: false
-                                wheelEnabled: true
-                                thumbAlwaysVisible: true
-                                value: root.source?.audio ? root.source.audio.volume : 0
-                                maximum: 1.5
-                                dragMaximum: 1.0
-                                referenceValue: 1.0
-                                accent: root.source?.audio?.muted ? root.theme.red : root.theme.pink
-                                boostAccent: root.source?.audio?.muted ? root.theme.red : root.theme.yellow
-                                available: Boolean(root.source?.audio)
-                                onValueRequested: function(value) {
-                                    if (root.source?.audio)
-                                        root.source.audio.volume = value
-                                }
-                            }
-                        }
-
-                        Text {
-                            width: 42
-                            text: root.source?.audio
-                                  ? Math.round(root.source.audio.volume * 100) + "%"
-                                  : "--%"
-                            color: root.source?.audio?.muted
-                                   ? root.theme.red
-                                   : (root.source?.audio && root.source.audio.volume > 1.001 ? root.theme.yellow : root.theme.offWhite)
-                            font.family: root.theme.fontFamily
-                            font.pixelSize: root.theme.typeTokens.body
-                            font.weight: root.source?.audio && root.source.audio.volume > 1.001 ? Font.DemiBold : Font.Normal
-                            horizontalAlignment: Text.AlignRight
-                        }
-                    }
-                }
-            }
-
-            Text {
-                text: "ENTRADAS"
-                color: root.theme.foreground
-                font.family: root.theme.fontFamily
-                font.pixelSize: root.theme.typeTokens.meta
-                font.weight: Font.DemiBold
-                font.letterSpacing: 0.5
-            }
-
-            Flickable {
-                id: inputFlick
-                width: parent.width
-                height: 76
-                contentWidth: width
-                contentHeight: inputList.implicitHeight
-                clip: true
-
-                WheelKinetic { scrollTarget: inputFlick }
-
-                Column {
-                    id: inputList
-                    width: parent.width
-                    spacing: root.theme.spacingTokens.tight
-
-                    Repeater {
-                        model: root.inputs
-
-                        delegate: PopupListRow {
-                            id: inputDelegate
-                            theme: root.theme
-                            required property var modelData
-                            rowHeight: 36
-                            cornerRadius: root.theme.radiusMd
-                            active: modelData === root.source
-                            idleColor: "transparent"
-                            idleBorderWidth: 0
-                            activeBorderWidth: 1
-                            activeBorderColor: root.theme.withAlpha(root.theme.primary, 0.40)
-                            leadingTablerIcon: active ? "dashboard-check" : "microphone"
-                            leadingIconColor: modelData === root.source ? root.theme.primary : root.theme.foreground
-                            leadingIconPixelSize: root.theme.iconTokens.md
-                            title: root.nodeName(inputDelegate.modelData, "Entrada")
-                            titleColor: active ? root.theme.primary : root.theme.foreground
-                            subtitle: active ? "Em uso" : ""
-                            subtitleColor: root.theme.primary
-
-                            interactionHandlers: TapHandler {
-                                onTapped: Pipewire.preferredDefaultAudioSource = inputDelegate.modelData
-                            }
-                        }
-                    }
-                }
-            }
             }
         }
     }

@@ -8,16 +8,19 @@ and once after an action. Socket access and actions have a two-second timeout.
 
 The mixer displays the current input and output presets, cycles the available
 presets in each pipeline, toggles global bypass, and opens the EasyEffects
-window for full editing. Preset names are discovered from the user's existing
+window for full editing below the primary PipeWire output, app-stream, and
+microphone sections. Preset names are discovered from the user's existing
 `~/.local/share/easyeffects/{input,output}` files. Names are validated against
 those files before being sent to the socket. Existing device-based autoload
 rules remain owned by EasyEffects; the shell observes the resulting active
-preset. If the daemon is unavailable, the mixer shows that state and preserves
-all PipeWire volume, mute, and device controls.
+preset. If the daemon is unavailable, the mixer collapses the section to a
+single compact status row (with tap-to-open) and preserves all PipeWire volume,
+mute, and device controls.
 
-The mixer sizes itself to its content up to the available screen height. When
-many application streams or devices make it taller, the whole content area
-scrolls inside the popup instead of drawing over windows behind it. Backend
+The mixer uses `ScrollableList` to size itself to its content up to the
+available screen height. When many application streams or devices make it taller,
+the content area scrolls with a single scrollbar instead of nested fixed-height
+lists or drawing over windows behind it. Backend
 error details stay compact in the panel; the unavailable state is already
 identified by the EasyEffects status row.
 

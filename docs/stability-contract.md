@@ -34,11 +34,12 @@ behavior and Quickshell references.
 ### Audio popup
 Considered stable and liked.
 Current behavior includes:
-- output section;
+- primary output section at the top;
+- per-application stream sliders and mute controls;
 - microphone section;
-- icon mute toggles;
-- sliders;
-- selectors.
+- icon mute toggles and clickable `> 100%` readout pill to reset to `100%`;
+- sliders (`0–150%` with 100% mark and scroll detent);
+- dynamic output and input device selectors.
 
 ### Media popup
 `MediaIsland.qml` opens the popup by click. An outside click dismisses it;
