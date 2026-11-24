@@ -294,4 +294,27 @@ TestCase {
         const elapsedMs = Date.now() - startMs
         verify(elapsedMs < 1000, "Expected cached 10k evaluations under 1000ms, got " + elapsedMs)
     }
+
+    function test_capByGroupRetainsNewestPerAppWithoutDroppingOtherApps() {
+        const items = []
+        for (let i = 0; i < 25; i++) {
+            items.push({
+                id: "t-" + i,
+                appName: "Telegram",
+                desktopEntry: "org.telegram.desktop",
+                summary: "Msg " + i
+            })
+        }
+        items.push({ id: "k-1", appName: "KDE Connect", desktopEntry: "", summary: "Ping" })
+        items.push({ id: "u-1", appName: "", desktopEntry: "", summary: "Anon 1" })
+        items.push({ id: "u-2", appName: "", desktopEntry: "", summary: "Anon 2" })
+
+        const capped = NotificationContent.capByGroup(items, 20)
+        compare(capped.length, 23)
+        compare(capped[0].id, "t-0")
+        compare(capped[19].id, "t-19")
+        compare(capped[20].id, "k-1")
+        compare(capped[21].id, "u-1")
+        compare(capped[22].id, "u-2")
+    }
 }

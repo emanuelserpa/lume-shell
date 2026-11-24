@@ -25,6 +25,7 @@ QtObject {
     property var capturingNotificationImages: ({})
     property int notificationImageSerial: 0
     readonly property int maximumCachedNotificationImages: 500
+    readonly property int maximumNotificationsPerApp: 20
     property var pendingStoreRequests: []
     property bool notificationStoreStarted: false
     property bool notificationStoreAvailable: false
@@ -104,7 +105,7 @@ QtObject {
             const timeB = Number(root.timestamps[b.id] ?? b.receivedAt ?? 0)
             return timeB - timeA
         })
-        return combined
+        return NotificationContent.capByGroup(combined, root.maximumNotificationsPerApp)
     }
     readonly property int count: tracked ? tracked.length : 0
     readonly property bool hasCritical: NotificationContent.hasCriticalNotification(
@@ -273,7 +274,8 @@ QtObject {
                 if (!current.some(function(item) { return String(item.id) === id })) {
                     current.unshift(response.item)
                     current.length = Math.min(current.length, 500)
-                    root.persistentHistory = current
+                    root.persistentHistory = NotificationContent.capByGroup(
+                        current, root.maximumNotificationsPerApp)
                 }
             } else if (response.type === "image-updated" && response.updated && response.item) {
                 root.persistentHistory = root.persistentHistory.map(function(item) {
@@ -311,6 +313,38 @@ QtObject {
     function dismiss(notification) {
         if (notification && typeof notification.dismiss === "function") {
             notification.dismiss()
+        }
+    }
+
+    function pruneLiveNotificationsForGroup(incoming) {
+        if (!incoming) return
+        const groupKey = NotificationContent.notificationGroupKey(incoming)
+        if (!groupKey || (!groupKey.startsWith("desktop:") && !groupKey.startsWith("name:")))
+            return
+
+        // qmllint disable missing-property
+        const raw = notificationServer.trackedNotifications.values ?? []
+        // qmllint enable missing-property
+        const live = raw.concat(root.internalNotifications)
+        const matching = []
+        for (let i = 0; i < live.length; i++) {
+            const item = live[i]
+            if (!item || item.tracked === false) continue
+            if (NotificationContent.isExcludedFromHistory(item)) continue
+            if (NotificationContent.notificationGroupKey(item) !== groupKey) continue
+            matching.push(item)
+        }
+        if (matching.length <= root.maximumNotificationsPerApp) return
+
+        matching.sort(function(a, b) {
+            const timeA = Number(root.timestamps[a.id] ?? a.receivedAt ?? 0)
+            const timeB = Number(root.timestamps[b.id] ?? b.receivedAt ?? 0)
+            return timeB - timeA
+        })
+        for (let i = root.maximumNotificationsPerApp; i < matching.length; i++) {
+            const stale = matching[i]
+            root.releaseNotificationImage(stale)
+            root.dismiss(stale)
         }
     }
 
@@ -415,6 +449,7 @@ QtObject {
         root.internalNotifications = remaining
         if (!isBat) {
             root.recordNotification(notification)
+            root.pruneLiveNotificationsForGroup(notification)
         }
 
         const expireAfterMs = Number(details.expireAfterMs ?? 0)
@@ -789,6 +824,7 @@ QtObject {
             if (!excludedFromHistory) {
                 root.retainNotificationImage(n)
                 root.recordNotification(n)
+                root.pruneLiveNotificationsForGroup(n)
             }
             root._lastFingerprint = fp
             root._lastSeenTime = now
