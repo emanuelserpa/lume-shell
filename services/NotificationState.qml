@@ -73,9 +73,11 @@ QtObject {
         const liveFingerprints = Object.create(null)
         for (let i = 0; i < live.length; i++) {
             const n = live[i]
-            if (n && n.tracked !== false && root.notificationHasUsefulContent(n) && !root.isExcludedFromHistory(n)) {
+            if (!n || n.tracked === false) continue
+            const meta = NotificationContent.trackedMetadata(n)
+            if (meta.useful && !meta.excluded) {
                 validLive.push(n)
-                const fingerprint = root.notificationFingerprint(n)
+                const fingerprint = meta.baseFingerprint + root.imageSource(n)
                 liveFingerprints[fingerprint] = (liveFingerprints[fingerprint] || 0) + 1
             }
         }
@@ -85,8 +87,10 @@ QtObject {
         // messages that should remain in history after the live one is cleared.
         const archived = []
         for (const n of root.persistentHistory || []) {
-            if (!n || !root.notificationHasUsefulContent(n) || root.isExcludedFromHistory(n)) continue
-            const fingerprint = root.notificationFingerprint(n)
+            if (!n) continue
+            const meta = NotificationContent.trackedMetadata(n)
+            if (!meta.useful || meta.excluded) continue
+            const fingerprint = meta.baseFingerprint + root.imageSource(n)
             if ((liveFingerprints[fingerprint] || 0) > 0) {
                 liveFingerprints[fingerprint] -= 1
                 continue
@@ -642,10 +646,7 @@ QtObject {
     }
 
     function notificationFingerprint(n) {
-        return String(n?.appName ?? "").trim() + "\n"
-            + root.formatText(n?.summary) + "\n"
-            + root.formatText(n?.body) + "\n"
-            + root.imageSource(n)
+        return NotificationContent.baseFingerprint(n) + root.imageSource(n)
     }
 
     function imageSource(notification) {
