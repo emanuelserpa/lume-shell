@@ -3,6 +3,14 @@
 The numbered entries below record functional milestones; they are not the
 package version. Public package releases are defined by Git tags.
 
+## Unreleased
+
+- Redesign `bar/AudioPopup.qml` so the primary output volume sits at the top,
+  unify output/microphone endpoint cards with light-theme-safe `surfaceForeground`
+  contrast and a clickable reset-to-100% boost pill, replace fixed 76 px nested
+  device scrollboxes with dynamic selectors inside a single `ScrollableList`, and
+  collapse unavailable EasyEffects controls to a compact action row at the bottom.
+
 ## 0.1.5
 
 - Mark the 100% limit and 100–150% boost zone on the volume/microphone OSD, and
