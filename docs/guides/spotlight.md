@@ -37,6 +37,9 @@ retorna à lista principal.
 
 ## Comportamento por compositor e persistência
 
+- **Abertura de aplicativos:** a ação principal e “Nova instância” iniciam
+  a entrada desktop em um escopo próprio do systemd de usuário. Reiniciar o
+  serviço do Lume deixa esses aplicativos em execução.
 - **Hyprland:** integra atalhos globais (`quickshell:spotlight*`) e despacho de
   janelas via `scripts/compositor-dispatch.sh`.
 - **labwc:** como `hyprland_global_shortcuts_v1` não está disponível, o

@@ -7,7 +7,7 @@ pkgdesc='Wayland desktop shell built with Quickshell'
 arch=('x86_64')
 url='https://github.com/emanuelserpa/lume-shell'
 license=('MIT')
-depends=('quickshell' 'qt6-5compat' 'qt6-declarative' 'glib2' 'python' 'python-requests'
+depends=('quickshell' 'qt6-5compat' 'qt6-declarative' 'glib2' 'gtk3' 'python' 'python-requests'
   'python-pillow' 'systemd' 'polkit' 'power-profiles-daemon' 'util-linux' 'fontconfig' 'kitty')
 optdepends=(
   'noto-fonts: default interface font family'
