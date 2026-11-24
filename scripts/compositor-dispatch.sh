@@ -81,6 +81,16 @@ fi
 
 # Hyprland dispatch handling. A binary installed on the system does not mean
 # the current Wayland session is Hyprland.
+is_valid_hypr_workspace() {
+    local value="$1"
+    [[ "$value" =~ ^([1-9][0-9]*|[erm]?[+-][1-9][0-9]*|special(:[A-Za-z0-9_.-]+)?|name:[A-Za-z0-9_.-]+|[A-Za-z][A-Za-z0-9_.:-]{0,63})$ ]]
+}
+
+is_valid_hypr_address() {
+    local value="$1"
+    [[ "$value" =~ ^(0[xX])?[0-9a-fA-F]{1,32}$ ]]
+}
+
 if [[ ":${CURRENT_DESKTOP}:" == *:hyprland:* ]] && command -v hyprctl >/dev/null 2>&1; then
     case "$ACTION" in
         submap)
@@ -97,6 +107,10 @@ if [[ ":${CURRENT_DESKTOP}:" == *:hyprland:* ]] && command -v hyprctl >/dev/null
             ;;
         workspace)
             TARGET="${2:-1}"
+            if ! is_valid_hypr_workspace "$TARGET"; then
+                echo "hyprland: invalid workspace target '$TARGET'" >&2
+                exit 1
+            fi
             # 1. Try Lua dispatcher (Hyprland 0.55+ with Lua configuration)
             if hyprctl dispatch "hl.dsp.focus({ workspace = \"$TARGET\" })" >/dev/null 2>&1; then
                 exit 0
@@ -108,9 +122,16 @@ if [[ ":${CURRENT_DESKTOP}:" == *:hyprland:* ]] && command -v hyprctl >/dev/null
         window)
             ADDR="${2:-}"
             WS="${3:-}"
-            [ -z "$ADDR" ] && exit 1
+            if ! is_valid_hypr_address "$ADDR"; then
+                echo "hyprland: invalid window address '$ADDR'" >&2
+                exit 1
+            fi
+            if [ -n "$WS" ] && ! is_valid_hypr_workspace "$WS"; then
+                echo "hyprland: invalid workspace '$WS'" >&2
+                exit 1
+            fi
 
-            if [ -n "$WS" ] && [[ ! "$WS" =~ ^special: ]]; then
+            if [ -n "$WS" ] && [[ ! "$WS" =~ ^special(:|$) ]]; then
                 LUA="(function() hl.dispatch(hl.dsp.focus({ workspace = \"$WS\" })); return hl.dsp.focus({ window = \"address:$ADDR\" }) end)()"
                 if hyprctl dispatch "$LUA" >/dev/null 2>&1; then
                     exit 0
@@ -129,7 +150,10 @@ if [[ ":${CURRENT_DESKTOP}:" == *:hyprland:* ]] && command -v hyprctl >/dev/null
 
         close-window)
             ADDR="${2:-}"
-            [ -z "$ADDR" ] && exit 1
+            if ! is_valid_hypr_address "$ADDR"; then
+                echo "hyprland: invalid window address '$ADDR'" >&2
+                exit 1
+            fi
             exec hyprctl dispatch killwindow "address:$ADDR"
             ;;
 

@@ -5,6 +5,16 @@ package version. Public package releases are defined by Git tags.
 
 ## Unreleased
 
+- Harden compositor dispatching, geolocation, and weather state handling (#21):
+  - Validate Hyprland workspace selectors and window addresses in
+    `scripts/compositor-dispatch.sh` before building Lua/fallback `hyprctl` calls.
+  - Migrate IP geolocation in `scripts/weather-fetch.py` and
+    `scripts/nightlight-manager.py` to HTTPS with coordinate validation and
+    opt-out support (`auto_location: false` / `LUME_WEATHER_DISABLE_AUTO_GEO=1`).
+  - Escape external values in weather HTML tooltips with `html.escape()`,
+    validate `cities`/`selected`/IDs/coordinates across weather state and CLI
+    helpers, add regression tests, and gate `.github/workflows/release-arch-package.yml`
+    on automated validation.
 - Redesign `bar/AudioPopup.qml` so the primary output volume sits at the top,
   unify output/microphone endpoint cards with light-theme-safe `surfaceForeground`
   contrast and a clickable reset-to-100% boost pill, replace fixed 76 px nested

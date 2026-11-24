@@ -8,6 +8,12 @@ import tempfile
 from pathlib import Path
 
 from network_utils import prefer_ipv4_resolution
+from weather_state_utils import (
+    is_valid_city_id,
+    load_sanitized_weather_state,
+    sanitize_city_entry,
+    validate_coords,
+)
 
 prefer_ipv4_resolution()
 
@@ -23,18 +29,7 @@ DEFAULT_STATE = {
 
 
 def load_state():
-    try:
-        with STATE_FILE.open(encoding="utf-8") as f:
-            state = json.load(f)
-        if not isinstance(state, dict):
-            raise ValueError
-        state.setdefault("selected", "auto")
-        state.setdefault("cities", [])
-        if not isinstance(state["cities"], list):
-            state["cities"] = []
-        return state
-    except (OSError, ValueError, json.JSONDecodeError):
-        return dict(DEFAULT_STATE)
+    return load_sanitized_weather_state(STATE_FILE)
 
 
 def save_state(state):
@@ -82,6 +77,7 @@ def public_state(state):
         "ok": True,
         "version": 1,
         "selected": state.get("selected", "auto"),
+        "auto_location": bool(state.get("auto_location", True)),
         "cities": items,
         "count": len(items),
         "error": None,
@@ -121,18 +117,21 @@ def cmd_search(args):
 
             region = str(item.get("admin1") or "").strip()
             country = str(item.get("country") or "").strip()
-            lat = item.get("latitude")
-            lon = item.get("longitude")
-            if lat is None or lon is None:
+            coords = validate_coords(item.get("latitude"), item.get("longitude"))
+            if coords is None:
+                continue
+
+            cid = city_id(name, region, country, coords[0], coords[1])
+            if not is_valid_city_id(cid):
                 continue
 
             results.append({
-                "id": city_id(name, region, country, lat, lon),
+                "id": cid,
                 "name": name,
                 "region": region,
                 "country": country,
-                "latitude": float(lat),
-                "longitude": float(lon),
+                "latitude": coords[0],
+                "longitude": coords[1],
                 "subtitle": ", ".join(x for x in (region, country) if x),
             })
 
@@ -150,14 +149,20 @@ def cmd_search(args):
 def cmd_add(args):
     state = load_state()
 
-    c = {
+    c = sanitize_city_entry({
         "id": args.id,
         "name": args.name,
         "region": args.region or "",
         "country": args.country or "",
-        "latitude": float(args.latitude),
-        "longitude": float(args.longitude),
-    }
+        "latitude": args.latitude,
+        "longitude": args.longitude,
+    })
+    if c is None:
+        err_res = public_state(state)
+        err_res["ok"] = False
+        err_res["error"] = "Dados inválidos para cidade ou coordenadas"
+        print(json.dumps(err_res, ensure_ascii=False))
+        sys.exit(1)
 
     found = False
     new = []
@@ -231,6 +236,17 @@ def cmd_cycle(args):
     print(json.dumps(public_state(state), ensure_ascii=False))
 
 
+def cmd_auto_geo(args):
+    state = load_state()
+    if args.mode == "on":
+        state["auto_location"] = True
+        save_state(state)
+    elif args.mode == "off":
+        state["auto_location"] = False
+        save_state(state)
+    print(json.dumps(public_state(state), ensure_ascii=False))
+
+
 def main():
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -262,6 +278,10 @@ def main():
     sp = sub.add_parser("cycle")
     sp.add_argument("direction", choices=["next", "prev"])
     sp.set_defaults(func=cmd_cycle)
+
+    sp = sub.add_parser("auto-geo")
+    sp.add_argument("mode", nargs="?", default="status", choices=["status", "on", "off"])
+    sp.set_defaults(func=cmd_auto_geo)
 
     args = p.parse_args()
     try:

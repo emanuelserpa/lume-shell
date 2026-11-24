@@ -40,8 +40,8 @@ placement, monitor behavior, and font rendering.
 ## Release gate
 
 Run the local validator on the intended commit before tagging. The current
-release workflow builds the Arch package from the tag commit, then publishes
-the package and SHA-256 checksum through the `release` GitHub Environment.
-The remote quality workflow is currently disabled; the release workflow does
-not run the test suite. Publication approval depends on the repository's
-Environment settings, which must be checked on GitHub separately.
+release workflow first runs a `validate` job (`./scripts/validate.sh --offline --skip-qmllint`,
+covering unit tests, QML behavior tests, syntax/module checks, and Markdown links)
+and builds/publishes the Arch package and SHA-256 checksum only when validation
+passes. Publication approval still depends on the repository's `release`
+Environment settings on GitHub.

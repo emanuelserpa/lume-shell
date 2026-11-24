@@ -20,6 +20,17 @@ import time
 
 sys.dont_write_bytecode = True
 
+_SCRIPTS_DIR = str(Path(__file__).resolve().parent)
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+
+from weather_state_utils import (
+    fetch_https_geolocation,
+    is_auto_geo_disabled,
+    load_sanitized_weather_state,
+    validate_coords,
+)
+
 STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "quickshell"
 STATE_FILE = STATE_DIR / "nightlight.json"
 WEATHER_STATE_FILE = STATE_DIR / "weather.json"
@@ -180,62 +191,52 @@ def is_night_time(sunrise_str: str, sunset_str: str, now_time: datetime.time | N
 def get_weather_location() -> dict:
     """
     Obtém a localização (cidade, latitude, longitude) a partir da configuração de clima.
-    Prioridade: 1) configuração atual do clima, 2) localização de rede, 3) coordenadas padrão.
+    Prioridade: 1) configuração atual do clima, 2) geolocalização HTTPS, 3) coordenadas padrão.
     """
     # 1. ~/.local/state/quickshell/weather.json
-    try:
-        if WEATHER_STATE_FILE.is_file():
-            data = json.loads(WEATHER_STATE_FILE.read_text(encoding="utf-8"))
-            selected = str(data.get("selected", "auto"))
-            cities = data.get("cities", [])
-            for city in cities:
-                if city.get("id") == selected:
-                    lat = float(city.get("latitude"))
-                    lon = float(city.get("longitude"))
-                    name = str(city.get("name", "Localização"))
-                    region = str(city.get("region", ""))
-                    display = f"{name}, {region}" if region else name
-                    return {
-                        "city": display,
-                        "latitude": round(lat, 5),
-                        "longitude": round(lon, 5),
-                        "source": "weather_state",
-                    }
-            # Se for "auto" mas houver cidades salvas, usa a primeira como referência se offline
-            if selected == "auto" and cities:
-                first = cities[0]
-                lat = float(first.get("latitude"))
-                lon = float(first.get("longitude"))
-                name = str(first.get("name", "Localização"))
-                region = str(first.get("region", ""))
-                display = f"{name}, {region}" if region else name
-                return {
-                    "city": display,
-                    "latitude": round(lat, 5),
-                    "longitude": round(lon, 5),
-                    "source": "weather_cities",
-                }
-    except Exception:
-        pass
+    state = load_sanitized_weather_state(WEATHER_STATE_FILE)
+    selected = state.get("selected", "auto")
+    cities = state.get("cities", [])
+    for city in cities:
+        if city.get("id") == selected:
+            coords = validate_coords(city.get("latitude"), city.get("longitude"))
+            if coords is None:
+                continue
+            name = str(city.get("name", "Localização"))
+            region = str(city.get("region", ""))
+            display = f"{name}, {region}" if region else name
+            return {
+                "city": display,
+                "latitude": coords[0],
+                "longitude": coords[1],
+                "source": "weather_state",
+            }
+    # Se for "auto" mas houver cidades salvas, usa a primeira como referência se offline
+    if selected == "auto" and cities:
+        first = cities[0]
+        coords = validate_coords(first.get("latitude"), first.get("longitude"))
+        if coords is not None:
+            name = str(first.get("name", "Localização"))
+            region = str(first.get("region", ""))
+            display = f"{name}, {region}" if region else name
+            return {
+                "city": display,
+                "latitude": coords[0],
+                "longitude": coords[1],
+                "source": "weather_cities",
+            }
 
-    # 2. Fallback geoip se auto e nada configurado
-    try:
-        import urllib.request
-        req = urllib.request.Request("http://ip-api.com/json/", headers={"User-Agent": "Quickshell-NightLight"})
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            geo_data = json.loads(resp.read().decode("utf-8"))
-            if geo_data.get("status") == "success":
-                city = geo_data.get("city", "Localização automática")
-                lat = float(geo_data.get("lat"))
-                lon = float(geo_data.get("lon"))
-                return {
-                    "city": city,
-                    "latitude": round(lat, 5),
-                    "longitude": round(lon, 5),
-                    "source": "ip_geo",
-                }
-    except Exception:
-        pass
+    # 2. Fallback geoip HTTPS se auto e não desativado
+    if not is_auto_geo_disabled(state):
+        resolved = fetch_https_geolocation(timeout=3.0, user_agent="Quickshell-NightLight")
+        if resolved is not None:
+            city, lat, lon = resolved
+            return {
+                "city": city,
+                "latitude": lat,
+                "longitude": lon,
+                "source": "ip_geo",
+            }
 
     # 3. Fallback seguro padrão
     return {
