@@ -61,6 +61,7 @@ os planos em sequência.
 - [Plano do Spotlight](plans/spotlight-raycast-plan.md)
 - [Cores do wallpaper](plans/wallpaper-color-plan.md)
 - [Backend Wayland genérico](plans/wayland-backend-plan.md)
+- [Padronização de caminhos em lume-shell](plans/lume-shell-paths-plan.md)
 - [Histórico do plano visual](history/design-plan-log.md) e
   [roadmap legado](plans/roadmap.md)
 

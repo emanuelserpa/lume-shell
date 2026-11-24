@@ -37,7 +37,7 @@ process:
 For a one-off development session:
 
 ```sh
-LUME_COMPOSITOR_MODE=wayland quickshell --path ~/.config/quickshell
+LUME_COMPOSITOR_MODE=wayland quickshell --path ~/.config/lume-shell
 ```
 
 For the installed systemd service, run `systemctl --user edit

@@ -358,7 +358,8 @@ if [[ -x /usr/lib/lumeshell/lumeshell-cpu-boost \
     else
         warn "Kernel não expõe uma interface compatível de boost de CPU"
     fi
-    boost_preference="$CONFIG_HOME/lumeshell/power/cpu-boost.json"
+    boost_preference="$CONFIG_HOME/lume-shell/power/cpu-boost.json"
+    [[ -f "$boost_preference" ]] || boost_preference="$CONFIG_HOME/lumeshell/power/cpu-boost.json"
     [[ -f "$boost_preference" ]] || boost_preference="$CONFIG_HOME/quickshell/power/cpu-boost.json"
     if [[ -f "$boost_preference" ]]; then
         if python3 - "$boost_preference" <<'PY'

@@ -37,7 +37,7 @@ class ClipboardBackendTestCase(unittest.TestCase):
         clipboard_store.BASE_DIR = self.test_dir / "clipboard"
         clipboard_store.DB_PATH = clipboard_store.BASE_DIR / "clipboard.db"
         clipboard_store.BLOBS_DIR = clipboard_store.BASE_DIR / "blobs"
-        clipboard_store.CACHE_DIR = self.test_dir / "cache" / "quickshell"
+        clipboard_store.CACHE_DIR = self.test_dir / "cache" / "lume-shell"
         clipboard_store.CACHE_INDEX_FILE = clipboard_store.CACHE_DIR / "clipboard-index.json"
         clipboard_store.CHANGE_FILE = clipboard_store.CACHE_DIR / "clipboard-change"
         clipboard_store.THUMBS_DIR = clipboard_store.CACHE_DIR / "clipboard-thumbs"
@@ -640,7 +640,7 @@ class ClipboardCaptureRetryTestCase(unittest.TestCase):
 
         with tempfile.TemporaryDirectory(prefix="clipboard-paused-callback-") as tmp:
             root = Path(tmp)
-            state_dir = root / "state" / "quickshell"
+            state_dir = root / "state" / "lume-shell"
             data_dir = root / "data"
             cache_dir = root / "cache"
             fake_bin = root / "bin"
@@ -674,7 +674,7 @@ class ClipboardCaptureRetryTestCase(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stderr.decode(errors="replace"))
             self.assertFalse(wl_log.exists(), "paused callback must not query wl-paste")
             self.assertFalse(
-                (data_dir / "quickshell" / "clipboard" / "clipboard.db").exists(),
+                (data_dir / "lume-shell" / "clipboard" / "clipboard.db").exists(),
                 "paused callback must not create or write the clipboard database",
             )
 

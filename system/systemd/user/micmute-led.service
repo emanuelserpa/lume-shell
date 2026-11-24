@@ -5,7 +5,7 @@ Wants=pipewire-pulse.service
 
 [Service]
 Type=simple
-ExecStart=%h/.config/quickshell/scripts/micmute-led.sh
+ExecStart=/usr/share/lume-shell/scripts/micmute-led.sh
 Restart=always
 RestartSec=2
 NoNewPrivileges=yes

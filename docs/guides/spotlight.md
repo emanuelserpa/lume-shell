@@ -50,8 +50,8 @@ retorna à lista principal.
   de temas (`F6` alterna entre os painéis, setas movem e `Enter` aplica). Veja
   [Temas e wallpapers](theme-management.md).
 - **Persistência de uso:** lançamentos de aplicativos ficam em
-  `$XDG_STATE_HOME/quickshell/launcher-usage.json` e emojis usados em
-  `$XDG_STATE_HOME/quickshell/launcher-emoji-usage.json`.
+  `$XDG_STATE_HOME/lume-shell/launcher-usage.json` e emojis usados em
+  `$XDG_STATE_HOME/lume-shell/launcher-emoji-usage.json`.
 
 ## Referências relacionadas
 

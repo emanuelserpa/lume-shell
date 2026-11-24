@@ -5,7 +5,7 @@
 O seletor visual `Ilhas` / `Contínua` está implementado no estúdio de aparência
 do Spotlight. `Ilhas` continua como padrão; `Contínua` desenha uma superfície
 única sob a composição atual. A escolha fica em
-`$XDG_CONFIG_HOME/quickshell/bar.json`, com versão e fallback seguro. A ordem,
+`$XDG_CONFIG_HOME/lume-shell/bar.json`, com versão e fallback seguro. A ordem,
 visibilidade e configuração dos módulos não são alteradas por esse seletor.
 As demais etapas abaixo continuam sendo planejamento.
 
@@ -144,7 +144,7 @@ controle.
 ## Persistência e interface de configuração
 
 Expandir o arquivo versionado já usado pelo modo visual em
-`$XDG_CONFIG_HOME/quickshell/`, separado de `Theme.qml` e dos dados de estado.
+`$XDG_CONFIG_HOME/lume-shell/`, separado de `Theme.qml` e dos dados de estado.
 Novas preferências precisam ter defaults, validação e fallback seguro para
 valores inválidos; gravações devem ser atômicas e opções desconhecidas devem ser
 ignoradas. As mesmas preferências são consumidas pelas instâncias da barra em

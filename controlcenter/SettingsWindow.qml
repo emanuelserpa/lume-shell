@@ -853,7 +853,7 @@ FloatingWindow {
 
                             Repeater {
                                 model: [
-                                    { name: "Quickshell", key: "quickshell", icon: "󰄯" },
+                                    { name: "Lume Shell", key: "lume-shell", icon: "󰄯" },
                                     { name: "Kitty", key: "kitty", icon: "󰆍" },
                                     { name: "Hyprland", key: "hyprland", icon: "󰣇" },
                                     { name: "Hyprlock", key: "hyprlock", icon: "󰌾" },

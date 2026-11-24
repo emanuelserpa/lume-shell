@@ -3,11 +3,16 @@
 
 import json
 import math
-import os
 import sys
 from pathlib import Path
 
-STATE_DIR = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state") / "quickshell"
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from lume_paths import migrate_file, state_dir
+
+STATE_DIR = state_dir()
 STATE_FILE = STATE_DIR / "glass.json"
 DEFAULT_ALPHA = 0.68
 MIN_ALPHA = 0.35
@@ -19,6 +24,7 @@ def result(ok, **values):
 
 
 def read_alpha():
+    migrate_file(STATE_FILE)
     try:
         data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
         value = float(data.get("alpha", DEFAULT_ALPHA))

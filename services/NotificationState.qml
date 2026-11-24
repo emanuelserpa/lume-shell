@@ -390,7 +390,7 @@ QtObject {
         const notification = {
             id: notificationId,
             internalNotificationId: notificationId,
-            appName: String(details.appName ?? "Quickshell"),
+            appName: String(details.appName ?? "Lume Shell"),
             appIcon: String(details.appIcon ?? ""),
             image: String(details.image ?? ""),
             hints: ({}),
@@ -689,12 +689,10 @@ QtObject {
                 || (imageItem.status !== undefined && imageItem.status !== Image.Ready)) return false
 
         root.retainNotificationImage(notification)
-        const dataHome = Quickshell.env("XDG_DATA_HOME")
-                       || (Quickshell.env("HOME") + "/.local/share")
         const receivedAt = Number(root.timestamps[notification.id]
             ?? notification.receivedAt ?? Date.now())
         const serial = ++root.notificationImageSerial
-        const imagePath = dataHome + "/quickshell/notifications/images/notification-"
+        const imagePath = ShellPaths.dataFile("notifications/images/notification-")
                         + receivedAt + "-" + serial + ".png"
         const capturing = Object.assign({}, root.capturingNotificationImages)
         capturing[source] = true

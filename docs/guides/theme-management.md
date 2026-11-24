@@ -4,7 +4,7 @@ Theme Studio supports choosing a principal color extracted from the active
 wallpaper. It offers Automatic and up to five perceptually distinct candidates,
 previews Dark/Light/OLED locally, and applies only after confirmation. The
 preference is stored by wallpaper content hash in
-`$XDG_STATE_HOME/quickshell/wallpaper-color-preferences.json`; choosing Automatic
+`$XDG_STATE_HOME/lume-shell/wallpaper-color-preferences.json`; choosing Automatic
 removes the manual override. Preview generation does not write active palette
 files or synchronize adapters. See [Cores do wallpaper](../plans/wallpaper-color-plan.md)
 for the interaction and acceptance details.
@@ -29,8 +29,8 @@ Chameleon retains the wallpaper-color preview and explicit Apply/Cancel flow.
 The Appearance section also exposes a glass opacity slider. It updates the
 wallpaper stage and the shared glass surfaces immediately and persists the
 requested alpha in
-`$XDG_STATE_HOME/quickshell/glass.json` (or
-`~/.local/state/quickshell/glass.json`). The preference applies across themes.
+`$XDG_STATE_HOME/lume-shell/glass.json` (or
+`~/.local/state/lume-shell/glass.json`). The preference applies across themes.
 `Theme.qml` clamps it to the supported compositor range: Hyprland surfaces keep
 their blur cap, while labwc retains an opaque floor and disables the slider
 because it has no background blur. Mango popup cards keep their near-opaque
@@ -63,13 +63,16 @@ The clean-install package list in `docs/hyprland-install.md` includes Pillow.
 ## Selecting and reverting themes
 
 The theme choice is persisted under
-`$XDG_STATE_HOME/quickshell/theme.json` (or
-`~/.local/state/quickshell/theme.json` when `XDG_STATE_HOME` is unset).
+`$XDG_STATE_HOME/lume-shell/theme.json` (or
+`~/.local/state/lume-shell/theme.json` when `XDG_STATE_HOME` is unset), and
+the canonical palette snapshot is written to
+`$XDG_STATE_HOME/lume-shell/current_palette.json` with a compatibility symlink
+at `~/.local/state/quickshell/current_palette.json`.
 Use the Settings theme section or run:
 
 ```bash
-python3 ~/.config/quickshell/scripts/theme-manager.py list
-python3 ~/.config/quickshell/scripts/theme-manager.py set catppuccin-mocha
+python3 ~/.config/lume-shell/scripts/theme-manager.py list
+python3 ~/.config/lume-shell/scripts/theme-manager.py set catppuccin-mocha
 ```
 
 `set` writes the active palette and synchronizes available adapters. Kitty
@@ -110,7 +113,7 @@ fallbacks for built-in palettes that do not yet define those roles.
 The wallpaper gallery and `wallpaper-action.py` apply a wallpaper with the
 configured backend, update the current-wallpaper cache, and refresh Chameleon
 colors. Wallpaper selection is persisted separately in
-`$XDG_STATE_HOME/quickshell/wallpaper.json`. On session startup, `restore`
+`$XDG_STATE_HOME/lume-shell/wallpaper.json`. On session startup, `restore`
 reapplies the saved wallpaper when available.
 
 The gallery loads only its five visible thumbnails. WebP/AVIF previews use
@@ -120,8 +123,8 @@ awww/swww. Folder selection uses zenity; Spotlight temporarily unmaps so the
 native picker remains accessible, then returns to theme mode.
 
 ```bash
-python3 ~/.config/quickshell/scripts/wallpaper-action.py get
-python3 ~/.config/quickshell/scripts/wallpaper-action.py restore
+python3 ~/.config/lume-shell/scripts/wallpaper-action.py get
+python3 ~/.config/lume-shell/scripts/wallpaper-action.py restore
 ```
 
 The CLI returns a JSON envelope with `ok`, `error`, and `version` fields.

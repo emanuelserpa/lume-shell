@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 
 from command_utils import run_command
+from lume_paths import config_dir, migrate_file
 
 VERSION = 1
 PRIVILEGED_HELPER = Path("/usr/lib/lumeshell/lumeshell-cpu-boost")
@@ -18,8 +19,7 @@ BACKENDS = (
 
 
 def preference_path():
-    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return config_home / "lumeshell" / "power" / "cpu-boost.json"
+    return migrate_file(config_dir() / "power" / "cpu-boost.json")
 
 
 def emit(result):
@@ -94,10 +94,14 @@ def read_preference(path=None):
     except FileNotFoundError:
         if path is not None:
             return None
-        legacy = target.parent.parent.parent / "quickshell" / "power" / "cpu-boost.json"
-        try:
-            result = json.loads(legacy.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        for legacy_dir in ("lumeshell", "quickshell"):
+            legacy = target.parent.parent.parent / legacy_dir / "power" / "cpu-boost.json"
+            try:
+                result = json.loads(legacy.read_text(encoding="utf-8"))
+                break
+            except (OSError, json.JSONDecodeError):
+                result = None
+        if result is None:
             return None
     except (OSError, json.JSONDecodeError):
         return None

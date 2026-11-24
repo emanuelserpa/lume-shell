@@ -151,7 +151,7 @@ def main() -> int:
                 env=env, stdout=daemon_log, stderr=subprocess.STDOUT,
             )
             deadline = time.monotonic() + 5
-            while not (root / "data" / "quickshell" / "clipboard" / "clipboard.db").exists():
+            while not (root / "data" / "lume-shell" / "clipboard" / "clipboard.db").exists():
                 if daemon.poll() is not None:
                     daemon_log.flush()
                     daemon_log.seek(0)

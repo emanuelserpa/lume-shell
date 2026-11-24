@@ -13,7 +13,7 @@ mkdir -p "$DIR" 2>/dev/null || true
 if [ "${1:-output}" = "last" ]; then
     FILE="$(ls -t "$DIR"/*.png 2>/dev/null | head -n 1)"
     if [ -z "${FILE:-}" ] || [ ! -f "$FILE" ]; then
-        notify-send -a quickshell "Screenshot" "Nenhum screenshot em $DIR."
+        notify-send -a lume-shell "Screenshot" "Nenhum screenshot em $DIR."
         exit 1
     fi
     exec swappy -f "$FILE"

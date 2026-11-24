@@ -11,7 +11,13 @@ from pathlib import Path
 
 EMOJI_DB_FILE = Path(__file__).resolve().parent.parent / "data" / "emojis.json"
 
-STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "quickshell"
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+import clipboard_store
+from lume_paths import cache_dir, migrate_file, state_dir
+
+STATE_DIR = state_dir()
 STATE_FILE = STATE_DIR / "launcher-usage.json"
 EMOJI_USAGE_FILE = STATE_DIR / "launcher-emoji-usage.json"
 # Unicode emoji that default to text presentation in the Misc Symbols/Dingbats
@@ -28,11 +34,7 @@ EMOJI_PRESENTATION_RANGES = (
     (0x27B0, 0x27B0), (0x27BF, 0x27BF), (0x2B1B, 0x2B1C), (0x2B50, 0x2B50),
     (0x2B55, 0x2B55),
 )
-CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "quickshell"
-SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
-import clipboard_store
+CACHE_DIR = cache_dir()
 
 
 def out(obj):
@@ -41,6 +43,7 @@ def out(obj):
     print(json.dumps(obj, ensure_ascii=False))
 
 def load_usage():
+    migrate_file(STATE_FILE)
     try:
         data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
         return data if isinstance(data, dict) else {}
@@ -48,6 +51,7 @@ def load_usage():
         return {}
 
 def save_usage(data):
+    migrate_file(STATE_FILE)
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     tmp = STATE_FILE.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -68,6 +72,7 @@ def bump(name):
     out({"ok": True, "usage": data})
 
 def load_emoji_usage():
+    migrate_file(EMOJI_USAGE_FILE)
     try:
         data = json.loads(EMOJI_USAGE_FILE.read_text(encoding="utf-8"))
         return data if isinstance(data, dict) else {}

@@ -7,6 +7,11 @@ import sys
 import tempfile
 from pathlib import Path
 
+_SCRIPT_DIR = str(Path(__file__).resolve().parent)
+if _SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPT_DIR)
+
+from lume_paths import migrate_file, state_dir as lume_state_dir
 from network_utils import prefer_ipv4_resolution
 from weather_state_utils import (
     is_valid_city_id,
@@ -19,7 +24,7 @@ prefer_ipv4_resolution()
 
 import requests
 
-STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "quickshell"
+STATE_DIR = lume_state_dir()
 STATE_FILE = STATE_DIR / "weather.json"
 
 DEFAULT_STATE = {
@@ -33,6 +38,7 @@ def load_state():
 
 
 def save_state(state):
+    migrate_file(STATE_FILE)
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(
         mode="w",
@@ -104,7 +110,7 @@ def cmd_search(args):
                 "format": "json",
             },
             timeout=10,
-            headers={"User-Agent": "Quickshell Weather City Manager"},
+            headers={"User-Agent": "lume-shell Weather City Manager"},
         )
         r.raise_for_status()
         raw = r.json()

@@ -22,7 +22,7 @@ Itens em cache permanecem visíveis durante a atualização, sem repetir o rótu
 os itens no lugar sem reconstruir a lista nem deslocar a seleção.
 
 Enquanto o modo clipboard está aberto, a interface observa
-`~/.cache/quickshell/clipboard-change`. O backend atualiza esse marcador depois
+`~/.cache/lume-shell/clipboard-change`. O backend atualiza esse marcador depois
 de confirmar uma mudança no SQLite; o Spotlight agrupa eventos próximos e
 reconsulta o histórico, preservando a seleção pelo ID do item. Fora desse
 modo, não há consultas periódicas ao banco.
@@ -32,8 +32,8 @@ O callback do observador consome o conteúdo enviado por `wl-paste --watch` no
 PNG grande bloqueie o pipe e paralise eventos seguintes.
 
 O botão **Pausar** no cabeçalho do clipboard persiste a preferência em
-`$XDG_STATE_HOME/quickshell/clipboard-capture.json` (ou
-`~/.local/state/quickshell/clipboard-capture.json`). Enquanto pausado, uma faixa
+`$XDG_STATE_HOME/lume-shell/clipboard-capture.json` (ou
+`~/.local/state/lume-shell/clipboard-capture.json`). Enquanto pausado, uma faixa
 de aviso no topo do modo `#` deixa o estado visível com ação direta de
 **Retomar**; os callbacks ainda drenam o pipe do Wayland, mas não consultam MIME
 nem armazenam a seleção. **Retomar** volta a capturar as próximas mudanças; não
@@ -91,7 +91,7 @@ scripts/clipboard-daemon.py (--capture)
             └─► Persistência SQLite & Blobs
                     │
                     ▼
-     ~/.local/share/quickshell/clipboard/
+     ~/.local/share/lume-shell/clipboard/
          ├── clipboard.db (WAL mode)
          └── blobs/<hash>.<ext>
 ```
@@ -101,13 +101,13 @@ scripts/clipboard-daemon.py (--capture)
 ## Localização dos Arquivos e Diretórios
 
 ### Diretório de Dados (XDG Data)
-`~/.local/share/quickshell/clipboard/`
+`~/.local/share/lume-shell/clipboard/`
 - **`clipboard.db`**: banco SQLite principal (com WAL journaling ativo).
 - **`blobs/`**: imagens (`.png`, `.jpg`, `.webp`, `.svg`, etc.) nomeadas com seu hash SHA-256.
 - **`daemon.lock`**: arquivo de lock com `fcntl.flock` para impedir instâncias concorrentes do daemon.
 
 ### Diretório de Cache (XDG Cache)
-`~/.cache/quickshell/`
+`~/.cache/lume-shell/`
 - **`clipboard-index.json`**: snapshot serializado de compatibilidade, atualizado pelo caminho legado; o SQLite é a fonte de verdade.
 
 ---
@@ -219,7 +219,7 @@ O daemon `clipboard-daemon.py` é gerenciado diretamente pelo Quickshell via `se
 - Inicia uma única vez por sessão do desktop (nunca por monitor).
 - Escuta sinais `SIGTERM`, `SIGINT` e `SIGHUP` para encerrar o processo filho `wl-paste` de forma limpa.
 - Se o `wl-paste` encerrar inesperadamente (por exemplo, durante reinício do compositor), o supervisor reinicia o monitor após 1 segundo.
-- Um lockfile em `~/.local/share/quickshell/clipboard/daemon.lock` garante que apenas uma instância do daemon opere simultaneamente.
+- Um lockfile em `~/.local/share/lume-shell/clipboard/daemon.lock` garante que apenas uma instância do daemon opere simultaneamente.
 
 ---
 
@@ -245,12 +245,12 @@ e a interface exibe a mensagem de indisponibilidade de forma amigável.
 
 1. **Verificar status do clipboard**:
    ```bash
-   python3 ~/.config/quickshell/scripts/clipboard-daemon.py --status
+   python3 ~/.config/lume-shell/scripts/clipboard-daemon.py --status
    ```
 2. **Testar captura pontual**:
    ```bash
    wl-copy "Teste manual"
-   python3 ~/.config/quickshell/scripts/clipboard-daemon.py --capture
+   python3 ~/.config/lume-shell/scripts/clipboard-daemon.py --capture
    ```
 3. **Verificar processo em execução**:
    ```bash
@@ -258,5 +258,5 @@ e a interface exibe a mensagem de indisponibilidade de forma amigável.
    ```
 4. **Executar suite de testes unitários**:
    ```bash
-   python3 -m unittest discover -s ~/.config/quickshell/tests -p "test_*.py"
+   python3 -m unittest discover -s ~/.config/lume-shell/tests -p "test_*.py"
    ```

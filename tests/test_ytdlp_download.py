@@ -96,7 +96,7 @@ class StartTests(unittest.TestCase):
             # URL travels as one argv item; nothing executed through a shell.
             self.assertEqual(argv.count("https://example.com/v?id=1&x=2"), 1)
             self.assertTrue(seen["kwargs"].get("start_new_session"))
-            job_file = Path(state, "quickshell", "ytdlp", "jobs",
+            job_file = Path(state, "lume-shell", "ytdlp", "jobs",
                             result["data"]["job_id"], "job.json")
             self.assertTrue(job_file.exists())
 
@@ -110,7 +110,7 @@ class StartTests(unittest.TestCase):
 
 class StatusTests(unittest.TestCase):
     def _job(self, directory, pid=999999):
-        job_dir = Path(directory, "quickshell", "ytdlp", "jobs", "job1")
+        job_dir = Path(directory, "lume-shell", "ytdlp", "jobs", "job1")
         job_dir.mkdir(parents=True)
         job = {"job_id": "job1", "url": "https://example.com/v",
                "mode": "video", "dest": directory, "pid": pid,

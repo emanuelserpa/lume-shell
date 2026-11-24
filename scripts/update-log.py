@@ -11,12 +11,17 @@ import sys
 from pathlib import Path
 from typing import Any
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from lume_paths import cache_dir
+
 
 def log_paths(env: dict[str, str] | None = None, fallback: Path | None = None) -> tuple[Path, Path]:
     env = env or os.environ
-    cache = Path(env.get("XDG_CACHE_HOME") or (Path(env.get("HOME", str(Path.home()))) / ".cache"))
-    primary = cache / "quickshell" / "update.log"
-    fallback = fallback or Path("/tmp") / f"quickshell-update-{os.getuid()}.log"
+    primary = cache_dir(env) / "update.log"
+    fallback = fallback or Path("/tmp") / f"lume-shell-update-{os.getuid()}.log"
     return primary, fallback
 
 

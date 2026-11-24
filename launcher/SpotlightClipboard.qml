@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 import "../services/CommandResult.js" as CommandResult
 
 // Etapa 3 do fatiamento do Spotlight: controlador local do clipboard.
@@ -93,8 +94,7 @@ Item {
 
     FileView {
         id: changeFile
-        path: (Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache")
-              + "/quickshell/clipboard-change"
+        path: ShellPaths.cacheFile("clipboard-change")
         watchChanges: root.active
         printErrors: false
         onFileChanged: {

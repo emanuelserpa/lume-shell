@@ -38,8 +38,9 @@ Intel `intel_pstate/no_turbo` when that driver-specific interface is present;
 the helper normalizes both to an `enabled` boolean. The UI hides the switch
 when neither interface is exposed. Kernel state is refreshed while the popup is
 open and after a toggle. Successful user changes are saved atomically in
-`~/.config/lumeshell/power/cpu-boost.json`. Existing settings under
-`~/.config/quickshell/power/cpu-boost.json` are read as a migration fallback.
+`~/.config/lume-shell/power/cpu-boost.json`. Existing settings under
+`~/.config/lumeshell/power/cpu-boost.json` and
+`~/.config/quickshell/power/cpu-boost.json` are migrated on first access.
 The preference file is private to the user and contains only the requested
 on/off value.
 

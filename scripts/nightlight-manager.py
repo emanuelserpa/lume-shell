@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Night Light Manager for Quickshell Desktop Shell.
+Night Light Manager for Lume Shell.
 Calculates solar times (sunrise/sunset) using location from weather configuration,
 and controls display color temperature via hyprsunset or wlsunset.
 Output envelope adheres strictly to {"ok": bool, "error": str | None, ...}.
@@ -24,6 +24,7 @@ _SCRIPTS_DIR = str(Path(__file__).resolve().parent)
 if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
 
+from lume_paths import migrate_file, state_dir as lume_state_dir
 from weather_state_utils import (
     fetch_https_geolocation,
     is_auto_geo_disabled,
@@ -31,7 +32,7 @@ from weather_state_utils import (
     validate_coords,
 )
 
-STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "quickshell"
+STATE_DIR = lume_state_dir()
 STATE_FILE = STATE_DIR / "nightlight.json"
 WEATHER_STATE_FILE = STATE_DIR / "weather.json"
 
@@ -264,6 +265,7 @@ def detect_backend() -> str:
 
 def read_state() -> dict:
     """Lê o estado do Night Light."""
+    migrate_file(STATE_FILE)
     state = {
         "enabled": False,
         "night_temp": DEFAULT_NIGHT_TEMP,
@@ -281,6 +283,7 @@ def read_state() -> dict:
 
 def write_state(state: dict) -> None:
     """Salva o estado atomicamente."""
+    migrate_file(STATE_FILE)
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     temp_file = STATE_FILE.with_suffix(".tmp")
     temp_file.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

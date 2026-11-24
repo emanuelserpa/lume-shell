@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Storage and SQLite manager for Quickshell native clipboard.
-Path: ~/.local/share/quickshell/clipboard/
+Storage and SQLite manager for Lume Shell native clipboard.
+Path: ~/.local/share/lume-shell/clipboard/
   - clipboard.db (SQLite with WAL)
   - blobs/ (image and large content store)
 """
@@ -18,14 +18,19 @@ sys.dont_write_bytecode = True
 import time
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
-BASE_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "quickshell" / "clipboard"
+from lume_paths import cache_dir, data_dir, migrate_dir, migrate_file, state_dir
+
+BASE_DIR = data_dir() / "clipboard"
 DB_PATH = BASE_DIR / "clipboard.db"
 BLOBS_DIR = BASE_DIR / "blobs"
-STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "quickshell"
+STATE_DIR = state_dir()
 CAPTURE_SETTINGS_FILE = STATE_DIR / "clipboard-capture.json"
 
-CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "quickshell"
+CACHE_DIR = cache_dir()
 CACHE_INDEX_FILE = CACHE_DIR / "clipboard-index.json"
 CHANGE_FILE = CACHE_DIR / "clipboard-change"
 THUMBS_DIR = CACHE_DIR / "clipboard-thumbs"
@@ -46,6 +51,7 @@ IMAGE_EXTENSIONS = {
 }
 
 def ensure_dirs():
+    migrate_dir(BASE_DIR)
     BASE_DIR.mkdir(parents=True, exist_ok=True)
     BLOBS_DIR.mkdir(parents=True, exist_ok=True)
     try:
@@ -66,6 +72,9 @@ def ensure_cache_dirs():
     """Keep clipboard-derived caches private, even under a shared XDG cache."""
     if CACHE_DIR.is_symlink() or THUMBS_DIR.is_symlink():
         raise OSError("clipboard cache directories must not be symlinks")
+    migrate_dir(THUMBS_DIR)
+    migrate_file(CACHE_INDEX_FILE)
+    migrate_file(CHANGE_FILE)
     CACHE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
     _ensure_mode(CACHE_DIR, 0o700)
     THUMBS_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -143,6 +152,7 @@ def notify_change():
 
 def clipboard_capture_paused():
     """Return the persisted preference; unreadable state fails closed to paused."""
+    migrate_file(CAPTURE_SETTINGS_FILE)
     try:
         settings = json.loads(CAPTURE_SETTINGS_FILE.read_text(encoding="utf-8"))
         return bool(settings.get("paused", True)) if isinstance(settings, dict) else True
@@ -153,6 +163,7 @@ def clipboard_capture_paused():
 
 def set_clipboard_capture_paused(paused):
     """Persist capture pause atomically with private state-file permissions."""
+    migrate_file(CAPTURE_SETTINGS_FILE)
     tmp_file = CAPTURE_SETTINGS_FILE.with_suffix(CAPTURE_SETTINGS_FILE.suffix + ".tmp")
     try:
         STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)

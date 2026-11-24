@@ -15,9 +15,9 @@ grim -g "$REGION" "$TMP" 2>/dev/null || exit 0
 
 DATA="$(zbarimg --raw --quiet "$TMP" 2>/dev/null | head -n 1)"
 if [ -z "${DATA:-}" ]; then
-    notify-send -a quickshell "QR Code" "Nenhum código encontrado na região."
+    notify-send -a lume-shell "QR Code" "Nenhum código encontrado na região."
     exit 1
 fi
 
 printf '%s' "$DATA" | wl-copy
-notify-send -a quickshell "QR Code" "Copiado para o clipboard."
+notify-send -a lume-shell "QR Code" "Copiado para o clipboard."

@@ -145,7 +145,7 @@ def capture_clipboard():
             return
 
         if len(raw_bytes) > MAX_BLOB_BYTES:
-            print(f"quickshell-clipboard: ignoring image exceeding size limit ({len(raw_bytes)} bytes)", file=sys.stderr)
+            print(f"lume-shell-clipboard: ignoring image exceeding size limit ({len(raw_bytes)} bytes)", file=sys.stderr)
             return
 
         ext = IMAGE_EXTENSIONS.get(matched_image_mime, ".png")
@@ -179,7 +179,7 @@ def capture_clipboard():
             return
 
         if len(raw_bytes) > MAX_TEXT_BYTES:
-            print(f"quickshell-clipboard: ignoring text exceeding size limit ({len(raw_bytes)} bytes)", file=sys.stderr)
+            print(f"lume-shell-clipboard: ignoring text exceeding size limit ({len(raw_bytes)} bytes)", file=sys.stderr)
             return
 
         text = raw_bytes.decode("utf-8", errors="replace")
@@ -209,7 +209,7 @@ def capture_clipboard():
 
 def run_daemon():
     if not shutil.which("wl-paste"):
-        print("quickshell-clipboard: error: wl-paste is not available on PATH", file=sys.stderr)
+        print("lume-shell-clipboard: error: wl-paste is not available on PATH", file=sys.stderr)
         sys.exit(1)
 
     BASE_DIR.mkdir(parents=True, exist_ok=True)
@@ -218,7 +218,7 @@ def run_daemon():
     try:
         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except (IOError, OSError):
-        print("quickshell-clipboard: daemon already running", file=sys.stderr)
+        print("lume-shell-clipboard: daemon already running", file=sys.stderr)
         sys.exit(0)
 
     init_db()
