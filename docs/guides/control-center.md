@@ -14,8 +14,6 @@ and `controlcenter/SliderRow.qml` components with the existing domain state:
 - Wi-Fi and Bluetooth radio toggles;
 - idle-inhibition, DND, and night-light toggles;
 - a game-status row shown only while one or more games are running;
-- full active media controls, including player selection and seeking through
-  the shared `components/MediaSeekBar.qml` used by the full media popup;
 - notification history and session actions.
 
 The combined popup uses the shared Adaptive Soft UI tokens: its frame keeps
@@ -68,16 +66,13 @@ context action; its compact caffeine indicator appears in the bar while active.
 The former `SystemUpdates` component and `ControlCenterCard` are retired. Steam
 launching remains available through Spotlight; the game row in Quick Settings
 is informational and appears only while a game is active.
-The media section restores the detailed player selector, artwork and album
-metadata, seek bar with elapsed/total time, and previous/play-pause/next actions
-inside a rounded card with a clipped, blurred album-art backdrop. The old media
-popup continues to offer its hover-preview behavior.
+Playback controls and player selection are available from the bar's media island
+and its dedicated popup.
 
 The current implementation keeps these established integrations:
 
 - native Quickshell PipeWire for audio;
 - native Quickshell UPower for battery;
-- native MPRIS through `services/MediaState.qml`;
 - existing NetworkManager and Bluetooth helper scripts;
 - existing energy-profile, night-light, update, and session helpers;
 - shared idle-inhibit state in `qs.services.IdleState`.

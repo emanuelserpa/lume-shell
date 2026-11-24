@@ -200,7 +200,8 @@ Esta lista é um roteiro, não uma declaração de que a auditoria já foi feita
 ## Quick Settings e dispositivos
 
 - [ ] Notificações abrem o painel combinado com áudio, brilho, rede, Bluetooth,
-  DND, inibição, night light, mídia e sessão; atualizações ficam no popup próprio.
+  DND, inibição, night light e sessão; mídia e atualizações ficam em seus popups
+  próprios.
 - [ ] Detalhes de rede/Bluetooth abrem no owner correto após fechar o painel.
 - [ ] Rede: conexão ativa, lista, senha, QR e speedtest mantêm seus contratos.
 - [ ] NetworkPopup: vetores temáticos e hierarquia de superfícies; conferir

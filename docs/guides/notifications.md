@@ -96,8 +96,8 @@ The system is organized into modular QML components connected through a reactive
     `PopupSettingsButton.qml` shares its interaction and visual base.
   - Anchored to the bar pill with standard right-cluster geometry.
   - Implements the Unified Popup Behavior (`grabFocus: true`, pill toggle, Escape dismissal).
-  - The same popup includes compact quick settings, active media controls, and
-    notification history. Wi-Fi and Bluetooth tile icons toggle their radios;
+  - The same popup includes compact quick settings and notification history.
+    Wi-Fi and Bluetooth tile icons toggle their radios;
     the tile details open the existing `NetworkPopup` and `BluetoothPopup`
     after this popup's fade-out, preserving their scanning, pairing, password,
     and action-feedback flows. Requests are routed through the existing bar
@@ -107,10 +107,6 @@ The system is organized into modular QML components connected through a reactive
   - Clicking the output-volume or microphone icon toggles PipeWire mute;
     dragging its slider still adjusts the corresponding level. Muted devices
     use the semantic error color, and unavailable devices remain non-interactive.
-  - Active media uses `bar/QuickMediaPlayer.qml`, with MPRIS player selection,
-    clipped blurred album art, artwork/album metadata, seeking, elapsed/total
-    time, and transport controls. Seeking and time formatting use the shared
-    `components/MediaSeekBar.qml` also used by `bar/MediaPopup.qml`.
   - The slider group controls output volume, microphone input volume, and
     brightness through their existing PipeWire and brightness state.
   - Clicking a live notification's main content invokes its default/Open action when available; archived snapshots have no app actions, but clicking can reopen their application through the saved desktop-entry ID using `gtk-launch`. Successful activation closes the popup. Notifications without an action or desktop-entry remain informational. The header's Clear All removes both live and archived entries.
@@ -214,9 +210,7 @@ flattened grouped model keeps the existing virtualized scrolling list. First/las
 row markers join expanded messages into one continuous app surface, with spacing
 only between apps. Headers and message text share a fixed leading column; history
 titles allow two lines and secondary text uses the subtitle size. Individual
-messages retain their swipe dismissal and hover actions. The compact media player
-uses a single-line app selector and hides seeking/time labels when duration is
-unknown.
+messages retain their swipe dismissal and hover actions.
 
 ### Performance verification — 26/10/2026
 

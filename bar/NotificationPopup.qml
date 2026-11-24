@@ -42,11 +42,6 @@ PopupWindow {
     readonly property var runningGames: gameState.result.data.games ?? []
     readonly property bool gameActive: Boolean(gameState.result.data.active)
 
-    // Media bindings
-    readonly property var currentMedia: MediaState.player
-    readonly property string mediaTitle: currentMedia ? String(currentMedia.trackTitle ?? "").trim() : ""
-    readonly property bool hasMedia: Boolean(currentMedia && mediaTitle.length > 0)
-
     // PopupAnchor metadata is incomplete in this qmllint version.
     // qmllint disable missing-property unqualified unresolved-type
     anchor.item: target
@@ -437,23 +432,14 @@ PopupWindow {
 
             }
 
-            // 3. MÍDIA COMPLETA (controles MPRIS e troca de reprodutor)
-            QuickMediaPlayer {
-                visible: root.hasMedia
-                theme: root.theme
-                player: root.currentMedia
-                players: MediaState.players.filter(p => p && (p.isPlaying || String(p.trackTitle ?? "").trim().length > 0))
-                onPlayerSelected: function(selected) { MediaState.selectPlayer(selected) }
-            }
-
-            // 4. DIVISOR
+            // DIVISOR
             Rectangle {
                 width: parent.width
                 height: 1
                 color: root.theme.glassBorderSubtle
             }
 
-            // 5. HEADER DAS NOTIFICAÇÕES
+            // HEADER DAS NOTIFICAÇÕES
             PopupHeader {
                 theme: root.theme
                 parentAnchored: false
@@ -538,7 +524,7 @@ PopupWindow {
                 wrapMode: Text.WordWrap
             }
 
-            // 6. EMPTY STATE (quando não há notificações)
+            // EMPTY STATE (quando não há notificações)
             Item {
                 visible: NotificationState.count === 0
                 width: parent.width
@@ -557,7 +543,7 @@ PopupWindow {
                 }
             }
 
-            // 7. LISTA DE NOTIFICAÇÕES (quando há notificações)
+            // LISTA DE NOTIFICAÇÕES (quando há notificações)
             ScrollableList {
                 id: notifListView
                 theme: root.theme
