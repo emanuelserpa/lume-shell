@@ -15,14 +15,28 @@ SPEC.loader.exec_module(nm)
 
 class TestNightLightManager(unittest.TestCase):
     def test_get_sun_times_coordinates(self):
-        # Tururu, CE: lat -3.58083, lon -39.43722
-        sunrise, sunset = nm.get_sun_times(-3.58083, -39.43722, datetime.date(2026, 9, 20))
-        self.assertRegex(sunrise, r"^\d{2}:\d{2}$")
-        self.assertRegex(sunset, r"^\d{2}:\d{2}$")
-        sh, sm = map(int, sunrise.split(":"))
-        eh, em = map(int, sunset.split(":"))
-        self.assertTrue(4 <= sh <= 6)
-        self.assertTrue(16 <= eh <= 19)
+        import os
+        import time
+        old_tz = os.environ.get("TZ")
+        os.environ["TZ"] = "America/Fortaleza"
+        if hasattr(time, "tzset"):
+            time.tzset()
+        try:
+            # Tururu, CE: lat -3.58083, lon -39.43722
+            sunrise, sunset = nm.get_sun_times(-3.58083, -39.43722, datetime.date(2026, 9, 20))
+            self.assertRegex(sunrise, r"^\d{2}:\d{2}$")
+            self.assertRegex(sunset, r"^\d{2}:\d{2}$")
+            sh, sm = map(int, sunrise.split(":"))
+            eh, em = map(int, sunset.split(":"))
+            self.assertTrue(4 <= sh <= 6)
+            self.assertTrue(16 <= eh <= 19)
+        finally:
+            if old_tz is None:
+                os.environ.pop("TZ", None)
+            else:
+                os.environ["TZ"] = old_tz
+            if hasattr(time, "tzset"):
+                time.tzset()
 
     def test_is_night_time_detection(self):
         # Sunrise 05:30, Sunset 17:30

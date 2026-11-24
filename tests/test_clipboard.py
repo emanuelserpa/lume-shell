@@ -596,7 +596,9 @@ class ClipboardCaptureRetryTestCase(unittest.TestCase):
             recorded.update(kw)
             return (1, True)
 
-        with patch.object(self.daemon.subprocess, "run", side_effect=fake_run), \
+        with patch.object(self.daemon, "clipboard_capture_paused", return_value=False), \
+             patch.object(self.daemon.shutil, "which", return_value="/usr/bin/wl-paste"), \
+             patch.object(self.daemon.subprocess, "run", side_effect=fake_run), \
              patch.object(self.daemon, "record_item", side_effect=fake_record_item), \
              patch.object(self.daemon, "save_blob", return_value=("hash.png", "hash")), \
              patch.object(self.daemon.time, "sleep", return_value=None):

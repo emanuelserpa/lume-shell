@@ -475,13 +475,25 @@ class TestContracts(unittest.TestCase):
         self.assertTrue(os.access(script_path, os.X_OK))
 
         import subprocess
+        import tempfile
+        from pathlib import Path
         res = subprocess.run([script_path], capture_output=True, text=True)
         self.assertEqual(res.returncode, 1)
         self.assertIn("Usage:", res.stderr)
 
-        res_invalid = subprocess.run([script_path, "nonexistent_action"], capture_output=True, text=True)
-        self.assertEqual(res_invalid.returncode, 1)
-        self.assertIn("Unknown action", res_invalid.stderr)
+        with tempfile.TemporaryDirectory() as tmp:
+            fake_hyprctl = Path(tmp) / "hyprctl"
+            fake_hyprctl.write_text("#!/bin/sh\nexit 0\n")
+            fake_hyprctl.chmod(0o755)
+            env = os.environ.copy()
+            env["PATH"] = f"{tmp}:{env.get('PATH', '')}"
+            env["XDG_CURRENT_DESKTOP"] = "Hyprland"
+            res_invalid = subprocess.run(
+                [script_path, "nonexistent_action"],
+                env=env, capture_output=True, text=True,
+            )
+            self.assertEqual(res_invalid.returncode, 1)
+            self.assertIn("Unknown action", res_invalid.stderr)
 
     def test_session_action_contract(self):
         script_path = os.path.join(SCRIPT_DIR, "session-action.sh")

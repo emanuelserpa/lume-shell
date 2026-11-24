@@ -43,8 +43,9 @@ class TestGearLeverUpdates(unittest.TestCase):
         self.assertEqual(payload["count"], 0)
         self.assertIn("Consulta expirou", payload["tooltip"])
 
+    @patch.object(gearlever.shutil, "which", return_value="/usr/bin/flatpak")
     @patch.object(gearlever, "run_command", return_value=(0, '{"schema_version": 1, "updates": []}', ""))
-    def test_queries_gear_lever_cli(self, run_command):
+    def test_queries_gear_lever_cli(self, run_command, _which):
         result = gearlever.query_updates("/usr/bin/flatpak")
 
         self.assertEqual(result["status"], "ok")
