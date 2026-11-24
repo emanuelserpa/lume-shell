@@ -9,7 +9,6 @@ referências para alterações específicas; não é preciso ler tudo em sequên
 - `docs/setup/` — instalação do ambiente, compositores, greeter e depuração
 - `docs/guides/` — guias técnicos por domínio e recurso
 - `docs/plans/` — planos ativos, auditorias e pesquisas de protocolo
-- `docs/uml/` — diagramas PlantUML das camadas e fluxos do shell
 - `docs/history/` — registros datados e auditorias concluídas
 
 ## Instalar e usar
@@ -26,12 +25,11 @@ referências para alterações específicas; não é preciso ler tudo em sequên
 ## Desenvolver
 
 - [Mapa do shell](current-state.md): componentes ativos e onde encontrar cada recurso.
-- [Arquitetura](architecture.md): responsabilidades e componentes compartilhados.
+- [Arquitetura](architecture.md): visão simples das camadas, diagrama Mermaid e fronteiras.
 - [Regras de contribuição](../AGENTS.md) ([atalho Claude](../CLAUDE.md)) e
   [contratos estáveis](stability-contract.md).
 - [Guia visual](design-guidelines.md), [build e validação](deploy-and-validation.md) e
   [checklist visual](visual-regression-checklist.md).
-- [Diagramas PlantUML](uml/README.md), quando precisar visualizar as relações.
 - Referências auxiliares: [ícones Tabler](../assets/tabler/README.md) e
   [referências visuais](../references/README.md).
 
