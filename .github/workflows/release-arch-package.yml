@@ -6,7 +6,29 @@ on:
       - 'v*'
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container:
+      image: archlinux:base-devel
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Install validation dependencies
+        run: |
+          pacman -Syu --needed --noconfirm git python python-requests python-pillow qt6-declarative
+
+      - name: Run offline checks and regression tests
+        env:
+          CI: "true"
+        run: ./scripts/validate.sh --offline --skip-qmllint
+
   arch-package:
+    needs: validate
     runs-on: ubuntu-latest
     permissions:
       contents: read

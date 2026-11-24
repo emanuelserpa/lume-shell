@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 import datetime
+import html
 import json
+import math
 import os
 import tempfile
 import subprocess
 from pathlib import Path
 
 from network_utils import prefer_ipv4_resolution
+from weather_state_utils import (
+    fetch_https_geolocation,
+    is_auto_geo_disabled,
+    load_sanitized_weather_state,
+    validate_coords,
+)
 
 prefer_ipv4_resolution()
 
@@ -158,40 +166,24 @@ def get_day_label(date_str: str, index: int) -> str:
 
 
 def load_city_state() -> dict:
-    try:
-        with STATE_FILE.open(encoding="utf-8") as file:
-            state = json.load(file)
-        if not isinstance(state, dict):
-            raise ValueError
-        state.setdefault("selected", "auto")
-        state.setdefault("cities", [])
-        return state
-    except (OSError, json.JSONDecodeError, ValueError):
-        return {"selected": "auto", "cities": []}
+    return load_sanitized_weather_state(STATE_FILE)
 
 
-def get_auto_location() -> tuple[str, str]:
+def get_auto_location(state: dict | None = None) -> tuple[str, str]:
     city_name = "Localização automática"
     location_query = ""
 
-    try:
-        geo_req = requests.get(
-            "http://ip-api.com/json/",
-            timeout=5,
-            headers={"User-Agent": "Quickshell Weather"},
-        )
-        geo_req.raise_for_status()
-        geo_data = geo_req.json()
+    if is_auto_geo_disabled(state):
+        return city_name, location_query
 
-        if geo_data.get("status") == "success":
-            city_name = geo_data.get("city") or city_name
-            lat = geo_data.get("lat")
-            lon = geo_data.get("lon")
-
-            if lat is not None and lon is not None:
-                location_query = f"{lat},{lon}"
-    except (requests.RequestException, ValueError):
-        pass
+    resolved = fetch_https_geolocation(
+        timeout=5.0,
+        user_agent="Quickshell Weather",
+    )
+    if resolved is not None:
+        resolved_city, lat, lon = resolved
+        city_name = resolved_city or city_name
+        location_query = f"{lat},{lon}"
 
     return city_name, location_query
 
@@ -205,17 +197,19 @@ def get_location() -> tuple[str, str, str]:
             if city.get("id") != selected:
                 continue
 
-            lat = city.get("latitude")
-            lon = city.get("longitude")
-            if lat is None or lon is None:
+            coords = validate_coords(city.get("latitude"), city.get("longitude"))
+            if coords is None:
                 break
 
             name = city.get("name") or "Cidade salva"
             region = city.get("region") or ""
             display = f"{name}, {region}" if region else name
-            return display, f"{lat},{lon}", selected
+            return display, f"{coords[0]},{coords[1]}", selected
 
-    name, query = get_auto_location()
+    if is_auto_geo_disabled(state):
+        raise RuntimeError("Localização automática desativada")
+
+    name, query = get_auto_location(state)
     return name, query, "auto"
 
 
@@ -257,16 +251,44 @@ def save_cache(city_name: str, city_id: str, data: dict) -> None:
     os.replace(temp_name, CACHE_FILE)
 
 
+def _safe_int(value, default: int = -1) -> int:
+    if isinstance(value, bool) or value is None:
+        return default
+    try:
+        num = int(value)
+        return num
+    except (TypeError, ValueError, OverflowError):
+        return default
+
+
+def _safe_round(value, default=0):
+    if isinstance(value, bool) or value is None:
+        return default
+    try:
+        num = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
+    if not math.isfinite(num):
+        return default
+    return round(num)
+
+
 def load_cache() -> dict | None:
     try:
         with CACHE_FILE.open(encoding="utf-8") as file:
             cache = json.load(file)
 
-        if not isinstance(cache.get("weather_data"), dict):
+        if not isinstance(cache, dict):
+            return None
+        weather_data = cache.get("weather_data")
+        if not isinstance(weather_data, dict):
+            return None
+        conditions = weather_data.get("current_condition")
+        if not isinstance(conditions, list) or not conditions or not isinstance(conditions[0], dict):
             return None
 
         return cache
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError, ValueError):
         return None
 
 
@@ -276,7 +298,11 @@ def fetch_weather() -> tuple[str, str, dict]:
     if not location_query or "," not in location_query:
         raise RuntimeError("Localização indisponível")
 
-    lat, lon = location_query.split(",", 1)
+    lat_str, lon_str = location_query.split(",", 1)
+    coords = validate_coords(lat_str, lon_str)
+    if coords is None:
+        raise RuntimeError("Coordenadas inválidas")
+    lat, lon = str(coords[0]), str(coords[1])
 
     proc = subprocess.run(
         [
@@ -310,33 +336,40 @@ def fetch_weather() -> tuple[str, str, dict]:
         raise RuntimeError(detail)
 
     raw = json.loads(proc.stdout)
+    if not isinstance(raw, dict):
+        raise ValueError("Resposta JSON inesperada")
 
-    current = raw.get("current") or {}
-    hourly = raw.get("hourly") or {}
-    daily = raw.get("daily") or {}
+    current = raw.get("current")
+    current = current if isinstance(current, dict) else {}
+    hourly = raw.get("hourly")
+    hourly = hourly if isinstance(hourly, dict) else {}
+    daily = raw.get("daily")
+    daily = daily if isinstance(daily, dict) else {}
 
-    current_code = int(current.get("weather_code", -1))
+    current_code = _safe_int(current.get("weather_code"), -1)
 
     transformed = {
         "current_time": str(current.get("time") or ""),
         "current_condition": [{
-            "temp_C": round(float(current.get("temperature_2m", 0))),
-            "FeelsLikeC": round(float(current.get("apparent_temperature", 0))),
-            "humidity": round(float(current.get("relative_humidity_2m", 0))),
-            "windspeedKmph": round(float(current.get("wind_speed_10m", 0))),
+            "temp_C": _safe_round(current.get("temperature_2m"), 0),
+            "FeelsLikeC": _safe_round(current.get("apparent_temperature"), 0),
+            "humidity": _safe_round(current.get("relative_humidity_2m"), 0),
+            "windspeedKmph": _safe_round(current.get("wind_speed_10m"), 0),
             "weatherCode": wmo_to_internal(current_code),
             "lang_pt": [{"value": weather_description_pt(current_code)}],
         }],
         "weather": [],
     }
 
-    hourly_times = hourly.get("time") or []
-    hourly_temps = hourly.get("temperature_2m") or []
-    hourly_codes = hourly.get("weather_code") or []
+    hourly_times = hourly.get("time") if isinstance(hourly.get("time"), list) else []
+    hourly_temps = hourly.get("temperature_2m") if isinstance(hourly.get("temperature_2m"), list) else []
+    hourly_codes = hourly.get("weather_code") if isinstance(hourly.get("weather_code"), list) else []
 
     hourly_by_date = {}
 
     for i, iso_time in enumerate(hourly_times):
+        if not isinstance(iso_time, str):
+            continue
         try:
             dt = datetime.datetime.fromisoformat(iso_time)
         except ValueError:
@@ -350,36 +383,42 @@ def fetch_weather() -> tuple[str, str, dict]:
 
         hourly_by_date.setdefault(date_key, []).append({
             "time": hour_key,
-            "tempC": round(float(temp)) if temp != "--" else "--",
-            "weatherCode": wmo_to_internal(int(code)),
+            "tempC": _safe_round(temp, "--") if temp != "--" else "--",
+            "weatherCode": wmo_to_internal(_safe_int(code, -1)),
         })
 
-    dates = daily.get("time") or []
-    maxes = daily.get("temperature_2m_max") or []
-    mins = daily.get("temperature_2m_min") or []
+    dates = daily.get("time") if isinstance(daily.get("time"), list) else []
+    maxes = daily.get("temperature_2m_max") if isinstance(daily.get("temperature_2m_max"), list) else []
+    mins = daily.get("temperature_2m_min") if isinstance(daily.get("temperature_2m_min"), list) else []
 
     for i, date_key in enumerate(dates[:5]):
+        if not isinstance(date_key, str):
+            continue
         transformed["weather"].append({
             "date": date_key,
-            "maxtempC": round(float(maxes[i])) if i < len(maxes) else "--",
-            "mintempC": round(float(mins[i])) if i < len(mins) else "--",
+            "maxtempC": _safe_round(maxes[i], "--") if i < len(maxes) else "--",
+            "mintempC": _safe_round(mins[i], "--") if i < len(mins) else "--",
             "hourly": hourly_by_date.get(date_key, []),
         })
 
     return city_name, city_id, transformed
 
 
+def _esc(value) -> str:
+    return html.escape(str(value), quote=True)
+
+
 def build_output(cache: dict, stale: bool) -> dict:
-    city_name = cache.get("city_name", "Localização atual")
+    city_name = str(cache.get("city_name") or "Localização atual")
     data = cache["weather_data"]
 
     current = data["current_condition"][0]
+    lang_pt = current.get("lang_pt")
+    weather_desc_list = current.get("weatherDesc")
+    pt_val = lang_pt[0].get("value") if isinstance(lang_pt, list) and lang_pt and isinstance(lang_pt[0], dict) else None
+    en_val = weather_desc_list[0].get("value") if isinstance(weather_desc_list, list) and weather_desc_list and isinstance(weather_desc_list[0], dict) else None
 
-    weather_desc = (
-        current.get("lang_pt", [{}])[0].get("value")
-        or current.get("weatherDesc", [{}])[0].get("value")
-        or "Clima desconhecido"
-    ).capitalize()
+    weather_desc = str(pt_val or en_val or "Clima desconhecido").capitalize()
 
     temp_c = current.get("temp_C", "--")
     feels_like = current.get("FeelsLikeC", "--")
@@ -392,8 +431,8 @@ def build_output(cache: dict, stale: bool) -> dict:
     )
 
     tooltip_lines = [
-        f"<b>{city_name}: {weather_desc}</b>",
-        f"Sensação: {feels_like}°C · Umidade: {humidity}% · Vento: {wind} km/h",
+        f"<b>{_esc(city_name)}: {_esc(weather_desc)}</b>",
+        f"Sensação: {_esc(feels_like)}°C · Umidade: {_esc(humidity)}% · Vento: {_esc(wind)} km/h",
         "",
     ]
 
@@ -408,10 +447,16 @@ def build_output(cache: dict, stale: bool) -> dict:
             minute=0, second=0, microsecond=0
         )
 
+    weather_days = data.get("weather") if isinstance(data.get("weather"), list) else []
     all_hourly = []
-    for day in data.get("weather", []):
+    for day in weather_days:
+        if not isinstance(day, dict):
+            continue
         date_key = str(day.get("date") or "")
-        for item in day.get("hourly", []):
+        day_hourly = day.get("hourly") if isinstance(day.get("hourly"), list) else []
+        for item in day_hourly:
+            if not isinstance(item, dict):
+                continue
             raw_hour = str(item.get("time") or "")
             try:
                 hour = int(raw_hour[:-2]) if raw_hour.endswith("00") else int(raw_hour)
@@ -438,13 +483,16 @@ def build_output(cache: dict, stale: bool) -> dict:
 
     days = []
 
-    for i, day in enumerate(data.get("weather", [])[:5]):
-        day_title = get_day_label(day.get("date", ""), i)
+    for i, day in enumerate(weather_days[:5]):
+        if not isinstance(day, dict):
+            continue
+        day_title = get_day_label(str(day.get("date") or ""), i)
 
+        day_hourly = day.get("hourly") if isinstance(day.get("hourly"), list) else []
         hourly_data = {
             item.get("time"): item
-            for item in day.get("hourly", [])
-            if item.get("time") is not None
+            for item in day_hourly
+            if isinstance(item, dict) and item.get("time") is not None
         }
 
         morning_icon, morning_temp = get_period(hourly_data, "900")
@@ -453,14 +501,14 @@ def build_output(cache: dict, stale: bool) -> dict:
         dawn_icon, dawn_temp = get_period(hourly_data, "2100")
 
         tooltip_lines.extend([
-            f"<b>{day_title}</b>",
+            f"<b>{_esc(day_title)}</b>",
             (
-                f"Manhã {morning_icon} {morning_temp}   "
-                f"Tarde {afternoon_icon} {afternoon_temp}"
+                f"Manhã {_esc(morning_icon)} {_esc(morning_temp)}   "
+                f"Tarde {_esc(afternoon_icon)} {_esc(afternoon_temp)}"
             ),
             (
-                f"Noite {night_icon} {night_temp}   "
-                f"Madruga {dawn_icon} {dawn_temp}"
+                f"Noite {_esc(night_icon)} {_esc(night_temp)}   "
+                f"Madruga {_esc(dawn_icon)} {_esc(dawn_temp)}"
             ),
             "",
         ])
@@ -481,9 +529,9 @@ def build_output(cache: dict, stale: bool) -> dict:
     updated_at = cache.get("updated_at", "")
     if updated_at:
         try:
-            updated = datetime.datetime.fromisoformat(updated_at)
+            updated = datetime.datetime.fromisoformat(str(updated_at))
             tooltip_lines.extend([
-                f"<i>Atualizado: {updated:%d/%m às %H:%M}</i>",
+                f"<i>Atualizado: {_esc(f'{updated:%d/%m às %H:%M}')}</i>",
             ])
         except ValueError:
             pass
@@ -530,7 +578,7 @@ def main() -> None:
         if len(detail) > 90:
             detail = detail[:87] + "..."
         error_message = "Falha ao consultar Open-Meteo" + (f": {detail}" if detail else "")
-    except (json.JSONDecodeError, ValueError, KeyError, IndexError) as exc:
+    except (json.JSONDecodeError, ValueError, KeyError, IndexError, TypeError, AttributeError) as exc:
         error_message = f"Resposta inválida: {exc.__class__.__name__}"
 
     cache = load_cache()

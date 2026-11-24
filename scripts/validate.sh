@@ -8,18 +8,21 @@ cd "$REPO_ROOT"
 
 LIVE_CHECKS=false
 SPOTLIGHT_LATENCY=false
+SKIP_QMLLINT=false
 for arg in "$@"; do
     case "$arg" in
         --offline) ;;
         --live) LIVE_CHECKS=true ;;
+        --skip-qmllint) SKIP_QMLLINT=true ;;
         --spotlight-latency) SPOTLIGHT_LATENCY=true ;;
         --visual) exec "$REPO_ROOT/scripts/visual-check.sh" ;;
         --help|-h)
             cat <<'HELP'
-Uso: scripts/validate.sh [--offline] [--live] [--spotlight-latency] [--visual]
+Uso: scripts/validate.sh [--offline] [--live] [--skip-qmllint] [--spotlight-latency] [--visual]
 
 Sem opções (ou com --offline), executa verificações locais sem sondar hardware,
-rede ou IPC do shell. --live habilita sondagens reais dos helpers. A medição
+rede ou IPC do shell. --live habilita sondagens reais dos helpers. --skip-qmllint
+pula apenas o qmllint (útil em containers de CI sem pacote Quickshell). A medição
 --spotlight-latency alterna o Spotlight da sessão e exige autorização explícita.
 --visual encaminha para o checklist visual interativo.
 HELP
@@ -79,7 +82,9 @@ for cand in /usr/lib/qt6/bin/qmllint "$(command -v qmllint 2>/dev/null || true)"
     [ -n "$cand" ] && [ -x "$cand" ] && { qmllint_bin="$cand"; break; }
 done
 
-if [ -z "$qmllint_bin" ]; then
+if [ "$SKIP_QMLLINT" = true ]; then
+    record_ok "qmllint static check skipped (--skip-qmllint)"
+elif [ -z "$qmllint_bin" ]; then
     if [[ "${CI:-}" == "true" ]]; then
         record_fail "qmllint is required in CI"
     else

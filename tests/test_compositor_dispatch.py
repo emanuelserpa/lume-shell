@@ -107,6 +107,46 @@ class TestHyprlandDispatch(unittest.TestCase):
         self.assertIn("invalid display projection mode", result.stderr)
         self.assertFalse(self.python_capture.exists())
 
+    def test_accepts_valid_hyprland_targets(self):
+        for args, expected_sub in [
+            (["workspace", "3"], "workspace = \"3\""),
+            (["workspace", "e+1"], "workspace = \"e+1\""),
+            (["workspace", "special:scratch"], "workspace = \"special:scratch\""),
+            (["window", "0x55aa11", "2"], "address:0x55aa11"),
+            (["close-window", "0x55aa11"], "address:0x55aa11"),
+        ]:
+            if self.capture.exists():
+                self.capture.unlink()
+            result = subprocess.run(
+                [str(DISPATCH), *args],
+                env=self.env, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(result.returncode, 0, f"{args}: {result.stderr}")
+            self.assertTrue(self.capture.exists())
+            self.assertIn(expected_sub, self.capture.read_text())
+
+    def test_rejects_malicious_or_invalid_hyprland_targets_before_ipc(self):
+        invalid_invocations = [
+            ["workspace", '1" }) os.execute("id") --'],
+            ["workspace", "1; rm -rf /"],
+            ["workspace", "1 2"],
+            ["workspace", "../2"],
+            ["window", '0x1" }) os.execute("id") --', "1"],
+            ["window", "0x1234", '2" }) os.execute("id") --'],
+            ["window", "not-hex", "1"],
+            ["close-window", "0x12; echo pwn"],
+            ["close-window", ""],
+        ]
+        for args in invalid_invocations:
+            if self.capture.exists():
+                self.capture.unlink()
+            result = subprocess.run(
+                [str(DISPATCH), *args],
+                env=self.env, capture_output=True, text=True, check=False,
+            )
+            self.assertNotEqual(result.returncode, 0, f"Unexpectedly succeeded: {args}")
+            self.assertFalse(self.capture.exists(), f"hyprctl called for invalid args: {args}")
+
 
 if __name__ == "__main__":
     unittest.main()
