@@ -3,12 +3,11 @@
 The numbered entries below record functional milestones; they are not the
 package version. Public package releases are defined by Git tags.
 
-## Unreleased
+## 0.2.1
 
 - Simplify `docs/architecture.md` in Portuguese with a Mermaid overview diagram
   and replace the 5 separate PlantUML files under `docs/uml/` that duplicated
   component inventories.
-
 - Harden compositor dispatching, geolocation, and weather state handling (#21):
   - Validate Hyprland workspace selectors and window addresses in
     `scripts/compositor-dispatch.sh` before building Lua/fallback `hyprctl` calls.
@@ -19,6 +18,12 @@ package version. Public package releases are defined by Git tags.
     validate `cities`/`selected`/IDs/coordinates across weather state and CLI
     helpers, add regression tests, and gate `.github/workflows/release-arch-package.yml`
     on automated validation.
+- Remove the redundant embedded `QuickMediaPlayer` from `bar/NotificationPopup.qml`.
+
+## 0.2.0
+
+- Isolate Spotlight desktop app launches in their own `systemd-run --user --scope --slice=app.slice`
+  cgroup via `gtk-launch`.
 - Redesign `bar/AudioPopup.qml` so the primary output volume sits at the top,
   unify output/microphone endpoint cards with light-theme-safe `surfaceForeground`
   contrast and a clickable reset-to-100% boost pill, replace fixed 76 px nested
