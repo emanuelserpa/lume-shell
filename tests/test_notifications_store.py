@@ -234,6 +234,24 @@ class NotificationStoreTests(unittest.TestCase):
         self.assertEqual(items[0]["summary"], "Legacy 24")
         self.assertEqual(items[-1]["summary"], "Legacy 5")
 
+    def test_notification_image_archiving_avoids_grab_to_image(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        for folder in ("bar", "components", "notifications", "services"):
+            for qml_file in (repo_root / folder).rglob("*.qml"):
+                content = qml_file.read_text(encoding="utf-8")
+                self.assertNotIn(
+                    "grabToImage(",
+                    content,
+                    f"Unexpected grabToImage() call in {qml_file}",
+                )
+
+        card_qml = (repo_root / "components" / "NotificationCardContent.qml").read_text(encoding="utf-8")
+        self.assertNotIn("archiveNotificationImage", card_qml)
+        self.assertNotIn("captureWindow", card_qml)
+
+        bar_qml = (repo_root / "bar" / "Bar.qml").read_text(encoding="utf-8")
+        self.assertIn("NotificationImageArchiver", bar_qml)
+
 
 if __name__ == "__main__":
     unittest.main()

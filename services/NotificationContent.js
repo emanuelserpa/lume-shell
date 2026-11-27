@@ -323,3 +323,16 @@ function historyRows(notifications, expandedKeys) {
     }
     return rows
 }
+
+function squareCropRect(width, height) {
+    const w = Number(width)
+    const h = Number(height)
+    if (!(w > 0 && h > 0)) return null
+    const side = Math.min(w, h)
+    return {
+        sx: (w - side) / 2,
+        sy: (h - side) / 2,
+        sw: side,
+        sh: side
+    }
+}

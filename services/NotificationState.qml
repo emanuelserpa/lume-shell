@@ -23,6 +23,11 @@ QtObject {
     property var retainedImageNotifications: []
     property var cachedNotificationImages: ({})
     property var capturingNotificationImages: ({})
+    property var pendingImageArchives: []
+    property var imageArchivers: []
+    property var activeImageArchiver: null
+    property var activeImageJob: null
+    property int imageArchiveEpoch: 0
     property int notificationImageSerial: 0
     readonly property int maximumCachedNotificationImages: 500
     readonly property int maximumNotificationsPerApp: 20
@@ -147,6 +152,10 @@ QtObject {
         persistentHistory = []
         cachedNotificationImages = ({})
         retainedImageNotifications = []
+        capturingNotificationImages = ({})
+        pendingImageArchives = []
+        activeImageJob = null
+        imageArchiveEpoch += 1
         root.sendStoreRequest({"op": "clear"})
         // qmllint disable missing-property
         const native = notificationServer.trackedNotifications.values ?? []
@@ -716,13 +725,57 @@ QtObject {
         root.cachedNotificationImages = cached
     }
 
-    function archiveNotificationImage(notification, imageItem) {
+    function updateActiveImageArchiver() {
+        let chosen = null
+        for (let i = 0; i < root.imageArchivers.length; i++) {
+            const entry = root.imageArchivers[i]
+            if (entry && entry.active) {
+                chosen = entry.item
+                break
+            }
+        }
+        if (!chosen && root.imageArchivers.length > 0)
+            chosen = root.imageArchivers[0].item
+        root.activeImageArchiver = chosen
+    }
+
+    function registerImageArchiver(archiver, active) {
+        if (!archiver) return
+        const next = root.imageArchivers.filter(function(entry) {
+            return entry && entry.item !== archiver
+        })
+        next.push({ item: archiver, active: Boolean(active) })
+        root.imageArchivers = next
+        root.updateActiveImageArchiver()
+        root.processNextImageArchive()
+    }
+
+    function unregisterImageArchiver(archiver) {
+        if (!archiver) return
+        root.imageArchivers = root.imageArchivers.filter(function(entry) {
+            return entry && entry.item !== archiver
+        })
+        root.updateActiveImageArchiver()
+        const job = root.activeImageJob
+        if (job && job.archiver === archiver) {
+            root.activeImageJob = null
+            job.archiver = null
+            if (job.epoch === root.imageArchiveEpoch) {
+                const queue = root.pendingImageArchives.slice()
+                queue.unshift(job)
+                root.pendingImageArchives = queue
+            } else {
+                root.releaseNotificationImage(job.notification)
+            }
+        }
+        root.processNextImageArchive()
+    }
+
+    function enqueueNotificationImage(notification) {
         const source = String(notification?.image ?? "")
         if (!source.startsWith("image://qsimage/")
                 || root.cachedNotificationImages[source]
-                || root.capturingNotificationImages[source]
-                || !imageItem
-                || (imageItem.status !== undefined && imageItem.status !== Image.Ready)) return false
+                || root.capturingNotificationImages[source]) return false
 
         root.retainNotificationImage(notification)
         const receivedAt = Number(root.timestamps[notification.id]
@@ -730,38 +783,89 @@ QtObject {
         const serial = ++root.notificationImageSerial
         const imagePath = ShellPaths.dataFile("notifications/images/notification-")
                         + receivedAt + "-" + serial + ".png"
+
         const capturing = Object.assign({}, root.capturingNotificationImages)
         capturing[source] = true
         root.capturingNotificationImages = capturing
-        const started = imageItem.grabToImage(function(result) {
-            const saved = Boolean(result && result.saveToFile(imagePath))
-            const currentCaptures = Object.assign({}, root.capturingNotificationImages)
-            delete currentCaptures[source]
-            root.capturingNotificationImages = currentCaptures
-            if (!saved) {
-                console.warn("NotificationState: não foi possível arquivar imagem", source)
-                return
+
+        const queue = root.pendingImageArchives.slice()
+        queue.push({
+            notification: notification,
+            source: source,
+            receivedAt: receivedAt,
+            imagePath: imagePath,
+            epoch: root.imageArchiveEpoch,
+            archiver: null
+        })
+        while (queue.length > root.maximumCachedNotificationImages) {
+            const dropped = queue.shift()
+            if (dropped) {
+                const nextCaptures = Object.assign({}, root.capturingNotificationImages)
+                delete nextCaptures[dropped.source]
+                root.capturingNotificationImages = nextCaptures
+                root.releaseNotificationImage(dropped.notification)
             }
-
-            root.cacheNotificationImage(source, imagePath)
-            root.releaseNotificationImage(notification)
-
-            const snapshot = NotificationContent.storageSnapshot(notification, receivedAt)
-            snapshot.sourceImage = source
-            snapshot.image = imagePath
-            root.sendStoreRequest({"op": "update_image", "notification": snapshot})
-
-            root.restoreHistory = root.restoreHistory.map(function(item) {
-                return item.originalId === notification.id && item.image === source
-                    ? Object.assign({}, item, { image: imagePath }) : item
-            })
-        }, Qt.size(256, 256))
-        if (!started) {
-            const currentCaptures = Object.assign({}, root.capturingNotificationImages)
-            delete currentCaptures[source]
-            root.capturingNotificationImages = currentCaptures
         }
-        return Boolean(started)
+        root.pendingImageArchives = queue
+        root.processNextImageArchive()
+        return true
+    }
+
+    function processNextImageArchive() {
+        if (root.activeImageJob !== null || root.pendingImageArchives.length === 0)
+            return
+        const archiver = root.activeImageArchiver
+        if (!archiver || typeof archiver.startJob !== "function" || archiver.busy)
+            return
+
+        const queue = root.pendingImageArchives.slice()
+        const job = queue.shift()
+        root.pendingImageArchives = queue
+        if (!job) return
+
+        job.archiver = archiver
+        root.activeImageJob = job
+        if (!archiver.startJob(job))
+            root.completeImageArchive(job, false)
+    }
+
+    function completeImageArchive(job, saved) {
+        if (!job) return
+        const isCurrent = root.activeImageJob === job
+        if (isCurrent) {
+            root.activeImageJob = null
+        } else if (job.epoch === root.imageArchiveEpoch) {
+            return
+        }
+
+        const currentCaptures = Object.assign({}, root.capturingNotificationImages)
+        delete currentCaptures[job.source]
+        root.capturingNotificationImages = currentCaptures
+        root.releaseNotificationImage(job.notification)
+
+        if (job.epoch !== root.imageArchiveEpoch) {
+            root.processNextImageArchive()
+            return
+        }
+
+        if (!saved) {
+            console.warn("NotificationState: não foi possível arquivar imagem", job.source)
+            root.processNextImageArchive()
+            return
+        }
+
+        root.cacheNotificationImage(job.source, job.imagePath)
+
+        const snapshot = NotificationContent.storageSnapshot(job.notification, job.receivedAt)
+        snapshot.sourceImage = job.source
+        snapshot.image = job.imagePath
+        root.sendStoreRequest({"op": "update_image", "notification": snapshot})
+
+        root.restoreHistory = root.restoreHistory.map(function(item) {
+            return item.originalId === job.notification.id && item.image === job.source
+                ? Object.assign({}, item, { image: job.imagePath }) : item
+        })
+        root.processNextImageArchive()
     }
 
     property IpcHandler ipc: IpcHandler {
@@ -825,6 +929,7 @@ QtObject {
                 root.retainNotificationImage(n)
                 root.recordNotification(n)
                 root.pruneLiveNotificationsForGroup(n)
+                root.enqueueNotificationImage(n)
             }
             root._lastFingerprint = fp
             root._lastSeenTime = now

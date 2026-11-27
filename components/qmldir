@@ -24,4 +24,5 @@ NotificationActionButton 1.0 NotificationActionButton.qml
 PowerProfileSelector 1.0 PowerProfileSelector.qml
 WheelKinetic 1.0 WheelKinetic.qml
 NotificationCardContent 1.0 NotificationCardContent.qml
+NotificationImageArchiver 1.0 NotificationImageArchiver.qml
 TablerIcon 1.0 TablerIcon.qml
