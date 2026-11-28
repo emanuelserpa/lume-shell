@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Effects
-import QtQuick.Window
 import Quickshell.Services.Notifications
 import qs.services
 
@@ -82,7 +81,6 @@ Column {
 
             Image {
                 id: bodyImage
-                property var captureWindow: Window.window
                 anchors.fill: parent
                 // Notification payloads may be full-resolution screenshots.
                 // Decode only enough pixels for this small leading image slot;
@@ -93,17 +91,6 @@ Column {
                 source: root.hasBodyImage ? root.bodyImageSource : ""
                 fillMode: Image.PreserveAspectCrop
                 visible: false
-                function captureWhenReady() {
-                    if (captureWindow && captureWindow.visible && status === Image.Ready
-                            && root.bodyImageSource.startsWith("image://qsimage/"))
-                        NotificationState.archiveNotificationImage(root.notification, bodyImageMaskEffect)
-                }
-                onStatusChanged: captureWhenReady()
-                onCaptureWindowChanged: captureWhenReady()
-                Connections {
-                    target: bodyImage.captureWindow
-                    function onVisibleChanged() { bodyImage.captureWhenReady() }
-                }
             }
 
             Rectangle {

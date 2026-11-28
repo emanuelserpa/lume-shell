@@ -214,5 +214,9 @@ PanelWindow {
             ownerActive: root.projectionOwner
         }
 
+        NotificationImageArchiver {
+            active: root.projectionOwner
+        }
+
     }
 }

@@ -317,4 +317,22 @@ TestCase {
         compare(capped[21].id, "u-1")
         compare(capped[22].id, "u-2")
     }
+
+    function test_squareCropRectCenterCropsAndRejectsInvalidSizes() {
+        const wide = NotificationContent.squareCropRect(200, 100)
+        compare(wide.sx, 50)
+        compare(wide.sy, 0)
+        compare(wide.sw, 100)
+        compare(wide.sh, 100)
+
+        const tall = NotificationContent.squareCropRect(120, 240)
+        compare(tall.sx, 0)
+        compare(tall.sy, 60)
+        compare(tall.sw, 120)
+        compare(tall.sh, 120)
+
+        verify(NotificationContent.squareCropRect(0, 100) === null)
+        verify(NotificationContent.squareCropRect(-10, 100) === null)
+        verify(NotificationContent.squareCropRect(NaN, 100) === null)
+    }
 }
