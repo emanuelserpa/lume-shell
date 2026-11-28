@@ -3,6 +3,17 @@
 The numbered entries below record functional milestones; they are not the
 package version. Public package releases are defined by Git tags.
 
+## 0.2.4
+
+- Prevent `QSGRenderThread` segfaults (`QQuickItemGrabResult` /
+  `QObjectPrivate::ConnectionData::cleanOrphanedConnectionsImpl`) during
+  notification image archiving by replacing `grabToImage()` on transient
+  `MultiEffect` cards with a serialized, persistent `Canvas` archiver
+  (`components/NotificationImageArchiver.qml` mounted in `bar/Bar.qml`),
+  queuing `image://qsimage/` captures directly in `NotificationState.qml`
+  and guaranteeing notification retention release on both success and failure
+  (#27).
+
 ## 0.2.3
 
 - Cap notification history and active `NotificationServer` tracking at 20 items
